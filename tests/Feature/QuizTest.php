@@ -218,6 +218,9 @@ class QuizTest extends TestCase
         $takeResponse = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
         $takeResponse->assertStatus(200);
         $takeResponse->assertSee('Quiz SQL Cơ Bản');
+        $takeResponse->assertSee('Chưa hoàn thành bài thi');
+        $takeResponse->assertSee('validateAndSubmitQuiz');
+        $takeResponse->assertSee('unanswered-warning');
 
         // Học viên nộp bài: Đúng câu 1, sai câu 2 => 1/2 câu đúng = 5.0 điểm (Đạt)
         $submitResponse = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [

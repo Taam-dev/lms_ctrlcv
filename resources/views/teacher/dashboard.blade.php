@@ -70,7 +70,7 @@
                         <input type="text"
                                name="search"
                                value="{{ $search ?? '' }}"
-                               placeholder="{{ $currentTab === 'courses' ? 'Tìm kiếm khóa học của bạn...' : ($currentTab === 'quizzes' ? 'Tìm kiếm bài kiểm tra của bạn...' : ($currentTab === 'attempts' ? 'Tìm theo học viên, email, đề thi...' : 'Tìm bài giảng, khóa học...')) }}"
+                               placeholder="{{ $currentTab === 'courses' ? 'Tìm kiếm khóa học của bạn...' : ($currentTab === 'quizzes' ? 'Tìm kiếm bài kiểm tra của bạn...' : ($currentTab === 'attempts' ? 'Tìm học viên, email, đề thi, điểm (vd: 5, 8.5, >=8)...' : 'Tìm bài giảng, khóa học...')) }}"
                                class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                         @if(!empty($search))
                             <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
@@ -893,7 +893,7 @@
                                 </h3>
                                 <p class="text-xs text-slate-500">
                                     @if(!empty($search))
-                                        Vui lòng thử tìm kiếm bằng tên học viên, email hoặc bài kiểm tra khác.
+                                        Vui lòng thử tìm kiếm bằng tên học viên, email, đề thi hoặc điểm số khác (ví dụ: "5", "8.5", ">=8", "đạt").
                                     @else
                                         Khi học viên hoàn thành các bài trắc nghiệm của bạn, kết quả chi tiết sẽ hiển thị tại đây.
                                     @endif

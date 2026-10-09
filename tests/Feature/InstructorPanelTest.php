@@ -559,8 +559,8 @@ class InstructorPanelTest extends TestCase
             'quiz_id' => $quiz->id,
             'student_id' => $student2->id,
             'total_questions' => 10,
-            'correct_answers' => 5,
-            'score' => 5.0,
+            'correct_answers' => 8,
+            'score' => 8.5,
             'is_passed' => true,
         ]);
 
@@ -568,19 +568,54 @@ class InstructorPanelTest extends TestCase
             'quiz_id' => $quiz->id,
             'student_id' => $student3->id,
             'total_questions' => 10,
-            'correct_answers' => 5,
-            'score' => 5.0,
-            'is_passed' => true,
+            'correct_answers' => 3,
+            'score' => 3.0,
+            'is_passed' => false,
         ]);
 
-        // Tìm kiếm 'tam1' -> Chỉ thấy tam1, không thấy tam2 và tam3
+        // 1. Tìm kiếm theo tên học viên: 'tam1' -> Chỉ thấy tam1, không thấy tam2 và tam3
         $res = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => 'tam1']));
         $res->assertOk();
         $res->assertSee('tam1@gmail.com');
         $res->assertDontSee('tam2@gmail.com');
         $res->assertDontSee('tam3@gmail.com');
 
-        // Tìm kiếm từ khóa không khớp
+        // 2. Tìm kiếm theo điểm số chính xác: '8.5' -> Chỉ thấy tam2
+        $resScore = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => '8.5']));
+        $resScore->assertOk();
+        $resScore->assertSee('tam2@gmail.com');
+        $resScore->assertDontSee('tam1@gmail.com');
+        $resScore->assertDontSee('tam3@gmail.com');
+
+        // 3. Tìm kiếm theo điểm số dạng phân số: '5.0/10' -> Chỉ thấy tam1
+        $resScoreFraction = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => '5.0/10']));
+        $resScoreFraction->assertOk();
+        $resScoreFraction->assertSee('tam1@gmail.com');
+        $resScoreFraction->assertDontSee('tam2@gmail.com');
+        $resScoreFraction->assertDontSee('tam3@gmail.com');
+
+        // 4. Tìm kiếm theo điều kiện so sánh điểm số: '>= 8' -> Chỉ thấy tam2
+        $resScoreGte = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => '>= 8']));
+        $resScoreGte->assertOk();
+        $resScoreGte->assertSee('tam2@gmail.com');
+        $resScoreGte->assertDontSee('tam1@gmail.com');
+        $resScoreGte->assertDontSee('tam3@gmail.com');
+
+        // 5. Tìm kiếm theo điều kiện nhỏ hơn: '< 4' -> Chỉ thấy tam3
+        $resScoreLt = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => '< 4']));
+        $resScoreLt->assertOk();
+        $resScoreLt->assertSee('tam3@gmail.com');
+        $resScoreLt->assertDontSee('tam1@gmail.com');
+        $resScoreLt->assertDontSee('tam2@gmail.com');
+
+        // 6. Tìm kiếm theo trạng thái 'không đạt' -> Chỉ thấy tam3
+        $resFailed = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => 'không đạt']));
+        $resFailed->assertOk();
+        $resFailed->assertSee('tam3@gmail.com');
+        $resFailed->assertDontSee('tam1@gmail.com');
+        $resFailed->assertDontSee('tam2@gmail.com');
+
+        // 7. Tìm kiếm từ khóa không khớp
         $resEmpty = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => 'KhongTonTai']));
         $resEmpty->assertOk();
         $resEmpty->assertSee('Không tìm thấy kết quả làm bài nào khớp với');

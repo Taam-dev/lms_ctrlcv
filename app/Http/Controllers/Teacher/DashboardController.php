@@ -126,16 +126,66 @@ class DashboardController extends Controller
             ->latest();
 
         if ($search !== '') {
-            $attemptsQuery->where(function ($q) use ($search) {
+            $lowerSearch = mb_strtolower($search);
+
+            // Xử lý tìm kiếm theo điểm số:
+            $scoreOperator = null;
+            $scoreValue = null;
+            $cleanScoreSearch = trim(preg_replace('/^(?:điểm|diem)\s*:?\s*/iu', '', $search));
+
+            // 1. Dạng so sánh: ">=8", ">= 8", "<= 5", "> 7.5", "< 5", "= 9"
+            if (preg_match('/^(>=|<=|>|<|=)\s*([0-9]+(?:\.[0-9]+)?)(?:\s*\/\s*10)?$/', $cleanScoreSearch, $matches)) {
+                $scoreOperator = $matches[1];
+                $scoreValue = (float) $matches[2];
+            }
+            // 2. Dạng điểm số đơn hoặc phân số: "5", "5.0", "8.5", "5/10", "8.5/10"
+            elseif (preg_match('/^([0-9]+(?:\.[0-9]+)?)(?:\s*\/\s*10)?$/', $cleanScoreSearch, $matches)) {
+                $scoreOperator = '=';
+                $scoreValue = (float) $matches[1];
+            }
+
+            // 3. Dạng số câu đúng: "5 câu", "8 câu"
+            $correctAnswersCount = null;
+            if (preg_match('/^([0-9]+)\s*(?:câu|cau)$/iu', $cleanScoreSearch, $matches)) {
+                $correctAnswersCount = (int) $matches[1];
+            }
+
+            // 4. Dạng kết quả Đạt / Không đạt
+            $statusPassed = null;
+            if (str_contains($lowerSearch, 'không đạt') || str_contains($lowerSearch, 'chưa đạt') || $lowerSearch === 'fail' || $lowerSearch === 'truot') {
+                $statusPassed = false;
+            } elseif (str_contains($lowerSearch, 'đạt') || $lowerSearch === 'dat' || $lowerSearch === 'pass') {
+                $statusPassed = true;
+            }
+
+            $attemptsQuery->where(function ($q) use ($search, $scoreOperator, $scoreValue, $correctAnswersCount, $statusPassed) {
+                // Tìm theo học viên
                 $q->whereHas('student', function ($s) use ($search) {
                     $s->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
-                })->orWhereHas('quiz', function ($qz) use ($search) {
-                    $qz->where('title', 'like', "%{$search}%")
-                        ->orWhereHas('course', function ($c) use ($search) {
-                            $c->where('title', 'like', "%{$search}%");
-                        });
-                });
+                })
+                // Tìm theo bài kiểm tra và khóa học
+                    ->orWhereHas('quiz', function ($qz) use ($search) {
+                        $qz->where('title', 'like', "%{$search}%")
+                            ->orWhereHas('course', function ($c) use ($search) {
+                                $c->where('title', 'like', "%{$search}%");
+                            });
+                    });
+
+                // Tìm theo điểm số (chính xác hoặc so sánh)
+                if ($scoreOperator !== null && $scoreValue !== null) {
+                    $q->orWhere('score', $scoreOperator, $scoreValue);
+                }
+
+                // Tìm theo số câu đúng
+                if ($correctAnswersCount !== null) {
+                    $q->orWhere('correct_answers', $correctAnswersCount);
+                }
+
+                // Tìm theo trạng thái Đạt / Không đạt
+                if ($statusPassed !== null) {
+                    $q->orWhere('is_passed', $statusPassed);
+                }
             });
         }
 
