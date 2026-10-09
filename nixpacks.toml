@@ -1,0 +1,29 @@
+[phases.setup]
+nixPkgs = [
+  "php83",
+  "php83Packages.composer",
+  "php83Extensions.pdo_mysql",
+  "php83Extensions.mbstring",
+  "php83Extensions.bcmath",
+  "php83Extensions.exif",
+  "php83Extensions.gd",
+  "php83Extensions.intl",
+  "php83Extensions.zip",
+  "php83Extensions.opcache",
+  "nodejs_22",
+  "nginx"
+]
+
+[phases.install]
+cmds = [
+  "composer install --no-dev --optimize-autoloader --no-interaction",
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+
+[start]
+cmd = "sh docker/start.sh"

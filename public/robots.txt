@@ -1,0 +1,25 @@
+# Robots.txt chuẩn SEO cho website học trực tuyến Ctrl C+V (https://ctrlcv.io.vn)
+User-agent: *
+Allow: /
+Allow: /courses
+Allow: /khoa-hoc/
+Allow: /images/
+Allow: /build/
+Allow: /storage/
+
+# Chặn bot thu thập thông tin các trang quản trị, riêng tư, thanh toán và bài thi nội bộ
+Disallow: /admin/
+Disallow: /instructor/
+Disallow: /teacher/
+Disallow: /dashboard
+Disallow: /profile/
+Disallow: /thanh-toan/
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /quizzes/*/take
+Disallow: /quizzes/*/result/
+Disallow: /courses/*/lessons/
+Disallow: /courses/*/enroll
+
+# Đường dẫn sitemap chính thức cho Google Search Console
+Sitemap: https://ctrlcv.io.vn/sitemap.xml

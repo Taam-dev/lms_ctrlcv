@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Panel (Admin / Giảng viên): giữ góc bo nhẹ để khớp phong cách góc cạnh của giao diện */
+.panel-main .rounded-3xl { border-radius: 0.75rem; }
+.panel-main .rounded-2xl { border-radius: 0.5rem; }
+.panel-main .rounded-xl { border-radius: 0.375rem; }
+
+/* Avatar Cropper: Hiệu ứng khung cắt tròn */
+.avatar-cropper-box .cropper-view-box,
+.avatar-cropper-box .cropper-face {
+    border-radius: 50% !important;
+}
+.avatar-cropper-box .cropper-view-box {
+    outline: 2px solid #ec4899 !important;
+    outline-color: rgba(236, 72, 153, 0.85) !important;
+}
