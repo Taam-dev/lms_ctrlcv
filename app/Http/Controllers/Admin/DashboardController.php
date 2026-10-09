@@ -84,12 +84,38 @@ class DashboardController extends Controller
         $quizzes = $quizzesQuery->get();
 
         // Lấy danh sách Khóa học cùng các bài giảng cho Tab Bài giảng (Accordion theo Khóa học)
-        $coursesWithLessons = Course::with(['teacher', 'lessons' => function ($q) {
+        $coursesWithLessonsQuery = Course::with(['teacher', 'lessons' => function ($q) {
             $q->orderBy('order_number');
-        }])->withCount('lessons')->latest()->get();
+        }])->withCount('lessons')->latest();
+
+        if ($search !== '') {
+            $coursesWithLessonsQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('lessons', function ($l) use ($search) {
+                        $l->where('title', 'like', "%{$search}%")
+                            ->orWhere('content', 'like', "%{$search}%");
+                    });
+            });
+        }
+        $coursesWithLessons = $coursesWithLessonsQuery->get();
 
         // Lấy danh sách Bài giảng (tương thích ngược nếu cần)
-        $lessons = Lesson::with(['course.teacher'])->latest()->paginate(15);
+        $lessonsQuery = Lesson::with(['course.teacher'])->latest();
+        if ($search !== '') {
+            $lessonsQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhereHas('course', function ($c) use ($search) {
+                        $c->where('title', 'like', "%{$search}%");
+                    });
+            });
+        }
+        $lessons = $lessonsQuery->paginate(15);
 
         // Lấy danh sách Người dùng
         $users = User::latest()->paginate(15);

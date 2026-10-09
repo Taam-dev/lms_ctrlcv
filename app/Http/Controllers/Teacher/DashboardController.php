@@ -67,7 +67,11 @@ class DashboardController extends Controller
         if ($search !== '') {
             $coursesBuilder->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('lessons', function ($l) use ($search) {
+                        $l->where('title', 'like', "%{$search}%")
+                            ->orWhere('content', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -103,6 +107,16 @@ class DashboardController extends Controller
 
         if ($selectedCourseId && $teacherCourseIds->contains($selectedCourseId)) {
             $lessonsQuery->where('course_id', $selectedCourseId);
+        }
+
+        if ($search !== '') {
+            $lessonsQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhereHas('course', function ($c) use ($search) {
+                        $c->where('title', 'like', "%{$search}%");
+                    });
+            });
         }
         $lessons = $lessonsQuery->get();
 

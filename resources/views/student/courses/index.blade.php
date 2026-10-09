@@ -51,16 +51,17 @@
                            name="search"
                            value="{{ $search ?? '' }}"
                            placeholder="Tìm kiếm theo tên khóa học, mô tả, giảng viên..."
-                           class="w-full pl-11 pr-24 py-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-inner">
-                    <div class="absolute right-1.5 flex items-center gap-1.5">
+                           class="w-full pl-12 {{ !empty($search) ? 'pr-36' : 'pr-28' }} py-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-inner">
+                    <div class="absolute inset-y-0 right-2 flex items-center gap-1.5">
                         @if(!empty($search))
                             <a href="{{ route('courses.index') }}"
-                               class="px-2.5 py-1.5 text-xs text-neutral-400 hover:text-white transition font-semibold">
-                                Xóa
+                               class="px-2.5 py-1.5 text-xs text-neutral-400 hover:text-white transition font-semibold rounded-lg hover:bg-neutral-800"
+                               title="Xóa tìm kiếm">
+                                &times; Xóa
                             </a>
                         @endif
                         <button type="submit"
-                                class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                                class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-xl shadow-xs transition shrink-0">
                             Tìm kiếm
                         </button>
                     </div>

@@ -1,7 +1,7 @@
 <x-admin-layout breadcrumb="Quản lý Khóa học">
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="min-w-0 flex-1 max-w-lg lg:max-w-xl">
                 <div class="flex items-center gap-2 text-xs font-bold text-pink-600 uppercase tracking-wider mb-1">
                     <span class="w-2 h-2 rounded-full bg-pink-600"></span>
                     Đào Tạo & Khóa Học
@@ -14,44 +14,44 @@
                 </p>
             </div>
             
-            <div class="flex flex-col items-start sm:items-end gap-2.5 w-full sm:w-auto">
-                <!-- Hàng trên: Bộ lọc trạng thái + Nút tạo mới -->
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div class="flex flex-col items-start lg:items-end gap-2.5 w-full lg:w-auto shrink-0">
+                <!-- Hàng trên: Bộ lọc trạng thái + Nút tạo mới (Cùng 1 hàng, đồng bộ với bên Bài kiểm tra) -->
+                <div class="flex items-center gap-2 sm:gap-3 flex-nowrap shrink-0 overflow-x-auto max-w-full">
                     <!-- Status Filter Pills -->
-                    <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold">
+                    <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold shrink-0">
                         <a href="{{ route('admin.courses.index', array_filter(['search' => $search])) }}" 
-                           class="px-3 py-1.5 rounded-xl transition {{ empty($status) ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                           class="px-3 py-1.5 rounded-xl transition whitespace-nowrap {{ empty($status) ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
                             Tất cả ({{ $totalCount ?? $courses->count() }})
                         </a>
                         <a href="{{ route('admin.courses.index', array_filter(['status' => 'pending', 'search' => $search])) }}" 
-                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50' }}">
+                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap {{ $status === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50' }}">
                             <span class="w-1.5 h-1.5 rounded-full {{ $status === 'pending' ? 'bg-white' : 'bg-amber-500' }}"></span>
                             Chờ duyệt
                         </a>
                         <a href="{{ route('admin.courses.index', array_filter(['status' => 'approved', 'search' => $search])) }}" 
-                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50' }}">
+                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap {{ $status === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50' }}">
                             <span class="w-1.5 h-1.5 rounded-full {{ $status === 'approved' ? 'bg-white' : 'bg-emerald-500' }}"></span>
                             Đã duyệt
                         </a>
                         <a href="{{ route('admin.courses.index', array_filter(['status' => 'rejected', 'search' => $search])) }}" 
-                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-rose-700 hover:bg-rose-50' }}">
+                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap {{ $status === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-rose-700 hover:bg-rose-50' }}">
                             <span class="w-1.5 h-1.5 rounded-full {{ $status === 'rejected' ? 'bg-white' : 'bg-rose-500' }}"></span>
                             Đã loại bỏ
                         </a>
                     </div>
 
                     <a href="{{ route('admin.courses.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                        Tạo khóa học mới
+                        + Tạo khóa học mới
                     </a>
                 </div>
 
-                <!-- Hàng dưới (ở DƯỚI cái này): Thanh tìm kiếm -->
-                <form method="GET" action="{{ route('admin.courses.index') }}" class="flex items-center gap-1.5 w-full sm:w-auto">
+                <!-- Hàng dưới: Thanh tìm kiếm -->
+                <form method="GET" action="{{ route('admin.courses.index') }}" class="flex items-center gap-2 w-full lg:w-auto justify-end">
                     @if(!empty($status))
                         <input type="hidden" name="status" value="{{ $status }}">
                     @endif
-                    <div class="relative flex-1 sm:w-[440px]">
-                        <span class="absolute left-3 inset-y-0 flex items-center text-slate-400 pointer-events-none">
+                    <div class="relative flex-1 sm:w-80 lg:w-96">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -60,10 +60,10 @@
                                name="search"
                                value="{{ $search ?? '' }}"
                                placeholder="Tìm kiếm khóa học, giảng viên..."
-                               class="pl-9 pr-8 py-2 w-full bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
+                               class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                         @if(!empty($search))
                             <a href="{{ route('admin.courses.index', array_filter(['status' => $status])) }}"
-                               class="absolute right-2.5 inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold leading-none"
+                               class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 text-base font-bold leading-none"
                                title="Xóa tìm kiếm">
                                 &times;
                             </a>

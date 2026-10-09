@@ -10,18 +10,18 @@
                     Quản lý các khóa học bạn đã tạo, thêm bài giảng mới và kết nối đề thi trắc nghiệm.
                 </p>
             </div>
-            <div class="flex flex-col items-start sm:items-end gap-2.5 w-full sm:w-auto">
+            <div class="flex flex-col items-start sm:items-end gap-2.5 w-full sm:w-auto shrink-0">
                 <!-- Hàng trên: Nút tạo mới -->
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2 sm:gap-3 flex-nowrap shrink-0">
                     <a href="{{ route('teacher.courses.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                        Tạo khóa học mới
+                        + Tạo khóa học mới
                     </a>
                 </div>
 
-                <!-- Hàng dưới (ở DƯỚI cái này): Thanh tìm kiếm -->
-                <form method="GET" action="{{ route('teacher.courses.index') }}" class="flex items-center gap-1.5 w-full sm:w-auto">
-                    <div class="relative flex-1 sm:w-[440px]">
-                        <span class="absolute left-3 inset-y-0 flex items-center text-slate-400 pointer-events-none">
+                <!-- Hàng dưới: Thanh tìm kiếm -->
+                <form method="GET" action="{{ route('teacher.courses.index') }}" class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <div class="relative flex-1 sm:w-80 lg:w-96">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-slate-400 pointer-events-none">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -30,10 +30,10 @@
                                name="search"
                                value="{{ request('search') }}"
                                placeholder="Tìm kiếm khóa học của bạn..."
-                               class="pl-9 pr-8 py-2 w-full bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
+                               class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                         @if(request('search'))
                             <a href="{{ route('teacher.courses.index') }}"
-                               class="absolute right-2.5 inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold leading-none"
+                               class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 text-base font-bold leading-none"
                                title="Xóa tìm kiếm">
                                 &times;
                             </a>
