@@ -1,9 +1,9 @@
 <x-app-layout
-    title="Ctrl C+V - Nền tảng Học trực tuyến & Luyện thi Quizzes"
-    meta-description="Ctrl C+V là nền tảng học trực tuyến tinh gọn giúp bạn tiếp cận bài giảng chất lượng, luyện thi trắc nghiệm quizzes tự chấm điểm và theo dõi tiến độ học tập minh bạch."
+    title="Ctrl C+V - Nền tảng Học trực tuyến | Đồ án 1"
+    meta-description="Nền tảng học tập tinh gọn giúp bạn tiếp cận bài giảng chất lượng, làm bài trắc nghiệm tự chấm điểm và nắm bắt tiến độ học tập minh bạch."
     meta-keywords="ctrl c+v, học trực tuyến, khóa học online, quizzes lập trình, lms mini, đào tạo trực tuyến"
-    :canonical="url('/')"
-    :og-image="asset('logo.png')"
+    canonical="https://ctrlcv.io.vn"
+    :og-image="asset('images/thumbnail.png')"
     og-type="website">
     <!-- ================= HERO BANNER ================= -->
     <section class="relative bg-neutral-950 text-white border-b border-neutral-900 overflow-hidden">

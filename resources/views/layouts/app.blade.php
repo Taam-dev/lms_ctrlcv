@@ -6,18 +6,16 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @php
             $siteBrand = 'Ctrl C+V';
-            $defaultTitle = $siteBrand . ' - Nền tảng Học trực tuyến & Luyện thi Quizzes';
+            $defaultTitle = 'Ctrl C+V - Nền tảng Học trực tuyến | Đồ án 1';
             $seoTitle = $title ?? (View::hasSection('title') ? View::getSection('title') : $defaultTitle);
             
-            $defaultDesc = 'Nền tảng học trực tuyến Ctrl C+V giúp bạn tiếp cận bài giảng chất lượng, làm bài thi trắc nghiệm tự chấm điểm và theo dõi tiến độ học tập minh bạch.';
+            $defaultDesc = 'Nền tảng học tập tinh gọn giúp bạn tiếp cận bài giảng chất lượng, làm bài trắc nghiệm tự chấm điểm và nắm bắt tiến độ học tập minh bạch.';
             $seoDesc = $metaDescription ?? (View::hasSection('meta_description') ? View::getSection('meta_description') : $defaultDesc);
             
             $defaultKeywords = 'học trực tuyến, khóa học online, ctrl c+v, quizzes, thi trắc nghiệm, bài giảng, lms';
             $seoKeywords = $metaKeywords ?? (View::hasSection('meta_keywords') ? View::getSection('meta_keywords') : $defaultKeywords);
             
             $seoCanonical = $canonical ?? (View::hasSection('canonical') ? View::getSection('canonical') : url()->current());
-            $seoOgImage = $ogImage ?? (View::hasSection('og_image') ? View::getSection('og_image') : asset('logo.png'));
-            $seoOgType = $ogType ?? (View::hasSection('og_type') ? View::getSection('og_type') : 'website');
         @endphp
 
         <title>{{ $seoTitle }}</title>
@@ -28,19 +26,18 @@
         <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
         <!-- Open Graph / Facebook / Zalo -->
-        <meta property="og:type" content="{{ $seoOgType }}">
-        <meta property="og:site_name" content="Ctrl C+V - Nền tảng Học trực tuyến">
-        <meta property="og:title" content="{{ $seoTitle }}">
-        <meta property="og:description" content="{{ $seoDesc }}">
-        <meta property="og:url" content="{{ $seoCanonical }}">
-        <meta property="og:image" content="{{ $seoOgImage }}">
-        <meta property="og:locale" content="vi_VN">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://ctrlcv.io.vn">
+        <meta property="og:title" content="Ctrl C+V - Nền tảng Học trực tuyến | Đồ án 1">
+        <meta property="og:description" content="Nền tảng học tập tinh gọn giúp bạn tiếp cận bài giảng chất lượng, làm bài trắc nghiệm tự chấm điểm và nắm bắt tiến độ học tập minh bạch.">
+        <meta property="og:image" content="{{ asset('images/thumbnail.png') }}">
 
-        <!-- Twitter Card -->
+        <!-- Twitter / X Card -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="{{ $seoTitle }}">
-        <meta name="twitter:description" content="{{ $seoDesc }}">
-        <meta name="twitter:image" content="{{ $seoOgImage }}">
+        <meta name="twitter:url" content="https://ctrlcv.io.vn">
+        <meta name="twitter:title" content="Ctrl C+V - Nền tảng Học trực tuyến | Đồ án 1">
+        <meta name="twitter:description" content="Nền tảng học tập trực tuyến được phát triển bởi nhóm CtrlC+V">
+        <meta name="twitter:image" content="{{ asset('images/thumbnail.png') }}">
 
         <!-- Schema.org EducationalOrganization JSON-LD -->
         <script type="application/ld+json">

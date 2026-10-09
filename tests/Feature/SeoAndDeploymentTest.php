@@ -178,4 +178,23 @@ class SeoAndDeploymentTest extends TestCase
         $this->assertStringContainsString('Disallow: /thanh-toan/', $content);
         $this->assertStringContainsString('Allow: /khoa-hoc/', $content);
     }
+
+    /**
+     * Test trang chủ chứa đầy đủ thẻ Meta Open Graph và Twitter Card chuẩn SEO
+     */
+    public function test_home_page_renders_open_graph_and_twitter_cards(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('<meta property="og:type" content="website">', false);
+        $response->assertSee('<meta property="og:url" content="https://ctrlcv.io.vn">', false);
+        $response->assertSee('<meta property="og:title" content="Ctrl C+V - Nền tảng Học trực tuyến | Đồ án 1">', false);
+        $response->assertSee('<meta property="og:description" content="Nền tảng học tập tinh gọn giúp bạn tiếp cận bài giảng chất lượng, làm bài trắc nghiệm tự chấm điểm và nắm bắt tiến độ học tập minh bạch.">', false);
+        $response->assertSee('images/thumbnail.png', false);
+        $response->assertSee('<meta name="twitter:card" content="summary_large_image">', false);
+        $response->assertSee('<meta name="twitter:url" content="https://ctrlcv.io.vn">', false);
+        $response->assertSee('<meta name="twitter:title" content="Ctrl C+V - Nền tảng Học trực tuyến | Đồ án 1">', false);
+        $response->assertSee('<meta name="twitter:description" content="Nền tảng học tập trực tuyến được phát triển bởi nhóm CtrlC+V">', false);
+    }
 }
