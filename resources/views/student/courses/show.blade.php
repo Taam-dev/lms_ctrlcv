@@ -147,43 +147,78 @@
     <div class="py-10 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-            <!-- Banner khóa học -->
-            <div class="relative w-full h-56 sm:h-72 md:h-80 overflow-hidden bg-neutral-950 border border-pink-100 shadow-md">
-                <img src="{{ $course->banner_url }}" 
-                     alt="{{ $course->title }}" 
-                     class="w-full h-full object-cover">
-                <div class="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2 mb-2">
-                            <span class="inline-flex items-center px-3 py-1 bg-pink-600 text-white text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap">
-                                Khóa học tiêu chuẩn
-                            </span>
-                            @if($isEnrolled)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md whitespace-nowrap shrink-0">
-                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                    <span>Đã đăng ký</span>
+            <!-- Tổng quan khóa học & Banner chuẩn kích thước nguyên bản như bên ngoài -->
+            <div class="bg-white border border-pink-100 p-6 md:p-8 shadow-sm">
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-6 lg:gap-8">
+                    <!-- Khung ảnh banner: Giữ nguyên kích thước và thiết kế y chang như nhìn ở bên ngoài thẻ khóa học -->
+                    <div class="w-full max-w-sm md:w-80 lg:w-96 shrink-0 mx-auto md:mx-0">
+                        <div class="relative h-48 w-full overflow-hidden bg-neutral-950 border border-pink-100 shadow-md group">
+                            <img src="{{ $course->banner_url }}" 
+                                 alt="{{ $course->title }}" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-black/20"></div>
+
+                            <!-- Badges trên banner y chang bên ngoài -->
+                            <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                                @if($isEnrolled)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        <span>Đã đăng ký</span>
+                                    </span>
+                                @else
+                                    <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider bg-neutral-950/90 text-pink-400 border border-pink-500/30 backdrop-blur-xs whitespace-nowrap shrink-0">
+                                        Khóa học
+                                    </span>
+                                @endif
+                                <span class="text-xs font-black px-2 py-0.5 bg-pink-600 text-white shrink-0">
+                                    {{ $course->approvedQuizzes->count() }} Quizzes
                                 </span>
-                            @endif
+                            </div>
+
+                            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-bold pointer-events-none">
+                                <span class="flex items-center gap-1.5 text-neutral-200">
+                                    @if($isEnrolled)
+                                        <span class="text-pink-300 font-black">{{ count($completedLessonIds ?? []) }}/{{ $course->lessons->count() }} bài đã học</span>
+                                    @else
+                                        <span>{{ $course->lessons->count() }} bài giảng</span>
+                                    @endif
+                                </span>
+                                <span class="text-neutral-300 text-[11px]">
+                                    {{ $course->created_at->format('d/m/Y') }}
+                                </span>
+                            </div>
                         </div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                            {{ $course->title }}
-                        </h2>
                     </div>
-                    <div class="text-xs text-neutral-300 font-semibold sm:text-right">
-                        <span>Ngày tạo: {{ $course->created_at->format('d/m/Y') }}</span>
+
+                    <!-- Thông tin chi tiết khóa học & Mô tả -->
+                    <div class="flex-1 min-w-0 space-y-4">
+                        <div class="space-y-2">
+                            <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+                                <span class="px-2.5 py-1 bg-pink-50 text-pink-700 border border-pink-200/80 font-bold uppercase text-[10px] tracking-wider">
+                                    Khóa học trực tuyến
+                                </span>
+                                <span>&bull;</span>
+                                <span>Giảng viên: <strong class="text-slate-800">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
+                                <span>&bull;</span>
+                                <span>Ngày tạo: {{ $course->created_at->format('d/m/Y') }}</span>
+                            </div>
+
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+                                {{ $course->title }}
+                            </h2>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-neutral-900 mb-2 flex items-center gap-2">
+                                <span class="w-1.5 h-4 bg-pink-600"></span>
+                                Mô tả khóa học &amp; Mục tiêu đào tạo
+                            </h3>
+                            <p class="text-neutral-700 text-sm md:text-base leading-relaxed">
+                                {{ $course->description ?? 'Khóa học này hiện chưa có mô tả chi tiết.' }}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Mô tả khóa học -->
-            <div class="bg-white border border-pink-100 p-6 md:p-8 shadow-sm">
-                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-neutral-900 mb-3 flex items-center gap-2">
-                    <span class="w-1.5 h-4 bg-pink-600"></span>
-                    Mô tả khóa học &amp; Mục tiêu đào tạo
-                </h3>
-                <p class="text-neutral-700 text-sm md:text-base leading-relaxed">
-                    {{ $course->description ?? 'Khóa học này hiện chưa có mô tả chi tiết.' }}
-                </p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
