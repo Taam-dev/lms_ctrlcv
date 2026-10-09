@@ -70,7 +70,7 @@
                         <input type="text"
                                name="search"
                                value="{{ $search ?? '' }}"
-                               placeholder="{{ $currentTab === 'courses' ? 'Tìm kiếm khóa học của bạn...' : ($currentTab === 'quizzes' ? 'Tìm kiếm bài kiểm tra của bạn...' : 'Tìm khóa học, bài kiểm tra...') }}"
+                               placeholder="{{ $currentTab === 'courses' ? 'Tìm kiếm khóa học của bạn...' : ($currentTab === 'quizzes' ? 'Tìm kiếm bài kiểm tra của bạn...' : ($currentTab === 'attempts' ? 'Tìm theo học viên, email, đề thi...' : 'Tìm bài giảng, khóa học...')) }}"
                                class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                         @if(!empty($search))
                             <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
@@ -185,7 +185,7 @@
             <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
                 <div class="border-b border-slate-200/80 px-6 pt-4 flex flex-wrap gap-4 sm:gap-8 bg-slate-50/50">
                     <!-- Tab 1: Khóa học -->
-                    <a href="{{ route('instructor.dashboard', ['tab' => 'courses', 'status' => $statusFilter]) }}"
+                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter, 'search' => $search])) }}"
                        class="pb-4 text-sm font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap shrink-0 {{ $currentTab === 'courses' ? 'border-pink-600 text-pink-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         
                         Khóa học của tôi
@@ -195,7 +195,7 @@
                     </a>
 
                     <!-- Tab 2: Bài giảng -->
-                    <a href="{{ route('instructor.dashboard', ['tab' => 'lessons', 'course_id' => $selectedCourseId]) }}"
+                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'lessons', 'course_id' => $selectedCourseId, 'search' => $search])) }}"
                        class="pb-4 text-sm font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap shrink-0 {{ $currentTab === 'lessons' ? 'border-pink-600 text-pink-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         
                         Danh sách Bài giảng
@@ -205,7 +205,7 @@
                     </a>
 
                     <!-- Tab 3: Quizzes -->
-                    <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes', 'status' => $statusFilter]) }}"
+                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'quizzes', 'status' => $statusFilter, 'search' => $search])) }}"
                        class="pb-4 text-sm font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap shrink-0 {{ $currentTab === 'quizzes' ? 'border-pink-600 text-pink-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         
                         Đề thi Trắc nghiệm (Quizzes)
@@ -215,7 +215,7 @@
                     </a>
 
                     <!-- Tab 4: Kết quả học viên -->
-                    <a href="{{ route('instructor.dashboard', ['tab' => 'attempts']) }}"
+                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'attempts', 'search' => $search])) }}"
                        class="pb-4 text-sm font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap shrink-0 {{ $currentTab === 'attempts' ? 'border-pink-600 text-pink-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         
                         Kết quả Học viên
@@ -724,14 +724,44 @@
 
                     <!-- TAB 3: BÀI KIỂM TRA (QUIZZES) -->
                     @elseif($currentTab === 'quizzes')
+                        @if(!empty($search))
+                            <div class="p-3.5 mx-6 mt-4 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="w-2 h-2 rounded-full bg-pink-600"></span>
+                                    <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $quizzes->count() }} bài kiểm tra khớp)</span>
+                                </div>
+                                <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'quizzes', 'status' => $statusFilter])) }}"
+                                   class="font-bold text-slate-500 hover:text-pink-600 transition">
+                                    &times; Xóa tìm kiếm
+                                </a>
+                            </div>
+                        @endif
+
                         @if($quizzes->isEmpty())
                             <div class="p-16 text-center">
-                                
-                                <h3 class="font-bold text-slate-800 text-base mb-1">Chưa có bài kiểm tra nào</h3>
-                                <p class="text-xs text-slate-500 mb-4">Bạn chưa tạo bài kiểm tra trắc nghiệm nào cho khóa học của mình.</p>
-                                <a href="{{ route('instructor.quizzes.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs shadow-xs hover:bg-pink-700 transition whitespace-nowrap shrink-0">
-                                    + Tạo bài kiểm tra đầu tiên
-                                </a>
+                                <h3 class="font-bold text-slate-800 text-base mb-1">
+                                    @if(!empty($search))
+                                        Không tìm thấy bài kiểm tra khớp với "{{ $search }}"
+                                    @else
+                                        Chưa có bài kiểm tra nào
+                                    @endif
+                                </h3>
+                                <p class="text-xs text-slate-500 mb-4">
+                                    @if(!empty($search))
+                                        Vui lòng thử tìm kiếm bằng từ khóa khác hoặc xóa bộ lọc tìm kiếm.
+                                    @else
+                                        Bạn chưa tạo bài kiểm tra trắc nghiệm nào cho khóa học của mình.
+                                    @endif
+                                </p>
+                                @if(!empty($search))
+                                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'quizzes', 'status' => $statusFilter])) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                                        Xóa tìm kiếm
+                                    </a>
+                                @else
+                                    <a href="{{ route('instructor.quizzes.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs shadow-xs hover:bg-pink-700 transition whitespace-nowrap shrink-0">
+                                        + Tạo bài kiểm tra đầu tiên
+                                    </a>
+                                @endif
                             </div>
                         @else
                             <div class="overflow-x-auto">
@@ -839,11 +869,42 @@
 
                     <!-- TAB 4: KẾT QUẢ HỌC VIÊN -->
                     @elseif($currentTab === 'attempts')
+                        @if(!empty($search))
+                            <div class="p-3.5 mx-6 mt-4 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="w-2 h-2 rounded-full bg-pink-600"></span>
+                                    <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $attempts->total() }} lượt nộp bài khớp)</span>
+                                </div>
+                                <a href="{{ route('instructor.dashboard', ['tab' => 'attempts']) }}"
+                                   class="font-bold text-slate-500 hover:text-pink-600 transition">
+                                    &times; Xóa tìm kiếm
+                                </a>
+                            </div>
+                        @endif
+
                         @if($attempts->isEmpty())
                             <div class="p-16 text-center">
-                                
-                                <h3 class="font-bold text-slate-800 text-base mb-1">Chưa có kết quả làm bài nào</h3>
-                                <p class="text-xs text-slate-500">Khi học viên hoàn thành các bài trắc nghiệm của bạn, kết quả chi tiết sẽ hiển thị tại đây.</p>
+                                <h3 class="font-bold text-slate-800 text-base mb-1">
+                                    @if(!empty($search))
+                                        Không tìm thấy kết quả làm bài nào khớp với "{{ $search }}"
+                                    @else
+                                        Chưa có kết quả làm bài nào
+                                    @endif
+                                </h3>
+                                <p class="text-xs text-slate-500">
+                                    @if(!empty($search))
+                                        Vui lòng thử tìm kiếm bằng tên học viên, email hoặc bài kiểm tra khác.
+                                    @else
+                                        Khi học viên hoàn thành các bài trắc nghiệm của bạn, kết quả chi tiết sẽ hiển thị tại đây.
+                                    @endif
+                                </p>
+                                @if(!empty($search))
+                                    <div class="pt-3">
+                                        <a href="{{ route('instructor.dashboard', ['tab' => 'attempts']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                                            Xóa tìm kiếm
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                         @else
                             <div class="overflow-x-auto">
@@ -893,7 +954,7 @@
                                 </table>
                             </div>
                             <div class="p-4 border-t border-slate-100">
-                                {{ $attempts->links() }}
+                                {{ $attempts->appends(array_filter(['tab' => 'attempts', 'search' => $search]))->links() }}
                             </div>
                         @endif
                     @endif

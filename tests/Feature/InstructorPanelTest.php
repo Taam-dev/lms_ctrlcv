@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -512,5 +513,76 @@ class InstructorPanelTest extends TestCase
         $res->assertSee('Kiem tra Thuật toán Sorting');
         $res->assertDontSee('Đề thi OOP Java nâng cao');
         $res->assertDontSee('Kiem tra Thuật toán Dijkstra');
+    }
+
+    /**
+     * Giảng viên có thể tìm kiếm kết quả học viên (attempts) theo tên hoặc email
+     */
+    public function test_instructor_can_search_student_attempts_on_dashboard(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+
+        $quiz = Quiz::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'KT elonmusk',
+            'status' => 'approved',
+        ]);
+
+        $student1 = User::factory()->create([
+            'name' => 'tam1',
+            'email' => 'tam1@gmail.com',
+            'role' => 'student',
+        ]);
+
+        $student2 = User::factory()->create([
+            'name' => 'tam2',
+            'email' => 'tam2@gmail.com',
+            'role' => 'student',
+        ]);
+
+        $student3 = User::factory()->create([
+            'name' => 'tam3',
+            'email' => 'tam3@gmail.com',
+            'role' => 'student',
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student1->id,
+            'total_questions' => 10,
+            'correct_answers' => 5,
+            'score' => 5.0,
+            'is_passed' => true,
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student2->id,
+            'total_questions' => 10,
+            'correct_answers' => 5,
+            'score' => 5.0,
+            'is_passed' => true,
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student3->id,
+            'total_questions' => 10,
+            'correct_answers' => 5,
+            'score' => 5.0,
+            'is_passed' => true,
+        ]);
+
+        // Tìm kiếm 'tam1' -> Chỉ thấy tam1, không thấy tam2 và tam3
+        $res = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => 'tam1']));
+        $res->assertOk();
+        $res->assertSee('tam1@gmail.com');
+        $res->assertDontSee('tam2@gmail.com');
+        $res->assertDontSee('tam3@gmail.com');
+
+        // Tìm kiếm từ khóa không khớp
+        $resEmpty = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => 'KhongTonTai']));
+        $resEmpty->assertOk();
+        $resEmpty->assertSee('Không tìm thấy kết quả làm bài nào khớp với');
     }
 }

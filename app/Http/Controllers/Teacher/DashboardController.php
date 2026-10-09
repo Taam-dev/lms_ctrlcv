@@ -121,10 +121,25 @@ class DashboardController extends Controller
         $lessons = $lessonsQuery->get();
 
         // Lấy danh sách kết quả học viên làm bài trắc nghiệm
-        $attempts = QuizAttempt::with(['student', 'quiz.course'])
+        $attemptsQuery = QuizAttempt::with(['student', 'quiz.course'])
             ->whereIn('quiz_id', $teacherQuizIds)
-            ->latest()
-            ->paginate(15);
+            ->latest();
+
+        if ($search !== '') {
+            $attemptsQuery->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($s) use ($search) {
+                    $s->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })->orWhereHas('quiz', function ($qz) use ($search) {
+                    $qz->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('course', function ($c) use ($search) {
+                            $c->where('title', 'like', "%{$search}%");
+                        });
+                });
+            });
+        }
+
+        $attempts = $attemptsQuery->paginate(15);
 
         return view('teacher.dashboard', compact(
             'stats',
