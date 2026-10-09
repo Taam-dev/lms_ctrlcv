@@ -15,17 +15,9 @@
 
             <!-- Header -->
             <div class="text-center mb-7">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-950 border border-neutral-800 text-neutral-400 text-xs font-medium mb-3">
-                    <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-                    <span>Hệ thống học tập Ctrl C+V</span>
-                </div>
-
                 <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     Đăng nhập tài khoản
                 </h1>
-                <p class="mt-2 text-xs sm:text-sm text-neutral-400">
-                    Chào mừng bạn quay trở lại! Nhập thông tin để tiếp tục học tập.
-                </p>
             </div>
 
             <!-- Card: Form Inputs -->
