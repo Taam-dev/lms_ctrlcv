@@ -18,6 +18,7 @@ class DashboardController extends Controller
     {
         $currentTab = $request->query('tab', 'overview');
         $statusFilter = $request->query('status');
+        $search = trim((string) $request->query('search', ''));
 
         // Thống kê số liệu hệ thống
         $stats = [
@@ -50,12 +51,35 @@ class DashboardController extends Controller
         if ($statusFilter && in_array($statusFilter, ['pending', 'approved', 'rejected'])) {
             $coursesQuery->where('status', $statusFilter);
         }
+        if ($search !== '') {
+            $coursesQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
         $courses = $coursesQuery->get();
 
         // Lấy danh sách Bài kiểm tra (Quizzes)
         $quizzesQuery = Quiz::with(['course', 'teacher'])->withCount('questions')->latest();
         if ($statusFilter && in_array($statusFilter, ['pending', 'approved', 'rejected'])) {
             $quizzesQuery->where('status', $statusFilter);
+        }
+        if ($search !== '') {
+            $quizzesQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('course', function ($c) use ($search) {
+                        $c->where('title', 'like', "%{$search}%");
+                    });
+            });
         }
         $quizzes = $quizzesQuery->get();
 
@@ -83,7 +107,8 @@ class DashboardController extends Controller
             'coursesWithLessons',
             'users',
             'currentTab',
-            'statusFilter'
+            'statusFilter',
+            'search'
         ));
     }
 

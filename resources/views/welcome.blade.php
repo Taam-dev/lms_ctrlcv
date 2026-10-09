@@ -6,8 +6,19 @@
     :og-image="asset('logo.png')"
     og-type="website">
     <!-- ================= HERO BANNER ================= -->
-    <section class="relative bg-neutral-950 text-white border-b border-neutral-900">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+    <section class="relative bg-neutral-950 text-white border-b border-neutral-900 overflow-hidden">
+        <!-- Background Hero Image -->
+        <div class="absolute inset-0 z-0 pointer-events-none select-none">
+            <img src="{{ asset('images/hero-bg.jpg') }}" 
+                 alt="Ctrl C+V Hero Background" 
+                 class="w-full h-full object-cover object-right-top lg:object-center opacity-35 mix-blend-screen scale-105 transition-transform duration-1000">
+            <!-- Subtle gradient overlays for high contrast and readability -->
+            <div class="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/85 to-neutral-950/50"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/60"></div>
+            <div class="absolute inset-0 bg-neutral-950/15 backdrop-blur-[0.5px]"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
                 <!-- Cột trái: Tiêu đề & Giới thiệu -->
                 <div class="lg:col-span-6 xl:col-span-7">

@@ -76,4 +76,48 @@ class CoursePagesTest extends TestCase
         $response->assertSee('7000');
         $response->assertSee('Vào học ngay');
     }
+
+    public function test_courses_page_can_search_by_title_description_and_teacher(): void
+    {
+        $teacher1 = User::factory()->teacher()->create(['name' => 'Nguyen Van A']);
+        $teacher2 = User::factory()->teacher()->create(['name' => 'Tran Thi B']);
+
+        Course::create([
+            'teacher_id' => $teacher1->id,
+            'title' => 'Khoa hoc Lap trinh Laravel 11',
+            'description' => 'Huong dan tu co ban den nang cao',
+            'status' => 'approved',
+        ]);
+
+        Course::create([
+            'teacher_id' => $teacher2->id,
+            'title' => 'Lap trinh Vue JS Frontend',
+            'description' => 'Xay dung giao dien Single Page Application',
+            'status' => 'approved',
+        ]);
+
+        // Tìm theo tiêu đề Laravel
+        $res1 = $this->get(route('courses.index', ['search' => 'Laravel']));
+        $res1->assertOk();
+        $res1->assertSee('Khoa hoc Lap trinh Laravel 11');
+        $res1->assertDontSee('Lap trinh Vue JS Frontend');
+
+        // Tìm theo mô tả Single Page
+        $res2 = $this->get(route('courses.index', ['search' => 'Single Page']));
+        $res2->assertOk();
+        $res2->assertSee('Lap trinh Vue JS Frontend');
+        $res2->assertDontSee('Khoa hoc Lap trinh Laravel 11');
+
+        // Tìm theo tên giảng viên Tran Thi B
+        $res3 = $this->get(route('courses.index', ['search' => 'Tran Thi B']));
+        $res3->assertOk();
+        $res3->assertSee('Lap trinh Vue JS Frontend');
+        $res3->assertDontSee('Khoa hoc Lap trinh Laravel 11');
+
+        // Tìm không thấy kết quả
+        $res4 = $this->get(route('courses.index', ['search' => 'TuKhoaKhongTonTai123']));
+        $res4->assertOk();
+        $res4->assertSee('Không tìm thấy khóa học nào phù hợp');
+        $res4->assertSee('TuKhoaKhongTonTai123');
+    }
 }

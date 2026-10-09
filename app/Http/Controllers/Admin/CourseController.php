@@ -19,6 +19,7 @@ class CourseController extends Controller
     public function index(Request $request)
     {
         $status = $request->query('status');
+        $search = trim((string) $request->query('search', ''));
         $query = Course::with(['teacher', 'lessons'])->withCount('lessons')->latest();
 
         $totalCount = Course::count();
@@ -27,9 +28,20 @@ class CourseController extends Controller
             $query->where('status', $status);
         }
 
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         $courses = $query->get();
 
-        return view('admin.courses.index', compact('courses', 'status', 'totalCount'));
+        return view('admin.courses.index', compact('courses', 'status', 'totalCount', 'search'));
     }
 
     /**

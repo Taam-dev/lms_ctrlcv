@@ -262,4 +262,89 @@ class AdminManagementTest extends TestCase
         $response->assertSessionHasErrors('role');
         $this->assertEquals('student', $targetUser->fresh()->role);
     }
+
+    /**
+     * Admin có thể tìm kiếm khóa học theo tên hoặc giảng viên trong cả admin.courses.index và admin.dashboard
+     */
+    public function test_admin_can_search_courses(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher', 'name' => 'Thầy Giáo Ba']);
+
+        $course1 = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Docker DevOps',
+            'description' => 'Container hóa ứng dụng',
+            'status' => 'approved',
+        ]);
+
+        $course2 = Course::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Khóa học Figma UI UX',
+            'description' => 'Thiết kế giao diện',
+            'status' => 'pending',
+        ]);
+
+        // 1. Tìm trên admin.courses.index
+        $resIndex = $this->actingAs($admin)->get(route('admin.courses.index', ['search' => 'Docker']));
+        $resIndex->assertOk();
+        $resIndex->assertSee('Khóa học Docker DevOps');
+        $resIndex->assertDontSee('Khóa học Figma UI UX');
+
+        // Tìm kết hợp search và status
+        $resIndexStatus = $this->actingAs($admin)->get(route('admin.courses.index', ['search' => 'Docker', 'status' => 'pending']));
+        $resIndexStatus->assertOk();
+        $resIndexStatus->assertDontSee('Khóa học Docker DevOps');
+
+        // 2. Tìm trên admin.dashboard tab courses
+        $resDash = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'courses', 'search' => 'Figma']));
+        $resDash->assertOk();
+        $resDash->assertSee('Khóa học Figma UI UX');
+        $resDash->assertDontSee('Khóa học Docker DevOps');
+    }
+
+    /**
+     * Admin có thể tìm kiếm bài kiểm tra (quizzes) theo tiêu đề, khóa học hoặc giảng viên
+     */
+    public function test_admin_can_search_quizzes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher', 'name' => 'Cô Giáo Thảo']);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Python AI',
+            'status' => 'approved',
+        ]);
+
+        $quiz1 = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'course_id' => $course->id,
+            'title' => 'Trắc nghiệm Machine Learning Cơ Bản',
+            'status' => 'approved',
+        ]);
+
+        $quiz2 = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Đề thi Quản trị Mạng CCNA',
+            'status' => 'pending',
+        ]);
+
+        // 1. Tìm trên admin.quizzes.index theo tiêu đề
+        $res = $this->actingAs($admin)->get(route('admin.quizzes.index', ['search' => 'Machine Learning']));
+        $res->assertOk();
+        $res->assertSee('Trắc nghiệm Machine Learning Cơ Bản');
+        $res->assertDontSee('Đề thi Quản trị Mạng CCNA');
+
+        // Tìm kết hợp search và status
+        $resStatus = $this->actingAs($admin)->get(route('admin.quizzes.index', ['search' => 'Machine Learning', 'status' => 'pending']));
+        $resStatus->assertOk();
+        $resStatus->assertDontSee('Trắc nghiệm Machine Learning Cơ Bản');
+
+        // 2. Tìm trên admin.dashboard tab quizzes
+        $resDash = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'quizzes', 'search' => 'CCNA']));
+        $resDash->assertOk();
+        $resDash->assertSee('Đề thi Quản trị Mạng CCNA');
+        $resDash->assertDontSee('Trắc nghiệm Machine Learning Cơ Bản');
+    }
 }

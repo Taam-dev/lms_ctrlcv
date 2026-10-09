@@ -17,9 +17,9 @@ class QuizController extends Controller
     /**
      * Danh sách bài kiểm tra của giảng viên
      */
-    public function index()
+    public function index(Request $request)
     {
-        return redirect()->route('instructor.dashboard', ['tab' => 'quizzes']);
+        return redirect()->route('instructor.dashboard', array_merge(['tab' => 'quizzes'], $request->query()));
     }
 
     /**

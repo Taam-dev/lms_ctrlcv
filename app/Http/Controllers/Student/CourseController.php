@@ -59,18 +59,31 @@ class CourseController extends Controller
     }
 
     // trang riêng liệt kê tất cả khóa học đã được admin duyệt
-    public function list()
+    public function list(Request $request)
     {
-        $courses = Course::where('status', 'approved')
+        $search = trim((string) $request->query('search', ''));
+
+        $query = Course::where('status', 'approved')
             ->with('teacher')
-            ->withCount('lessons')
-            ->latest()
+            ->withCount('lessons');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $courses = $query->latest()
             ->latest('id')
             ->get();
 
         $this->attachStudentProgress($courses);
 
-        return view('student.courses.index', compact('courses'));
+        return view('student.courses.index', compact('courses', 'search'));
     }
 
     /**

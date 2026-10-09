@@ -14,47 +14,109 @@
                 </p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <!-- Bộ lọc trạng thái -->
-                <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold">
-                    <a href="{{ route('admin.quizzes.index') }}" 
-                       class="px-3 py-1.5 rounded-xl transition {{ empty($status) ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
-                        Tất cả ({{ $totalCount ?? $quizzes->count() }})
-                    </a>
-                    <a href="{{ route('admin.quizzes.index', ['status' => 'pending']) }}" 
-                       class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $status === 'pending' ? 'bg-white' : 'bg-amber-500' }}"></span>
-                        Chờ duyệt
-                    </a>
-                    <a href="{{ route('admin.quizzes.index', ['status' => 'approved']) }}" 
-                       class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $status === 'approved' ? 'bg-white' : 'bg-emerald-500' }}"></span>
-                        Đã duyệt
-                    </a>
-                    <a href="{{ route('admin.quizzes.index', ['status' => 'rejected']) }}" 
-                       class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-rose-700 hover:bg-rose-50' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $status === 'rejected' ? 'bg-white' : 'bg-rose-500' }}"></span>
-                        Đã loại bỏ
+            <div class="flex flex-col items-start sm:items-end gap-2.5 w-full sm:w-auto">
+                <!-- Hàng trên: Bộ lọc trạng thái + Nút tạo mới -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <!-- Bộ lọc trạng thái -->
+                    <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold">
+                        <a href="{{ route('admin.quizzes.index', array_filter(['search' => $search])) }}" 
+                           class="px-3 py-1.5 rounded-xl transition {{ empty($status) ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                            Tất cả ({{ $totalCount ?? $quizzes->count() }})
+                        </a>
+                        <a href="{{ route('admin.quizzes.index', array_filter(['status' => 'pending', 'search' => $search])) }}" 
+                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $status === 'pending' ? 'bg-white' : 'bg-amber-500' }}"></span>
+                            Chờ duyệt
+                        </a>
+                        <a href="{{ route('admin.quizzes.index', array_filter(['status' => 'approved', 'search' => $search])) }}" 
+                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $status === 'approved' ? 'bg-white' : 'bg-emerald-500' }}"></span>
+                            Đã duyệt
+                        </a>
+                        <a href="{{ route('admin.quizzes.index', array_filter(['status' => 'rejected', 'search' => $search])) }}" 
+                           class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $status === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-rose-700 hover:bg-rose-50' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $status === 'rejected' ? 'bg-white' : 'bg-rose-500' }}"></span>
+                            Đã loại bỏ
+                        </a>
+                    </div>
+
+                    <a href="{{ route('admin.quizzes.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                        Tạo Quiz mới
                     </a>
                 </div>
 
-                <a href="{{ route('admin.quizzes.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                    Tạo Quiz mới
-                </a>
+                <!-- Hàng dưới (ở DƯỚI cái này): Thanh tìm kiếm -->
+                <form method="GET" action="{{ route('admin.quizzes.index') }}" class="flex items-center gap-1.5 w-full sm:w-auto">
+                    @if(!empty($status))
+                        <input type="hidden" name="status" value="{{ $status }}">
+                    @endif
+                    <div class="relative flex-1 sm:w-[440px]">
+                        <span class="absolute left-3 inset-y-0 flex items-center text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </span>
+                        <input type="text"
+                               name="search"
+                               value="{{ $search ?? '' }}"
+                               placeholder="Tìm kiếm bài kiểm tra, khóa học, GV..."
+                               class="pl-9 pr-8 py-2 w-full bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
+                        @if(!empty($search))
+                            <a href="{{ route('admin.quizzes.index', array_filter(['status' => $status])) }}"
+                               class="absolute right-2.5 inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold leading-none"
+                               title="Xóa tìm kiếm">
+                                &times;
+                            </a>
+                        @endif
+                    </div>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs shrink-0">
+                        Tìm
+                    </button>
+                </form>
             </div>
         </div>
     </x-slot>
 
     <div class="space-y-6">
+        @if(!empty($search))
+            <div class="p-3.5 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
+                <div class="flex items-center gap-2 text-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-pink-600"></span>
+                    <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $quizzes->count() }} bài kiểm tra)</span>
+                </div>
+                <a href="{{ route('admin.quizzes.index', array_filter(['status' => $status])) }}"
+                   class="font-bold text-slate-500 hover:text-pink-600 transition">
+                    &times; Xóa tìm kiếm
+                </a>
+            </div>
+        @endif
+
         <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
             @if($quizzes->isEmpty())
                 <div class="p-16 text-center">
-                    
-                    <h3 class="font-extrabold text-slate-800 text-base mb-1">Không tìm thấy bài kiểm tra nào</h3>
-                    <p class="text-xs text-slate-500 mb-5">Hiện tại không có bài kiểm tra nào trong trạng thái đã chọn.</p>
-                    <a href="{{ route('admin.quizzes.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition">
-                        + Soạn bài kiểm tra ngay
-                    </a>
+                    <h3 class="font-extrabold text-slate-800 text-base mb-1">
+                        @if(!empty($search))
+                            Không tìm thấy bài kiểm tra khớp với "{{ $search }}"
+                        @else
+                            Không tìm thấy bài kiểm tra nào
+                        @endif
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-5">
+                        @if(!empty($search))
+                            Vui lòng thử tìm kiếm bằng từ khóa khác hoặc xóa bộ lọc tìm kiếm.
+                        @else
+                            Hiện tại không có bài kiểm tra nào trong trạng thái đã chọn.
+                        @endif
+                    </p>
+                    @if(!empty($search))
+                        <a href="{{ route('admin.quizzes.index', array_filter(['status' => $status])) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                            Xóa tìm kiếm
+                        </a>
+                    @else
+                        <a href="{{ route('admin.quizzes.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition">
+                            + Soạn bài kiểm tra ngay
+                        </a>
+                    @endif
                 </div>
             @else
                 <div class="overflow-x-auto">

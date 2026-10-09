@@ -11,37 +11,79 @@
                 </p>
             </div>
 
-            <!-- Quick Action Buttons -->
-            <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('instructor.courses.create') }}" 
-                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-sm shadow-pink-500/25 transition whitespace-nowrap shrink-0">
-                    
-                    Tạo khóa học mới
-                </a>
+            <!-- Quick Action Buttons & Search -->
+            <div class="flex flex-col items-start sm:items-end gap-2.5 w-full sm:w-auto">
+                <!-- Hàng trên: Bộ lọc trạng thái + Nút tạo mới -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    @if(in_array($currentTab, ['courses', 'quizzes']))
+                        <!-- Quick Filter by Status -->
+                        <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold">
+                            <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition {{ empty($statusFilter) ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                                Tất cả ({{ $currentTab === 'courses' ? $stats['total_courses'] : $stats['total_quizzes'] }})
+                            </a>
+                            <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'status' => 'pending', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $statusFilter === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'pending' ? 'bg-white' : 'bg-amber-500' }}"></span>
+                                Chờ duyệt
+                            </a>
+                            <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'status' => 'approved', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $statusFilter === 'approved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'approved' ? 'bg-white' : 'bg-emerald-500' }}"></span>
+                                Đã duyệt
+                            </a>
+                            <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'status' => 'rejected', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 {{ $statusFilter === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-rose-700 hover:bg-rose-50' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'rejected' ? 'bg-white' : 'bg-rose-500' }}"></span>
+                                Đã loại bỏ
+                            </a>
+                        </div>
+                    @endif
 
-                <a href="{{ route('instructor.quizzes.create') }}" 
-                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-sm shadow-pink-500/25 transition whitespace-nowrap shrink-0">
-                    
-                    Tạo bài kiểm tra
-                </a>
+                    @if($currentTab === 'courses' || !in_array($currentTab, ['quizzes']))
+                        <a href="{{ route('instructor.courses.create') }}" 
+                           class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                            Tạo khóa học mới
+                        </a>
+                    @endif
 
-                <!-- Quick Filter by Status -->
-                <div class="flex items-center gap-1 bg-white/80 backdrop-blur-md p-1 rounded-xl border border-slate-200 shadow-xs ms-1 flex-nowrap shrink-0">
-                    <a href="{{ route('instructor.dashboard', ['tab' => $currentTab]) }}" 
-                       class="px-2.5 py-1 rounded-lg text-xs font-semibold transition whitespace-nowrap shrink-0 {{ empty($statusFilter) ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
-                        Tất cả
-                    </a>
-                    <a href="{{ route('instructor.dashboard', ['tab' => $currentTab, 'status' => 'pending']) }}" 
-                       class="px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 whitespace-nowrap shrink-0 {{ $statusFilter === 'pending' ? 'bg-amber-500 text-white' : 'text-slate-600 hover:bg-amber-50' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'pending' ? 'bg-white' : 'bg-amber-500' }}"></span>
-                        Chờ duyệt
-                    </a>
-                    <a href="{{ route('instructor.dashboard', ['tab' => $currentTab, 'status' => 'approved']) }}" 
-                       class="px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 whitespace-nowrap shrink-0 {{ $statusFilter === 'approved' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-emerald-50' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'approved' ? 'bg-white' : 'bg-emerald-500' }}"></span>
-                        Đã duyệt
-                    </a>
+                    @if($currentTab === 'quizzes' || !in_array($currentTab, ['courses']))
+                        <a href="{{ route('instructor.quizzes.create') }}" 
+                           class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                            Tạo bài kiểm tra
+                        </a>
+                    @endif
                 </div>
+
+                <!-- Hàng dưới (ở DƯỚI cái này): Thanh tìm kiếm -->
+                <form method="GET" action="{{ route('instructor.dashboard') }}" class="flex items-center gap-1.5 w-full sm:w-auto">
+                    <input type="hidden" name="tab" value="{{ $currentTab }}">
+                    @if(!empty($statusFilter))
+                        <input type="hidden" name="status" value="{{ $statusFilter }}">
+                    @endif
+                    <div class="relative flex-1 sm:w-[440px]">
+                        <span class="absolute left-3 inset-y-0 flex items-center text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </span>
+                        <input type="text"
+                               name="search"
+                               value="{{ $search ?? '' }}"
+                               placeholder="{{ $currentTab === 'courses' ? 'Tìm kiếm khóa học của bạn...' : ($currentTab === 'quizzes' ? 'Tìm kiếm bài kiểm tra của bạn...' : 'Tìm khóa học, bài kiểm tra...') }}"
+                               class="pl-9 pr-8 py-2 w-full bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
+                        @if(!empty($search))
+                            <a href="{{ route('instructor.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
+                               class="absolute right-2.5 inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold leading-none"
+                               title="Xóa tìm kiếm">
+                                &times;
+                            </a>
+                        @endif
+                    </div>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs shrink-0">
+                        Tìm
+                    </button>
+                </form>
             </div>
         </div>
     </x-slot>
@@ -187,14 +229,74 @@
                 <div>
                     <!-- TAB 1: KHÓA HỌC CỦA TÔI -->
                     @if($currentTab === 'courses')
+                        <!-- Search Toolbar -->
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <form method="GET" action="{{ route('instructor.dashboard') }}" class="flex items-center gap-2 w-full sm:w-auto">
+                                <input type="hidden" name="tab" value="courses">
+                                @if(!empty($statusFilter))
+                                    <input type="hidden" name="status" value="{{ $statusFilter }}">
+                                @endif
+                                <div class="relative flex-1 sm:w-[440px]">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                        </svg>
+                                    </span>
+                                    <input type="text"
+                                           name="search"
+                                           value="{{ $search ?? '' }}"
+                                           placeholder="Tìm kiếm khóa học của bạn..."
+                                           class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
+                                    @if(!empty($search))
+                                        <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter])) }}"
+                                           class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold"
+                                           title="Xóa tìm kiếm">
+                                            &times;
+                                        </a>
+                                    @endif
+                                </div>
+                                <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs shrink-0">
+                                    Tìm
+                                </button>
+                            </form>
+
+                            @if(!empty($search))
+                                <div class="text-xs text-slate-500 flex items-center gap-2">
+                                    <span>Kết quả cho <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $courses->count() }} khóa học)</span>
+                                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter])) }}"
+                                       class="font-bold text-pink-600 hover:underline">Xóa</a>
+                                </div>
+                            @endif
+                        </div>
+
                         @if($courses->isEmpty())
                             <div class="p-16 text-center">
-                                
-                                <h3 class="font-bold text-slate-800 text-base mb-1">Chưa có khóa học nào</h3>
-                                <p class="text-xs text-slate-500 mb-4">Bạn chưa tạo khóa học nào hoặc bộ lọc hiện tại không có kết quả.</p>
-                                <a href="{{ route('instructor.courses.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs shadow-xs hover:bg-pink-700 transition whitespace-nowrap shrink-0">
-                                    + Tạo khóa học đầu tiên
-                                </a>
+                                <h3 class="font-bold text-slate-800 text-base mb-1">
+                                    @if(!empty($search))
+                                        Không tìm thấy khóa học khớp với "{{ $search }}"
+                                    @else
+                                        Chưa có khóa học nào
+                                    @endif
+                                </h3>
+                                <p class="text-xs text-slate-500 mb-4">
+                                    @if(!empty($search))
+                                        Vui lòng thử tìm kiếm bằng từ khóa khác hoặc xóa bộ lọc tìm kiếm.
+                                    @else
+                                        Bạn chưa tạo khóa học nào hoặc bộ lọc hiện tại không có kết quả.
+                                    @endif
+                                </p>
+                                @if(!empty($search))
+                                    <div class="mt-4">
+                                        <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter])) }}"
+                                           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                                            Xóa tìm kiếm
+                                        </a>
+                                    </div>
+                                @else
+                                    <a href="{{ route('instructor.courses.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs shadow-xs hover:bg-pink-700 transition whitespace-nowrap shrink-0">
+                                        + Tạo khóa học đầu tiên
+                                    </a>
+                                @endif
                             </div>
                         @else
                             <div x-data="{ expandedCourse: {{ request('expand') ?: 'null' }} }" class="overflow-x-auto">

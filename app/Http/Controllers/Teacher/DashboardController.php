@@ -22,6 +22,7 @@ class DashboardController extends Controller
         $currentTab = $request->query('tab', 'courses');
         $statusFilter = $request->query('status');
         $selectedCourseId = $request->query('course_id');
+        $search = trim((string) $request->query('search', ''));
 
         // Lấy danh sách ID các khóa học của giảng viên
         $teacherCourseIds = Course::where('teacher_id', $teacherId)->pluck('id');
@@ -62,6 +63,14 @@ class DashboardController extends Controller
         if ($statusFilter && in_array($statusFilter, ['pending', 'approved', 'rejected'])) {
             $coursesBuilder->where('status', $statusFilter);
         }
+
+        if ($search !== '') {
+            $coursesBuilder->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
         $courses = $coursesBuilder->get();
 
         // Lấy danh sách Bài kiểm tra (Quizzes)
@@ -73,6 +82,17 @@ class DashboardController extends Controller
         if ($statusFilter && in_array($statusFilter, ['pending', 'approved', 'rejected'])) {
             $quizzesBuilder->where('status', $statusFilter);
         }
+
+        if ($search !== '') {
+            $quizzesBuilder->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('course', function ($c) use ($search) {
+                        $c->where('title', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         $quizzes = $quizzesBuilder->get();
 
         // Lấy danh sách Bài giảng của các khóa học thuộc giảng viên
@@ -100,7 +120,8 @@ class DashboardController extends Controller
             'attempts',
             'currentTab',
             'statusFilter',
-            'selectedCourseId'
+            'selectedCourseId',
+            'search'
         ));
     }
 }

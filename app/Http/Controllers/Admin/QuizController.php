@@ -20,6 +20,7 @@ class QuizController extends Controller
     public function index(Request $request)
     {
         $status = $request->query('status');
+        $search = trim((string) $request->query('search', ''));
 
         $query = Quiz::with(['course', 'teacher'])->withCount('questions')->latest();
 
@@ -29,9 +30,23 @@ class QuizController extends Controller
             $query->where('status', $status);
         }
 
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('course', function ($c) use ($search) {
+                        $c->where('title', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         $quizzes = $query->get();
 
-        return view('admin.quizzes.index', compact('quizzes', 'status', 'totalCount'));
+        return view('admin.quizzes.index', compact('quizzes', 'status', 'totalCount', 'search'));
     }
 
     /**

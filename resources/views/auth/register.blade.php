@@ -1,9 +1,9 @@
-<x-guest-layout max-width="max-w-[920px]">
+<x-guest-layout max-width="max-w-[800px]">
     <div class="w-full">
         <!-- Session Status -->
         @if (session('status'))
-            <div class="mb-6 p-4 rounded-2xl bg-pink-50/80 border border-pink-200 text-sm font-medium text-pink-800 flex items-center gap-3">
-                <svg class="w-5 h-5 text-pink-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="mb-6 p-4 rounded-2xl bg-neutral-950 border border-emerald-500/40 text-sm font-medium text-emerald-400 flex items-center gap-3">
+                <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{{ session('status') }}</span>
@@ -15,11 +15,16 @@
 
             <!-- Header -->
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-black text-pink-600 tracking-tight">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-950 border border-neutral-800 text-neutral-400 text-xs font-medium mb-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+                    <span>Gia nhập cộng đồng Ctrl C+V</span>
+                </div>
+
+                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     Tạo tài khoản mới
-                </h2>
-                <p class="mt-2 text-sm text-gray-500">
-                    Đăng ký để bắt đầu hành trình học tập của bạn
+                </h1>
+                <p class="mt-2 text-xs sm:text-sm text-neutral-400">
+                    Đăng ký để bắt đầu trải nghiệm học tập và thử sức với các bài thi trắc nghiệm Quizzes.
                 </p>
             </div>
 
@@ -27,159 +32,156 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                 <!-- Cột 1: Thông tin cá nhân -->
-                <div class="bg-white p-5 rounded-2xl border border-pink-100 shadow-sm">
-                    <div class="flex items-center mb-5 border-b border-pink-50 pb-3">
-                        <div class="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600 mr-3 shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-neutral-950/60 border border-neutral-800 rounded-2xl p-5 sm:p-6 space-y-4">
+                    <div class="flex items-center gap-3 pb-3 border-b border-neutral-800/80">
+                        <div class="w-8 h-8 rounded-xl bg-pink-600/10 border border-pink-500/30 flex items-center justify-center text-pink-500 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </div>
-                        <h3 class="text-base font-bold text-gray-800 whitespace-nowrap">
+                        <h2 class="text-sm font-bold text-neutral-200 uppercase tracking-wider">
                             Thông tin cá nhân
-                        </h3>
+                        </h2>
                     </div>
 
-                    <div class="space-y-4">
-                        <!-- Họ và tên -->
-                        <div>
-                            <label for="name" class="block font-bold text-gray-600 text-xs uppercase tracking-wider mb-1.5">
-                                Họ và tên
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                name="name"
-                                value="{{ old('name') }}"
-                                required
-                                autofocus
-                                autocomplete="name"
-                                placeholder="Nhập họ tên của bạn"
-                                class="block w-full rounded-xl border-gray-200 bg-gray-50/60 px-4 py-3 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 transition duration-150"
-                            />
-                            <x-input-error :messages="$errors->get('name')" class="mt-1 text-xs" />
-                        </div>
+                    <!-- Họ và tên -->
+                    <div>
+                        <label for="name" class="block font-bold text-neutral-300 text-xs uppercase tracking-wider mb-2">
+                            Họ và tên
+                        </label>
+                        <input
+                            id="name"
+                            type="text"
+                            name="name"
+                            value="{{ old('name') }}"
+                            required
+                            autofocus
+                            autocomplete="name"
+                            placeholder="Nhập họ và tên của bạn"
+                            class="block w-full rounded-xl border border-neutral-800 bg-neutral-900/90 px-4 py-3 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition duration-150"
+                        />
+                        <x-input-error :messages="$errors->get('name')" class="mt-1.5 text-xs text-rose-400" />
+                    </div>
 
-                        <!-- Email -->
-                        <div>
-                            <label for="email" class="block font-bold text-gray-600 text-xs uppercase tracking-wider mb-1.5">
-                                Địa chỉ email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                name="email"
-                                value="{{ old('email') }}"
-                                required
-                                autocomplete="username"
-                                placeholder="email@example.com"
-                                class="block w-full rounded-xl border-gray-200 bg-gray-50/60 px-4 py-3 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 transition duration-150"
-                            />
-                            <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs" />
-                        </div>
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block font-bold text-neutral-300 text-xs uppercase tracking-wider mb-2">
+                            Địa chỉ Email
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            required
+                            autocomplete="username"
+                            placeholder="email@example.com"
+                            class="block w-full rounded-xl border border-neutral-800 bg-neutral-900/90 px-4 py-3 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition duration-150"
+                        />
+                        <x-input-error :messages="$errors->get('email')" class="mt-1.5 text-xs text-rose-400" />
                     </div>
                 </div>
 
                 <!-- Cột 2: Bảo mật tài khoản -->
-                <div class="bg-white p-5 rounded-2xl border border-pink-100 shadow-sm">
-                    <div class="flex items-center mb-5 border-b border-pink-50 pb-3">
-                        <div class="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600 mr-3 shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-neutral-950/60 border border-neutral-800 rounded-2xl p-5 sm:p-6 space-y-4">
+                    <div class="flex items-center gap-3 pb-3 border-b border-neutral-800/80">
+                        <div class="w-8 h-8 rounded-xl bg-pink-600/10 border border-pink-500/30 flex items-center justify-center text-pink-500 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                         </div>
-                        <h3 class="text-base font-bold text-gray-800 whitespace-nowrap">
+                        <h2 class="text-sm font-bold text-neutral-200 uppercase tracking-wider">
                             Bảo mật tài khoản
-                        </h3>
+                        </h2>
                     </div>
 
-                    <div class="space-y-4">
-                        <!-- Mật khẩu -->
-                        <div>
-                            <label for="password" class="block font-bold text-gray-600 text-xs uppercase tracking-wider mb-1.5">
-                                Mật khẩu
-                            </label>
-                            <div class="relative" x-data="{ show: false }">
-                                <input
-                                    id="password"
-                                    :type="show ? 'text' : 'password'"
-                                    type="password"
-                                    name="password"
-                                    required
-                                    autocomplete="new-password"
-                                    placeholder="••••••••"
-                                    class="block w-full rounded-xl border-gray-200 bg-gray-50/60 px-4 py-3 pr-12 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 transition duration-150"
-                                />
-                                <button
-                                    type="button"
-                                    @click="show = !show"
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-600 focus:outline-none transition-colors"
-                                    :aria-label="show ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
-                                >
-                                    <svg :class="{ 'hidden': show }" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    <svg :class="{ 'hidden': !show }" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.053 0 2.062.18 3 .512M7.5 7.5l9 9M10.125 10.125a3 3 0 114.25 4.25" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <x-input-error :messages="$errors->get('password')" class="mt-1 text-xs" />
+                    <!-- Mật khẩu -->
+                    <div>
+                        <label for="password" class="block font-bold text-neutral-300 text-xs uppercase tracking-wider mb-2">
+                            Mật khẩu
+                        </label>
+                        <div class="relative" x-data="{ show: false }">
+                            <input
+                                id="password"
+                                :type="show ? 'text' : 'password'"
+                                type="password"
+                                name="password"
+                                required
+                                autocomplete="new-password"
+                                placeholder="••••••••"
+                                class="block w-full rounded-xl border border-neutral-800 bg-neutral-900/90 px-4 py-3 pr-12 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition duration-150"
+                            />
+                            <button
+                                type="button"
+                                @click="show = !show"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-pink-400 focus:outline-none transition-colors"
+                                :aria-label="show ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
+                            >
+                                <svg :class="{ 'hidden': show }" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <svg :class="{ 'hidden': !show }" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.053 0 2.062.18 3 .512M7.5 7.5l9 9M10.125 10.125a3 3 0 114.25 4.25" />
+                                </svg>
+                            </button>
                         </div>
+                        <x-input-error :messages="$errors->get('password')" class="mt-1.5 text-xs text-rose-400" />
+                    </div>
 
-                        <!-- Xác nhận mật khẩu -->
-                        <div>
-                            <label for="password_confirmation" class="block font-bold text-gray-600 text-xs uppercase tracking-wider mb-1.5">
-                                Xác nhận mật khẩu
-                            </label>
-                            <div class="relative" x-data="{ show: false }">
-                                <input
-                                    id="password_confirmation"
-                                    :type="show ? 'text' : 'password'"
-                                    type="password"
-                                    name="password_confirmation"
-                                    required
-                                    autocomplete="new-password"
-                                    placeholder="••••••••"
-                                    class="block w-full rounded-xl border-gray-200 bg-gray-50/60 px-4 py-3 pr-12 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 transition duration-150"
-                                />
-                                <button
-                                    type="button"
-                                    @click="show = !show"
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-600 focus:outline-none transition-colors"
-                                    :aria-label="show ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
-                                >
-                                    <svg :class="{ 'hidden': show }" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    <svg :class="{ 'hidden': !show }" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.053 0 2.062.18 3 .512M7.5 7.5l9 9M10.125 10.125a3 3 0 114.25 4.25" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1 text-xs" />
+                    <!-- Xác nhận mật khẩu -->
+                    <div>
+                        <label for="password_confirmation" class="block font-bold text-neutral-300 text-xs uppercase tracking-wider mb-2">
+                            Xác nhận mật khẩu
+                        </label>
+                        <div class="relative" x-data="{ show: false }">
+                            <input
+                                id="password_confirmation"
+                                :type="show ? 'text' : 'password'"
+                                type="password"
+                                name="password_confirmation"
+                                required
+                                autocomplete="new-password"
+                                placeholder="••••••••"
+                                class="block w-full rounded-xl border border-neutral-800 bg-neutral-900/90 px-4 py-3 pr-12 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition duration-150"
+                            />
+                            <button
+                                type="button"
+                                @click="show = !show"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-pink-400 focus:outline-none transition-colors"
+                                :aria-label="show ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
+                            >
+                                <svg :class="{ 'hidden': show }" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <svg :class="{ 'hidden': !show }" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.053 0 2.062.18 3 .512M7.5 7.5l9 9M10.125 10.125a3 3 0 114.25 4.25" />
+                                </svg>
+                            </button>
                         </div>
+                        <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1.5 text-xs text-rose-400" />
                     </div>
                 </div>
             </div>
 
             <!-- Submit Button & Login Link -->
-            <div class="mt-8 flex flex-col items-center">
+            <div class="mt-8 flex flex-col items-center gap-4">
                 <button
                     type="submit"
-                    class="w-full max-w-sm min-h-[56px] px-6 py-3.5 bg-pink-600 hover:bg-pink-700 active:scale-[0.98] hover:-translate-y-0.5 text-white font-bold text-base rounded-xl shadow-lg shadow-pink-200/80 transition-all duration-200 text-center cursor-pointer flex items-center justify-center"
+                    class="w-full sm:max-w-sm min-h-[50px] px-6 py-3.5 bg-pink-600 hover:bg-pink-500 active:scale-[0.99] hover:-translate-y-0.5 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-pink-600/30 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
-                    Xác nhận đăng ký
+                    <span>Xác nhận đăng ký</span>
+                    <span>&rarr;</span>
                 </button>
 
-                <div class="mt-3 text-sm text-gray-500 text-center">
+                <div class="text-xs sm:text-sm text-neutral-400 text-center">
                     Bạn đã có tài khoản?
                     <a
                         href="{{ route('login') }}"
-                        class="font-bold text-pink-600 hover:text-pink-700 hover:underline decoration-2 underline-offset-4 ms-1"
+                        class="font-bold text-pink-400 hover:text-pink-300 hover:underline ms-1 inline-flex items-center gap-1"
                     >
-                        Đăng nhập
+                        <span>Đăng nhập tại đây</span>
                     </a>
                 </div>
             </div>

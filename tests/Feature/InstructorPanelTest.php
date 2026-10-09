@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -435,5 +436,81 @@ class InstructorPanelTest extends TestCase
 
         $responseQuizzes = $this->actingAs($instructor)->get(route('instructor.quizzes.index'));
         $responseQuizzes->assertRedirect(route('instructor.dashboard', ['tab' => 'quizzes']));
+    }
+
+    /**
+     * Giảng viên có thể tìm kiếm khóa học của chính mình trên Dashboard
+     */
+    public function test_instructor_can_search_own_courses(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+        $otherInstructor = User::factory()->instructor()->create();
+
+        Course::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'Khoa hoc React Native Mobile',
+            'description' => 'Lap trinh ung dung da nen tang',
+            'status' => 'approved',
+        ]);
+
+        Course::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'Lap trinh Golang Backend',
+            'description' => 'Xay dung microservices',
+            'status' => 'pending',
+        ]);
+
+        Course::create([
+            'teacher_id' => $otherInstructor->id,
+            'title' => 'Khoa hoc ReactJS Web',
+            'description' => 'Cua giang vien khac',
+            'status' => 'approved',
+        ]);
+
+        // Tìm kiếm 'React' -> Chỉ thấy khóa học React Native của chính mình, không thấy của người khác
+        $res = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'courses', 'search' => 'React']));
+        $res->assertOk();
+        $res->assertSee('Khoa hoc React Native Mobile');
+        $res->assertDontSee('Lap trinh Golang Backend');
+        $res->assertDontSee('Khoa hoc ReactJS Web');
+
+        // Tìm kết hợp search và status
+        $resStatus = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'courses', 'search' => 'Golang', 'status' => 'approved']));
+        $resStatus->assertOk();
+        $resStatus->assertDontSee('Lap trinh Golang Backend');
+    }
+
+    /**
+     * Giảng viên có thể tìm kiếm bài kiểm tra của chính mình trên Dashboard
+     */
+    public function test_instructor_can_search_own_quizzes(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+        $otherInstructor = User::factory()->instructor()->create();
+
+        Quiz::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'Kiem tra Thuật toán Sorting',
+            'status' => 'approved',
+        ]);
+
+        Quiz::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'Đề thi OOP Java nâng cao',
+            'status' => 'pending',
+        ]);
+
+        Quiz::create([
+            'teacher_id' => $otherInstructor->id,
+            'title' => 'Kiem tra Thuật toán Dijkstra',
+            'status' => 'approved',
+        ]);
+
+        // Tìm kiếm 'Thuật toán' -> Chỉ thấy quiz của chính mình, không thấy của giảng viên khác
+        $res = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'quizzes', 'search' => 'Thuật toán']));
+        $res->assertOk();
+        $res->assertSee('Kiem tra Thuật toán Sorting');
+        $res->assertDontSee('Đề thi OOP Java nâng cao');
+        $res->assertDontSee('Kiem tra Thuật toán Dijkstra');
     }
 }

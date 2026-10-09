@@ -12,9 +12,9 @@ use Illuminate\Support\Str;
 class CourseController extends Controller
 {
     // trả về giao diện danh sách khóa học của giảng viên
-    public function index()
+    public function index(Request $request)
     {
-        return redirect()->route('instructor.dashboard', ['tab' => 'courses']);
+        return redirect()->route('instructor.dashboard', array_merge(['tab' => 'courses'], $request->query()));
     }
 
     // trả về form tạo khóa học

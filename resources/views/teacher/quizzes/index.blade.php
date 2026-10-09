@@ -10,10 +10,40 @@
                     Tạo các đề thi trắc nghiệm, tùy chỉnh đảo ngẫu nhiên câu hỏi và quản lý câu hỏi cho học viên.
                 </p>
             </div>
-            <a href="{{ route('teacher.quizzes.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold shadow-md shadow-pink-500/25 transition">
-                
-                Tạo bài kiểm tra mới
-            </a>
+            <div class="flex flex-col items-start sm:items-end gap-2.5 w-full sm:w-auto">
+                <!-- Hàng trên: Nút tạo mới -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <a href="{{ route('teacher.quizzes.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                        Tạo bài kiểm tra
+                    </a>
+                </div>
+
+                <!-- Hàng dưới (ở DƯỚI cái này): Thanh tìm kiếm -->
+                <form method="GET" action="{{ route('teacher.quizzes.index') }}" class="flex items-center gap-1.5 w-full sm:w-auto">
+                    <div class="relative flex-1 sm:w-[440px]">
+                        <span class="absolute left-3 inset-y-0 flex items-center text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </span>
+                        <input type="text"
+                               name="search"
+                               value="{{ request('search') }}"
+                               placeholder="Tìm kiếm bài kiểm tra của bạn..."
+                               class="pl-9 pr-8 py-2 w-full bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
+                        @if(request('search'))
+                            <a href="{{ route('teacher.quizzes.index') }}"
+                               class="absolute right-2.5 inset-y-0 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold leading-none"
+                               title="Xóa tìm kiếm">
+                                &times;
+                            </a>
+                        @endif
+                    </div>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs shrink-0">
+                        Tìm
+                    </button>
+                </form>
+            </div>
         </div>
     </x-slot>
 
