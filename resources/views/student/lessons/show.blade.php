@@ -160,25 +160,14 @@
                             </form>
                         </div>
                     @else
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center font-black text-lg shrink-0">
-                                    &check;
-                                </div>
-                                <div>
-                                    <h4 class="font-black text-emerald-900 text-base">Bạn đã hoàn thành bài học này!</h4>
-                                    <p class="text-xs text-emerald-700 mt-0.5">Tiến độ khóa học của bạn đã được ghi nhận thành công.</p>
-                                </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center font-black text-lg shrink-0">
+                                &check;
                             </div>
-                            @if($nextLesson)
-                                <div class="w-full sm:w-auto flex justify-end">
-                                    <a href="{{ route('student.lessons.show', [$lesson->course_id, $nextLesson->id]) }}" 
-                                       class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-black text-xs shadow-md shadow-pink-600/25 transition">
-                                        <span>Bài tiếp theo: {{ $nextLesson->title }}</span>
-                                        &rarr;
-                                    </a>
-                                </div>
-                            @endif
+                            <div>
+                                <h4 class="font-black text-emerald-900 text-base">Bạn đã hoàn thành bài học này!</h4>
+                                <p class="text-xs text-emerald-700 mt-0.5">Tiến độ khóa học của bạn đã được ghi nhận thành công.</p>
+                            </div>
                         </div>
                     @endif
                 </div>

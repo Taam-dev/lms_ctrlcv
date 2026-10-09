@@ -98,6 +98,11 @@ class CourseProgressTest extends TestCase
         // Complete lesson 1 first
         $this->actingAs($student)->post(route('student.lessons.complete', [$course->id, $lessons[0]->id]));
 
+        // Visiting completed lesson 1 should display exactly one next lesson button
+        $accessLesson1AfterComplete = $this->actingAs($student)->get(route('student.lessons.show', [$course->id, $lessons[0]->id]));
+        $accessLesson1AfterComplete->assertOk();
+        $this->assertSame(1, substr_count($accessLesson1AfterComplete->getContent(), 'Bài tiếp theo: '.$lessons[1]->title));
+
         // Now lesson 2 is accessible and completable
         $accessLesson2 = $this->actingAs($student)->get(route('student.lessons.show', [$course->id, $lessons[1]->id]));
         $accessLesson2->assertOk();

@@ -56,20 +56,20 @@
             const img = document.getElementById('banner-crop-target-image');
             if (!img) return;
 
-            if (this.cropperInstance) {
-                this.cropperInstance.destroy();
-                this.cropperInstance = null;
-            }
-
-            img.src = this.rawImageSrc;
-            img.onload = () => {
+            const initCropper = () => {
                 if (typeof Cropper === 'undefined') {
                     console.error('Cropper.js chưa sẵn sàng');
                     return;
                 }
+
+                if (this.cropperInstance) {
+                    this.cropperInstance.destroy();
+                    this.cropperInstance = null;
+                }
+
                 this.cropperInstance = new Cropper(img, {
                     aspectRatio: 16 / 9,
-                    viewMode: 1,
+                    viewMode: 0, // Cho phép thu nhỏ tự do (viewMode 0) để thấy trọn vẹn toàn bộ ảnh vuông / dọc không bị cắt ép
                     dragMode: 'move',
                     autoCropArea: 0.95,
                     restore: false,
@@ -79,49 +79,96 @@
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     toggleDragModeOnDblclick: false,
+                    checkCrossOrigin: true,
+                    ready: () => {
+                        // Tự động căn trọn vẹn vào khung nếu ảnh không phải tỉ lệ 16:9 (ảnh vuông, ảnh dọc)
+                        const imageData = this.cropperInstance.getImageData();
+                        const cropBoxData = this.cropperInstance.getCropBoxData();
+                        if (imageData && cropBoxData) {
+                            const imgRatio = imageData.naturalWidth / imageData.naturalHeight;
+                            const targetRatio = 16 / 9;
+                            // Nếu tỉ lệ ảnh hẹp hơn nhiều so với 16:9 thì căn vừa vặn
+                            if (imgRatio < targetRatio * 0.9) {
+                                this.fitCropBox();
+                            }
+                        }
+                    }
                 });
             };
+
+            img.onload = () => initCropper();
+            img.onerror = () => {
+                console.error('Lỗi khi tải ảnh vào cropper:', this.rawImageSrc);
+                alert('Không thể tải hình ảnh này để cắt. Vui lòng thử tải ảnh từ máy tính hoặc dùng ảnh khác.');
+                this.cancelCropModal();
+            };
+
+            // Hỗ trợ CORS nếu là liên kết http/https
+            if (this.rawImageSrc.startsWith('http://') || this.rawImageSrc.startsWith('https://')) {
+                img.crossOrigin = 'anonymous';
+            } else {
+                img.removeAttribute('crossorigin');
+            }
+
+            if (img.src === this.rawImageSrc && img.complete && img.naturalWidth > 0) {
+                initCropper();
+            } else {
+                img.src = this.rawImageSrc;
+                if (img.complete && img.naturalWidth > 0) {
+                    initCropper();
+                }
+            }
         });
     },
 
     applyCroppedImage() {
         if (!this.cropperInstance) return;
 
-        // Lấy canvas đã crop chất lượng cao chuẩn 16:9 (1280x720)
-        const canvas = this.cropperInstance.getCroppedCanvas({
-            width: 1280,
-            height: 720,
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        });
+        try {
+            // Lấy canvas đã crop chất lượng cao chuẩn 16:9 (1280x720) với nền tối thanh lịch
+            const canvas = this.cropperInstance.getCroppedCanvas({
+                width: 1280,
+                height: 720,
+                fillColor: '#171717', // Điền nền tối chuẩn nếu người dùng thu nhỏ ảnh vào giữa khung
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
 
-        if (!canvas) return;
-
-        const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        this.previewUrl = croppedDataUrl;
-        this.hasBanner = true;
-        this.isCropped = true;
-
-        // Gán base64 vào input hidden dự phòng
-        const croppedInput = document.getElementById('thumbnail_cropped_data');
-        if (croppedInput) {
-            croppedInput.value = croppedDataUrl;
-        }
-
-        // Tạo File object và đưa vào input file bằng DataTransfer
-        canvas.toBlob((blob) => {
-            if (blob) {
-                const file = new File([blob], 'course-banner-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-                const fileInput = document.getElementById('thumbnail_file');
-                if (fileInput) {
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    fileInput.files = dt.files;
-                }
+            if (!canvas) {
+                alert('Không thể xuất ảnh đã cắt. Vui lòng thử lại!');
+                return;
             }
-        }, 'image/jpeg', 0.92);
 
-        this.cancelCropModal();
+            const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+            this.previewUrl = croppedDataUrl;
+            this.hasBanner = true;
+            this.isCropped = true;
+
+            // Gán base64 vào input hidden dự phòng
+            const croppedInput = document.getElementById('thumbnail_cropped_data');
+            if (croppedInput) {
+                croppedInput.value = croppedDataUrl;
+            }
+
+            // Tạo File object và đưa vào input file bằng DataTransfer
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const file = new File([blob], 'course-banner-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+                    const fileInput = document.getElementById('thumbnail_file');
+                    if (fileInput) {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        fileInput.files = dt.files;
+                    }
+                }
+            }, 'image/jpeg', 0.92);
+
+            this.cancelCropModal();
+        } catch (error) {
+            console.error('Lỗi khi áp dụng cắt ảnh:', error);
+            alert('Không thể xuất ảnh do nguồn ảnh bị giới hạn bảo mật (CORS). Vui lòng lưu ảnh về máy và tải lên trực tiếp để cắt.');
+            this.cancelCropModal();
+        }
     },
 
     cancelCropModal() {
@@ -130,6 +177,54 @@
             this.cropperInstance = null;
         }
         this.showCropModal = false;
+    },
+
+    fitCropBox() {
+        if (!this.cropperInstance) return;
+        const cropBoxData = this.cropperInstance.getCropBoxData();
+        const imageData = this.cropperInstance.getImageData();
+        if (!cropBoxData || !imageData) return;
+
+        // Tỉ lệ scale để toàn bộ ảnh nằm trọn trong cropbox
+        const scaleX = cropBoxData.width / imageData.naturalWidth;
+        const scaleY = cropBoxData.height / imageData.naturalHeight;
+        const scale = Math.min(scaleX, scaleY);
+
+        const newWidth = imageData.naturalWidth * scale;
+        const newHeight = imageData.naturalHeight * scale;
+        const left = cropBoxData.left + (cropBoxData.width - newWidth) / 2;
+        const top = cropBoxData.top + (cropBoxData.height - newHeight) / 2;
+
+        this.cropperInstance.setCanvasData({
+            left: left,
+            top: top,
+            width: newWidth,
+            height: newHeight,
+        });
+    },
+
+    fillCropBox() {
+        if (!this.cropperInstance) return;
+        const cropBoxData = this.cropperInstance.getCropBoxData();
+        const imageData = this.cropperInstance.getImageData();
+        if (!cropBoxData || !imageData) return;
+
+        // Tỉ lệ scale để ảnh phủ kín toàn bộ cropbox
+        const scaleX = cropBoxData.width / imageData.naturalWidth;
+        const scaleY = cropBoxData.height / imageData.naturalHeight;
+        const scale = Math.max(scaleX, scaleY);
+
+        const newWidth = imageData.naturalWidth * scale;
+        const newHeight = imageData.naturalHeight * scale;
+        const left = cropBoxData.left + (cropBoxData.width - newWidth) / 2;
+        const top = cropBoxData.top + (cropBoxData.height - newHeight) / 2;
+
+        this.cropperInstance.setCanvasData({
+            left: left,
+            top: top,
+            width: newWidth,
+            height: newHeight,
+        });
     },
 
     zoom(delta) {
@@ -394,7 +489,10 @@
         <div x-show="hasBanner" class="p-4 rounded-2xl bg-neutral-950 text-white border border-neutral-800">
             <div class="text-xs font-bold text-neutral-300 mb-3 flex items-center justify-between">
                 <span>Xem trước ảnh từ đường dẫn URL:</span>
-                <button type="button" @click="removeCurrentBanner()" class="text-rose-400 hover:underline text-[11px]">Gỡ ảnh</button>
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="reCropCurrent()" class="text-pink-400 hover:underline text-[11px] font-bold">Cắt ảnh này</button>
+                    <button type="button" @click="removeCurrentBanner()" class="text-rose-400 hover:underline text-[11px]">Gỡ ảnh</button>
+                </div>
             </div>
             <div class="aspect-video w-full max-w-md mx-auto rounded-xl overflow-hidden bg-neutral-900 border border-neutral-700">
                 <img :src="previewUrl" alt="URL preview" class="w-full h-full object-cover">
@@ -435,18 +533,30 @@
             </div>
 
             <!-- Modal Crop Canvas Area -->
-            <div class="relative bg-neutral-900/90 p-4 flex-1 flex items-center justify-center min-h-[320px] max-h-[55vh] overflow-hidden">
-                <div class="max-w-full max-h-full">
+            <div class="relative bg-neutral-950 p-4 flex-1 flex items-center justify-center min-h-[340px] max-h-[58vh] overflow-hidden w-full">
+                <div class="w-full h-full flex items-center justify-center max-h-[54vh]">
                     <img id="banner-crop-target-image" 
                          src="" 
                          alt="Cắt ảnh banner" 
-                         class="max-w-full max-h-[50vh] block">
+                         class="max-w-full max-h-[52vh] block">
                 </div>
             </div>
 
             <!-- Toolbar Controls -->
             <div class="px-6 py-3 bg-neutral-900 border-t border-white/5 flex flex-wrap items-center justify-between gap-3 shrink-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
+                    <button type="button" 
+                            @click="fitCropBox()"
+                            title="Căn vừa toàn bộ ảnh vào khung 16:9 (dành cho ảnh vuông hoặc dọc)"
+                            class="px-3 py-1.5 rounded-lg bg-pink-600/30 hover:bg-pink-600/50 text-xs font-bold text-pink-300 border border-pink-500/30 transition flex items-center gap-1">
+                        <span>⤢ Căn vừa (Fit)</span>
+                    </button>
+                    <button type="button" 
+                            @click="fillCropBox()"
+                            title="Phóng to lấp đầy khung 16:9"
+                            class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition flex items-center gap-1">
+                        <span>⬛ Lấp đầy (Fill)</span>
+                    </button>
                     <button type="button" 
                             @click="zoom(0.1)"
                             title="Phóng to"
@@ -480,7 +590,7 @@
                 </div>
 
                 <div class="text-[11px] text-neutral-400 italic">
-                    Dùng chuột kéo thả để căn góc đẹp nhất
+                    Dùng chuột kéo thả hoặc con lăn để căn góc đẹp nhất
                 </div>
             </div>
 

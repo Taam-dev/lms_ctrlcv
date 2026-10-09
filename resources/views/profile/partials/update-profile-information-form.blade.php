@@ -65,20 +65,20 @@
                     const img = document.getElementById('avatar-crop-target-image');
                     if (!img) return;
 
-                    if (this.cropperInstance) {
-                        this.cropperInstance.destroy();
-                        this.cropperInstance = null;
-                    }
-
-                    img.src = this.rawImageSrc;
-                    img.onload = () => {
+                    const initCropper = () => {
                         if (typeof Cropper === 'undefined') {
                             console.error('Cropper.js chưa sẵn sàng');
                             return;
                         }
+
+                        if (this.cropperInstance) {
+                            this.cropperInstance.destroy();
+                            this.cropperInstance = null;
+                        }
+
                         this.cropperInstance = new Cropper(img, {
                             aspectRatio: 1,
-                            viewMode: 1,
+                            viewMode: 0,
                             dragMode: 'move',
                             autoCropArea: 0.9,
                             restore: false,
@@ -88,48 +88,78 @@
                             cropBoxMovable: true,
                             cropBoxResizable: true,
                             toggleDragModeOnDblclick: false,
+                            checkCrossOrigin: true,
                         });
                     };
+
+                    img.onload = () => initCropper();
+                    img.onerror = () => {
+                        console.error('Lỗi khi tải ảnh avatar:', this.rawImageSrc);
+                        alert('Không thể tải hình ảnh này để cắt. Vui lòng thử tải ảnh khác từ máy tính.');
+                        this.cancelCropModal();
+                    };
+
+                    if (this.rawImageSrc.startsWith('http://') || this.rawImageSrc.startsWith('https://')) {
+                        img.crossOrigin = 'anonymous';
+                    } else {
+                        img.removeAttribute('crossorigin');
+                    }
+
+                    if (img.src === this.rawImageSrc && img.complete && img.naturalWidth > 0) {
+                        initCropper();
+                    } else {
+                        img.src = this.rawImageSrc;
+                        if (img.complete && img.naturalWidth > 0) {
+                            initCropper();
+                        }
+                    }
                 });
             },
 
             applyCroppedImage() {
                 if (!this.cropperInstance) return;
 
-                const canvas = this.cropperInstance.getCroppedCanvas({
-                    width: 500,
-                    height: 500,
-                    imageSmoothingEnabled: true,
-                    imageSmoothingQuality: 'high',
-                });
+                try {
+                    const canvas = this.cropperInstance.getCroppedCanvas({
+                        width: 500,
+                        height: 500,
+                        fillColor: '#171717',
+                        imageSmoothingEnabled: true,
+                        imageSmoothingQuality: 'high',
+                    });
 
-                if (!canvas) return;
+                    if (!canvas) return;
 
-                const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-                this.previewUrl = croppedDataUrl;
-                this.removeAvatar = false;
-                this.isCropped = true;
+                    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                    this.previewUrl = croppedDataUrl;
+                    this.removeAvatar = false;
+                    this.isCropped = true;
 
-                // Gán base64 vào hidden input dự phòng
-                const croppedInput = document.getElementById('avatar_cropped_data');
-                if (croppedInput) {
-                    croppedInput.value = croppedDataUrl;
-                }
-
-                // Gán vào input file bằng DataTransfer
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        const file = new File([blob], 'avatar-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-                        const fileInput = document.getElementById('avatar-file-input');
-                        if (fileInput) {
-                            const dt = new DataTransfer();
-                            dt.items.add(file);
-                            fileInput.files = dt.files;
-                        }
+                    // Gán base64 vào hidden input dự phòng
+                    const croppedInput = document.getElementById('avatar_cropped_data');
+                    if (croppedInput) {
+                        croppedInput.value = croppedDataUrl;
                     }
-                }, 'image/jpeg', 0.92);
 
-                this.cancelCropModal();
+                    // Gán vào input file bằng DataTransfer
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const file = new File([blob], 'avatar-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+                            const fileInput = document.getElementById('avatar-file-input');
+                            if (fileInput) {
+                                const dt = new DataTransfer();
+                                dt.items.add(file);
+                                fileInput.files = dt.files;
+                            }
+                        }
+                    }, 'image/jpeg', 0.92);
+
+                    this.cancelCropModal();
+                } catch (e) {
+                    console.error('Lỗi khi áp dụng cắt avatar:', e);
+                    alert('Không thể xuất ảnh do giới hạn bảo mật (CORS). Vui lòng tải ảnh trực tiếp từ máy.');
+                    this.cancelCropModal();
+                }
             },
 
             cancelCropModal() {
