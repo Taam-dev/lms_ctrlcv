@@ -76,16 +76,16 @@
                 <h2 class="font-black text-2xl md:text-3xl text-slate-900 tracking-tight">
                     {{ $course->title }}
                 </h2>
-                <div class="flex items-center gap-3 mt-2 text-xs text-slate-500">
-                    <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-xs sm:text-sm text-slate-500">
+                    <div class="flex items-center gap-2.5">
                         @if($course->teacher && $course->teacher->avatar_url)
-                            <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0">
+                            <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-pink-200 shadow-xs shrink-0">
                         @else
-                            <div class="w-6 h-6 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-[10px] shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-black text-sm border-2 border-pink-200 shadow-xs shrink-0">
                                 {{ strtoupper(substr($course->teacher->name ?? 'G', 0, 1)) }}
                             </div>
                         @endif
-                        <span>Giảng viên: <strong class="text-slate-800">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
+                        <span>Giảng viên: <strong class="text-slate-800 font-bold">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
                     </div>
                     <span>&bull;</span>
                     <span>{{ $course->lessons->count() }} Bài giảng</span>
@@ -211,7 +211,7 @@
                         <div class="pt-3 border-t border-slate-100">
                             <h3 class="text-xs font-black uppercase tracking-[0.2em] text-neutral-900 mb-2 flex items-center gap-2">
                                 <span class="w-1.5 h-4 bg-pink-600"></span>
-                                Mô tả khóa học &amp; Mục tiêu đào tạo
+                                Mô tả
                             </h3>
                             <p class="text-neutral-700 text-sm md:text-base leading-relaxed">
                                 {{ $course->description ?? 'Khóa học này hiện chưa có mô tả chi tiết.' }}
