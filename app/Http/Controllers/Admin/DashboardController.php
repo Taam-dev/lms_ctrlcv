@@ -118,7 +118,29 @@ class DashboardController extends Controller
         $lessons = $lessonsQuery->paginate(15);
 
         // Lấy danh sách Người dùng
-        $users = User::latest()->paginate(15);
+        $usersQuery = User::latest();
+        if ($search !== '') {
+            $lowerSearch = mb_strtolower($search);
+            $roleSearch = null;
+            if (str_contains($lowerSearch, 'học viên') || $lowerSearch === 'student') {
+                $roleSearch = 'student';
+            } elseif (str_contains($lowerSearch, 'giảng viên') || $lowerSearch === 'teacher') {
+                $roleSearch = 'teacher';
+            } elseif (str_contains($lowerSearch, 'quản trị') || str_contains($lowerSearch, 'admin')) {
+                $roleSearch = 'admin';
+            }
+
+            $usersQuery->where(function ($q) use ($search, $roleSearch) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%");
+
+                if ($roleSearch) {
+                    $q->orWhere('role', $roleSearch);
+                }
+            });
+        }
+        $users = $usersQuery->paginate(15);
 
         return view('admin.dashboard', compact(
             'stats',

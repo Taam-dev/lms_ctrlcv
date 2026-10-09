@@ -68,6 +68,14 @@
                                 {{ $stats['total_lessons'] }} bài giảng trong {{ $stats['total_courses'] }} khóa học
                             </span>
                         </div>
+                    @elseif($currentTab === 'users')
+                        <!-- Huy hiệu thống kê người dùng -->
+                        <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold shrink-0">
+                            <span class="px-3 py-1.5 rounded-xl bg-pink-50 text-pink-700 flex items-center gap-1.5 whitespace-nowrap">
+                                <span class="w-1.5 h-1.5 rounded-full bg-pink-600"></span>
+                                {{ $stats['total_users'] }} tài khoản ({{ $stats['admins_count'] }} Admin, {{ $stats['teachers_count'] }} GV, {{ $stats['students_count'] }} Học viên)
+                            </span>
+                        </div>
                     @endif
 
                     @if(in_array($currentTab, ['overview', 'courses']))
@@ -82,8 +90,8 @@
                     @endif
                 </div>
 
-                @if(in_array($currentTab, ['courses', 'quizzes', 'lessons']))
-                    <!-- Thanh tìm kiếm ở DƯỚI (Vị trí tương tự bài kiểm tra và khóa học) -->
+                @if(in_array($currentTab, ['courses', 'quizzes', 'lessons', 'users']))
+                    <!-- Thanh tìm kiếm ở DƯỚI (Vị trí tương tự bài kiểm tra, khóa học, bài giảng) -->
                     <form method="GET" action="{{ route('admin.dashboard') }}" class="flex items-center gap-2 w-full lg:w-auto justify-end">
                         <input type="hidden" name="tab" value="{{ $currentTab }}">
                         @if(!empty($statusFilter))
@@ -98,7 +106,7 @@
                             <input type="text"
                                    name="search"
                                    value="{{ $search ?? '' }}"
-                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : 'Tìm bài giảng, khóa học, GV...') }}"
+                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : ($currentTab === 'users' ? 'Tìm theo tên, email, vai trò...' : 'Tìm bài giảng, khóa học, GV...')) }}"
                                    class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                             @if(!empty($search))
                                 <a href="{{ route('admin.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
@@ -945,6 +953,19 @@
 
         <!-- TAB 5: USERS -->
         @elseif($currentTab === 'users')
+            @if(!empty($search))
+                <div class="p-3.5 mb-5 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
+                    <div class="flex items-center gap-2 text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-pink-600"></span>
+                        <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $users->total() }} tài khoản khớp)</span>
+                    </div>
+                    <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}"
+                       class="font-bold text-slate-500 hover:text-pink-600 transition">
+                        &times; Xóa tìm kiếm
+                    </a>
+                </div>
+            @endif
+
             <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
                 <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/40">
                     <div>
@@ -960,7 +981,19 @@
 
                 @if($users->isEmpty())
                     <div class="p-16 text-center text-slate-500 text-sm">
-                        Chưa có dữ liệu người dùng.
+                        @if(!empty($search))
+                            <div class="max-w-md mx-auto space-y-3">
+                                <p class="font-bold text-slate-700">Không tìm thấy tài khoản người dùng khớp với "{{ $search }}"</p>
+                                <p class="text-xs text-slate-400">Vui lòng thử tìm kiếm bằng tên, email hoặc vai trò khác (ví dụ: "admin", "giảng viên", "học viên").</p>
+                                <div class="pt-2">
+                                    <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                                        Xóa tìm kiếm
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            Chưa có dữ liệu người dùng.
+                        @endif
                     </div>
                 @else
                     <div class="overflow-x-auto">
@@ -1041,7 +1074,7 @@
                         </table>
                     </div>
                     <div class="p-4 border-t border-slate-100">
-                        {{ $users->appends(['tab' => 'users'])->links() }}
+                        {{ $users->appends(array_filter(['tab' => 'users', 'search' => $search]))->links() }}
                     </div>
                 @endif
             </div>

@@ -347,4 +347,93 @@ class AdminManagementTest extends TestCase
         $resDash->assertSee('Đề thi Quản trị Mạng CCNA');
         $resDash->assertDontSee('Trắc nghiệm Machine Learning Cơ Bản');
     }
+
+    /**
+     * Admin có thể tìm kiếm bài giảng theo tiêu đề, nội dung hoặc khóa học
+     */
+    public function test_admin_can_search_lessons(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher', 'name' => 'Thầy Hoàng']);
+
+        $course1 = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Lập trình Flutter Mobile',
+            'status' => 'approved',
+        ]);
+
+        $course2 = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Lập trình React Native',
+            'status' => 'approved',
+        ]);
+
+        Lesson::create([
+            'course_id' => $course1->id,
+            'title' => 'Bài 1: Cài đặt Flutter SDK',
+            'content_type' => 'text',
+            'content' => 'Hướng dẫn cấu hình môi trường Flutter',
+            'order_number' => 1,
+        ]);
+
+        Lesson::create([
+            'course_id' => $course2->id,
+            'title' => 'Bài 1: Cài đặt NodeJS và React Native CLI',
+            'content_type' => 'text',
+            'content' => 'Hướng dẫn cấu hình môi trường React Native',
+            'order_number' => 1,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'lessons', 'search' => 'Flutter']));
+        $response->assertOk();
+        $response->assertSee('Lập trình Flutter Mobile');
+        $response->assertSee('Bài 1: Cài đặt Flutter SDK');
+        $response->assertDontSee('Lập trình React Native');
+    }
+
+    /**
+     * Admin có thể tìm kiếm tài khoản người dùng theo tên, email hoặc vai trò
+     */
+    public function test_admin_can_search_users(): void
+    {
+        $admin = User::factory()->create([
+            'name' => 'Nguyễn Quản Trị',
+            'email' => 'admin_test@example.com',
+            'role' => 'admin',
+        ]);
+
+        $teacher = User::factory()->create([
+            'name' => 'Trần Giảng Viên',
+            'email' => 'teacher_test@example.com',
+            'role' => 'teacher',
+        ]);
+
+        $student = User::factory()->create([
+            'name' => 'Lê Học Viên',
+            'email' => 'student_test@example.com',
+            'role' => 'student',
+        ]);
+
+        // 1. Tìm theo tên
+        $resName = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'users', 'search' => 'Trần Giảng Viên']));
+        $resName->assertOk();
+        $resName->assertSee('teacher_test@example.com');
+        $resName->assertDontSee('student_test@example.com');
+
+        // 2. Tìm theo email
+        $resEmail = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'users', 'search' => 'student_test@example.com']));
+        $resEmail->assertOk();
+        $resEmail->assertSee('Lê Học Viên');
+        $resEmail->assertDontSee('Trần Giảng Viên');
+
+        // 3. Tìm theo từ khóa vai trò tiếng Việt "giảng viên"
+        $resRole = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'users', 'search' => 'giảng viên']));
+        $resRole->assertOk();
+        $resRole->assertSee('Trần Giảng Viên');
+
+        // 4. Tìm từ khóa không tồn tại -> hiển thị thông báo không tìm thấy
+        $resEmpty = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'users', 'search' => 'KhongTonTai12345']));
+        $resEmpty->assertOk();
+        $resEmpty->assertSee('Không tìm thấy tài khoản người dùng khớp với');
+    }
 }
