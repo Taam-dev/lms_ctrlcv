@@ -242,8 +242,8 @@
                                     $isLessonDone = in_array($lesson->id, $completedLessonIds ?? []);
                                     $isLessonUnlocked = in_array($lesson->id, $unlockedLessonIds ?? []);
                                 @endphp
-                                <div class="p-5 flex items-center justify-between hover:bg-pink-50/30 transition">
-                                    <div class="flex items-center gap-3.5">
+                                <div class="p-5 flex items-center justify-between gap-4 hover:bg-pink-50/30 transition">
+                                    <div class="flex items-center gap-3.5 min-w-0">
                                         <span class="w-8 h-8 rounded-xl {{ $isLessonDone ? 'bg-emerald-600 text-white shadow-xs' : ($isLessonUnlocked ? 'bg-pink-50 text-pink-700 border border-pink-100' : 'bg-slate-100 text-slate-400') }} flex items-center justify-center font-bold text-xs shrink-0 transition">
                                             @if($isLessonDone)
                                                 &check;
@@ -253,21 +253,10 @@
                                                 {{ $lesson->order_number }}
                                             @endif
                                         </span>
-                                        <div>
-                                            <div class="flex items-center gap-2">
-                                                <h4 class="font-bold text-slate-900 text-sm md:text-base {{ ! $isLessonUnlocked && $isEnrolled ? 'text-slate-500' : '' }}">
-                                                    {{ $lesson->title }}
-                                                </h4>
-                                                @if($isLessonDone)
-                                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 whitespace-nowrap">
-                                                        Đã hoàn thành
-                                                    </span>
-                                                @elseif(! $isLessonUnlocked && $isEnrolled)
-                                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-slate-100 text-slate-400 whitespace-nowrap">
-                                                        Chưa mở khóa
-                                                    </span>
-                                                @endif
-                                            </div>
+                                        <div class="min-w-0">
+                                            <h4 class="font-bold text-slate-900 text-sm md:text-base {{ ! $isLessonUnlocked && $isEnrolled ? 'text-slate-500' : '' }}">
+                                                {{ $lesson->title }}
+                                            </h4>
                                             <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 uppercase mt-0.5">
                                                 @if($lesson->content_type === 'video')
                                                     Video bài giảng
@@ -278,8 +267,18 @@
                                         </div>
                                     </div>
 
-                                    <div>
+                                    <div class="flex items-center gap-3 shrink-0">
                                         @if($isEnrolled)
+                                            @if($isLessonDone)
+                                                <span class="px-2.5 py-1 rounded-lg text-[10px] md:text-[11px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200/60 whitespace-nowrap">
+                                                    Đã hoàn thành
+                                                </span>
+                                            @elseif(! $isLessonUnlocked)
+                                                <span class="px-2.5 py-1 rounded-lg text-[10px] md:text-[11px] font-extrabold uppercase bg-slate-100 text-slate-500 whitespace-nowrap">
+                                                    Chưa mở khóa
+                                                </span>
+                                            @endif
+
                                             @if($isLessonUnlocked)
                                                 <a href="{{ route('student.lessons.show', [$course->id, $lesson->id]) }}" 
                                                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl {{ $isLessonDone ? 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200' : 'bg-pink-50 hover:bg-pink-600 text-pink-700 hover:text-white' }} font-bold text-xs transition duration-150 whitespace-nowrap">
