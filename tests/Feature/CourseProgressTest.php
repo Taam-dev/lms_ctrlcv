@@ -208,4 +208,101 @@ class CourseProgressTest extends TestCase
             'lesson_id' => $lessons[0]->id,
         ]);
     }
+
+    public function test_lesson_video_embed_info_parses_various_video_providers(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Test Video Embed',
+            'status' => 'approved',
+        ]);
+
+        // 1. YouTube
+        $ytLesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài Youtube',
+            'content_type' => 'video',
+            'content' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            'order_number' => 1,
+        ]);
+        $ytInfo = $ytLesson->video_embed_info;
+        $this->assertNotNull($ytInfo);
+        $this->assertEquals('youtube', $ytInfo['type']);
+        $this->assertStringContainsString('https://www.youtube.com/embed/dQw4w9WgXcQ', $ytInfo['url']);
+
+        // 2. Facebook
+        $fbLesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài Facebook',
+            'content_type' => 'video',
+            'content' => 'https://www.facebook.com/share/v/1Ex6VmRaLs/',
+            'order_number' => 2,
+        ]);
+        $fbInfo = $fbLesson->video_embed_info;
+        $this->assertNotNull($fbInfo);
+        $this->assertEquals('facebook', $fbInfo['type']);
+        $this->assertStringContainsString('https://www.facebook.com/plugins/video.php', $fbInfo['url']);
+        $this->assertStringContainsString(urlencode('https://www.facebook.com/share/v/1Ex6VmRaLs/'), $fbInfo['url']);
+
+        // 3. Google Drive
+        $driveLesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài Drive',
+            'content_type' => 'video',
+            'content' => 'https://drive.google.com/file/d/1AbC2DeFgHiJkLmNoP/view?usp=sharing',
+            'order_number' => 3,
+        ]);
+        $driveInfo = $driveLesson->video_embed_info;
+        $this->assertNotNull($driveInfo);
+        $this->assertEquals('drive', $driveInfo['type']);
+        $this->assertEquals('https://drive.google.com/file/d/1AbC2DeFgHiJkLmNoP/preview', $driveInfo['url']);
+
+        // 4. Direct video (.mp4)
+        $mp4Lesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài MP4',
+            'content_type' => 'video',
+            'content' => 'https://example.com/videos/sample.mp4',
+            'order_number' => 4,
+        ]);
+        $mp4Info = $mp4Lesson->video_embed_info;
+        $this->assertNotNull($mp4Info);
+        $this->assertEquals('direct', $mp4Info['type']);
+        $this->assertEquals('https://example.com/videos/sample.mp4', $mp4Info['url']);
+    }
+
+    public function test_lesson_show_page_renders_facebook_video_and_no_stacked_header(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'PUBG Loot Do Course',
+            'status' => 'approved',
+        ]);
+
+        $lesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài 1: Cẩm Nang Loot Đồ',
+            'content_type' => 'video',
+            'content' => 'https://www.facebook.com/share/v/1Ex6VmRaLs/',
+            'order_number' => 1,
+        ]);
+
+        $student = User::factory()->create();
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('student.lessons.show', [$course->id, $lesson->id]));
+
+        $response->assertOk();
+        // Kiểm tra iframe video facebook được render trực tiếp
+        $response->assertSee('facebook.com/plugins/video.php', false);
+        // Kiểm tra có nút Làm bài Quizzes
+        $response->assertSee('Làm bài Quizzes');
+        // Kiểm tra có tiến độ bên sidebar
+        $response->assertSee('Tiến độ khóa học');
+    }
 }

@@ -61,29 +61,6 @@
             </div>
             
             <div class="flex items-center gap-3">
-                @php
-                    $progress = max(0, min(100, (int) ($progressPercent ?? 0)));
-                    $circumference = 2 * M_PI * 16;
-                    $dashoffset = $circumference - ($progress / 100) * $circumference;
-                @endphp
-                <div class="flex items-center gap-3 bg-white border border-pink-100 px-3 py-1.5 rounded-2xl shadow-xs">
-                    <div class="relative w-9 h-9 flex items-center justify-center shrink-0" title="Tiến độ: {{ $progress }}%">
-                        <svg class="w-9 h-9 -rotate-90 transform" viewBox="0 0 38 38">
-                            <circle cx="19" cy="19" r="16" stroke="currentColor" stroke-width="3.5" fill="transparent" class="text-pink-100" />
-                            <circle cx="19" cy="19" r="16" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="transparent"
-                                    class="{{ $progress >= 100 ? 'text-emerald-500' : 'text-pink-600' }} transition-all duration-500"
-                                    style="stroke-dasharray: {{ $circumference }}; stroke-dashoffset: {{ $dashoffset }};" />
-                        </svg>
-                        <span class="absolute font-black text-[10px] {{ $progress >= 100 ? 'text-emerald-700' : 'text-slate-900' }}">
-                            {{ $progress }}%
-                        </span>
-                    </div>
-                    <div class="text-left text-xs leading-tight pr-1 hidden sm:block">
-                        <span class="block text-[9px] uppercase font-black text-pink-600 tracking-wider">Tiến độ</span>
-                        <span class="font-bold text-slate-800">{{ $completedCount }}/{{ $totalLessons }} bài</span>
-                    </div>
-                </div>
-
                 <a href="{{ route('student.quizzes.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold transition">
                     Làm bài Quizzes
                 </a>
@@ -100,33 +77,61 @@
                     
                     @if($lesson->content_type === 'video')
                         @php
-                            // Chuyển đổi link youtube thông thường sang link embed nếu có
-                            $embedUrl = null;
-                            if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i', $lesson->content, $matches)) {
-                                $embedUrl = 'https://www.youtube.com/embed/' . $matches[1];
-                            }
+                            $embedInfo = $lesson->video_embed_info;
                         @endphp
 
                         <div class="space-y-4">
-                            @if($embedUrl)
-                                <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
-                                    <iframe class="absolute inset-0 w-full h-full" src="{{ $embedUrl }}" title="{{ $lesson->title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                </div>
-                            @endif
-
-                            <div class="p-4 rounded-2xl bg-pink-50/80 border border-pink-200/80">
-                                <div class="flex items-center justify-between gap-2">
-                                    <div class="text-xs text-slate-600">
-                                        <span class="font-bold text-slate-800 block">Liên kết video bài giảng:</span>
-                                        <a href="{{ $lesson->content }}" target="_blank" class="text-pink-600 hover:underline break-all font-medium mt-0.5 block">
-                                            {{ $lesson->content }}
-                                        </a>
+                            @if($embedInfo && in_array($embedInfo['type'], ['youtube', 'facebook', 'drive', 'vimeo', 'loom', 'direct', 'iframe']))
+                                @if($embedInfo['type'] === 'direct')
+                                    <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md border border-slate-800">
+                                        <video controls class="w-full h-full object-contain" preload="metadata">
+                                            <source src="{{ $embedInfo['url'] }}">
+                                            Trình duyệt của bạn không hỗ trợ phát thẻ video trực tiếp.
+                                        </video>
                                     </div>
-                                    <a href="{{ $lesson->content }}" target="_blank" class="shrink-0 px-3 py-1.5 rounded-xl bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 transition">
-                                        Mở video &rarr;
+                                @else
+                                    <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 shadow-md border border-slate-800">
+                                        <iframe class="absolute inset-0 w-full h-full"
+                                                src="{{ $embedInfo['url'] }}"
+                                                title="{{ $lesson->title }}"
+                                                frameborder="0"
+                                                style="border:none;overflow:hidden"
+                                                scrolling="no"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowfullscreen>
+                                        </iframe>
+                                    </div>
+                                @endif
+
+                                <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-pink-50/60 border border-pink-100 text-xs text-slate-600">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-pink-600 text-white font-black text-xs shrink-0">
+                                            ▶
+                                        </span>
+                                        <span class="truncate font-medium text-slate-700">
+                                            Nguồn video: <a href="{{ $embedInfo['original_url'] }}" target="_blank" rel="noopener noreferrer" class="text-pink-600 hover:underline font-semibold">{{ $embedInfo['original_url'] }}</a>
+                                        </span>
+                                    </div>
+                                    <a href="{{ $embedInfo['original_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-pink-200 text-pink-700 hover:bg-pink-600 hover:text-white font-bold transition shrink-0 shadow-2xs">
+                                        <span>Mở video gốc</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                     </a>
                                 </div>
-                            </div>
+                            @else
+                                <div class="p-6 rounded-2xl bg-pink-50/80 border border-pink-200/80 text-center space-y-3">
+                                    <div class="w-12 h-12 mx-auto rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center text-xl font-bold">
+                                        🎬
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-sm">Liên kết video bài giảng</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5 break-all">{{ $lesson->content }}</p>
+                                    </div>
+                                    <a href="{{ $lesson->content }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 shadow-md shadow-pink-600/25 transition">
+                                        <span>Mở video bài giảng</span>
+                                        &rarr;
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     @else
                         <div class="prose max-w-none text-slate-800 text-base leading-relaxed space-y-4">
@@ -212,6 +217,12 @@
                             {{ $allLessons->count() }} bài
                         </span>
                     </h3>
+
+                    @php
+                        $progress = max(0, min(100, (int) ($progressPercent ?? 0)));
+                        $circumference = 2 * M_PI * 16;
+                        $dashoffset = $circumference - ($progress / 100) * $circumference;
+                    @endphp
 
                     <!-- Hình tròn tiến độ bên sidebar dạng hàng ngang -->
                     <div class="mb-5 p-3.5 rounded-2xl bg-pink-50/80 border border-pink-100 flex items-center justify-between gap-3">
