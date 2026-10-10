@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -197,5 +199,99 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_user_can_change_email_with_correct_password(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'original@example.com',
+            'password' => bcrypt('correct-password'),
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile/email', [
+                'email' => 'new-email@example.com',
+                'password' => 'correct-password',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('new-email@example.com', $user->email);
+        $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_user_cannot_change_email_with_incorrect_password(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'original@example.com',
+            'password' => bcrypt('correct-password'),
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile/email', [
+                'email' => 'new-email@example.com',
+                'password' => 'wrong-password',
+            ]);
+
+        $response
+            ->assertSessionHasErrorsIn('changeEmail', 'password');
+
+        $user->refresh();
+
+        $this->assertSame('original@example.com', $user->email);
+    }
+
+    public function test_user_cannot_change_email_to_already_used_email(): void
+    {
+        $existingUser = User::factory()->create([
+            'email' => 'taken@example.com',
+        ]);
+
+        $user = User::factory()->create([
+            'email' => 'original@example.com',
+            'password' => bcrypt('correct-password'),
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile/email', [
+                'email' => 'taken@example.com',
+                'password' => 'correct-password',
+            ]);
+
+        $response
+            ->assertSessionHasErrorsIn('changeEmail', [
+                'email' => 'Email đã được sử dụng',
+            ]);
+
+        $user->refresh();
+
+        $this->assertSame('original@example.com', $user->email);
+    }
+
+    public function test_user_can_request_password_reset_link_to_original_email_from_profile(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'email' => 'original@example.com',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson('/profile/forgot-password');
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        Notification::assertSentTo($user, ResetPassword::class);
     }
 }

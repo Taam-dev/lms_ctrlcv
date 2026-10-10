@@ -56,20 +56,64 @@
                     </div>
 
                     <!-- Email -->
-                    <div>
-                        <label for="email" class="block font-bold text-neutral-300 text-xs uppercase tracking-wider mb-2">
-                            Địa chỉ Email
-                        </label>
+                    <div x-data="{
+                        email: '{{ old('email', '') }}',
+                        emailError: '',
+                        isChecking: false,
+                        checkEmail() {
+                            const val = (this.email || '').trim().toLowerCase();
+                            if (!val || !val.includes('@') || !val.includes('.')) {
+                                this.emailError = '';
+                                return;
+                            }
+                            this.isChecking = true;
+                            fetch('{{ route('check-email') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ email: val })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                this.isChecking = false;
+                                if (data.exists) {
+                                    this.emailError = 'Email đã được sử dụng';
+                                } else {
+                                    this.emailError = '';
+                                }
+                            })
+                            .catch(() => {
+                                this.isChecking = false;
+                            });
+                        }
+                    }" x-init="if (email) checkEmail()">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="email" class="block font-bold text-neutral-300 text-xs uppercase tracking-wider">
+                                Địa chỉ Email
+                            </label>
+                            <span x-show="isChecking" class="text-[11px] text-neutral-500 animate-pulse">
+                                Đang kiểm tra...
+                            </span>
+                        </div>
                         <input
                             id="email"
                             type="email"
                             name="email"
-                            value="{{ old('email') }}"
+                            x-model="email"
+                            @input.debounce.350ms="checkEmail()"
+                            @blur="checkEmail()"
                             required
                             autocomplete="username"
                             placeholder="email@example.com"
                             class="block w-full rounded-xl border border-neutral-800 bg-neutral-900/90 px-4 py-3 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition duration-150"
+                            :class="{ 'border-rose-500/70 ring-1 ring-rose-500/30': emailError }"
                         />
+                        <template x-if="emailError">
+                            <p class="mt-1.5 text-xs text-rose-400 font-medium flex items-center gap-1.5" x-text="emailError"></p>
+                        </template>
                         <x-input-error :messages="$errors->get('email')" class="mt-1.5 text-xs text-rose-400" />
                     </div>
                 </div>

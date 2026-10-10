@@ -1,4 +1,71 @@
-<section>
+<section x-data="{
+    showEmailModal: {{ $errors->changeEmail->isNotEmpty() || session('email_modal_open') || session('status') === 'reset-link-sent' ? 'true' : 'false' }},
+    showPassword: false,
+    newEmail: '{{ old('email', '') }}',
+    newEmailError: '',
+    isSendingReset: false,
+    resetSentMessage: '{{ session('reset_message', '') }}',
+    resetErrorMessage: '',
+
+    checkNewEmail() {
+        const val = (this.newEmail || '').trim().toLowerCase();
+        if (!val || !val.includes('@') || !val.includes('.')) {
+            this.newEmailError = '';
+            return;
+        }
+        if (val === '{{ strtolower($user->email) }}') {
+            this.newEmailError = 'Vui lòng nhập địa chỉ email khác với email hiện tại.';
+            return;
+        }
+        fetch('{{ route('check-email') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email: val })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.exists) {
+                this.newEmailError = 'Email đã được sử dụng';
+            } else {
+                this.newEmailError = '';
+            }
+        })
+        .catch(() => {});
+    },
+
+    sendResetLink() {
+        if (this.isSendingReset) return;
+        this.isSendingReset = true;
+        this.resetSentMessage = '';
+        this.resetErrorMessage = '';
+
+        fetch('{{ route('profile.forgot-password') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            this.isSendingReset = false;
+            if (data.success) {
+                this.resetSentMessage = data.message || 'Đã gửi liên kết đặt lại mật khẩu về email gốc ({{ $user->email }}). Vui lòng kiểm tra hộp thư!';
+            } else {
+                this.resetErrorMessage = data.message || 'Không thể gửi email đặt lại mật khẩu.';
+            }
+        })
+        .catch(() => {
+            this.isSendingReset = false;
+            this.resetErrorMessage = 'Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau.';
+        });
+    }
+}">
     <header>
         <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
             
@@ -446,20 +513,58 @@
 
         <!-- Email -->
         <div>
-            <label for="email" class="block font-medium text-sm text-slate-700 mb-1">
-                Địa chỉ Email <span class="text-rose-500">*</span>
-            </label>
-            <input id="email" 
-                   name="email" 
-                   type="email" 
-                   class="block w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition duration-150" 
-                   value="{{ old('email', $user->email) }}" 
-                   required 
-                   autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            <div class="flex items-center justify-between mb-1.5">
+                <label class="block font-medium text-sm text-slate-700">
+                    Địa chỉ Email <span class="text-xs font-normal text-slate-400">(Mail gốc tài khoản)</span>
+                </label>
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Mail gốc bảo mật</span>
+                </span>
+            </div>
+
+            <!-- Hidden input để form cập nhật thông tin cá nhân chính vẫn giữ nguyên $user->email -->
+            <input type="hidden" name="email" value="{{ $user->email }}">
+
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                        </svg>
+                    </div>
+                    <input type="email" 
+                           value="{{ $user->email }}" 
+                           disabled 
+                           readonly 
+                           class="block w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 select-all cursor-not-allowed" />
+                </div>
+
+                <!-- Nút Thay đổi Email -->
+                <button type="button" 
+                        id="open-change-email-btn"
+                        @click="showEmailModal = true"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-sm transition duration-150 shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    <span>Đổi Email</span>
+                </button>
+            </div>
+
+            @if (session('status') === 'email-updated')
+                <div class="mt-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Địa chỉ email đã được thay đổi thành công!</span>
+                </div>
+            @endif
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div class="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800">
+                <div class="mt-2.5 p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800">
                     <p>
                         Địa chỉ email của bạn chưa được xác minh.
                         <button form="send-verification" class="underline font-semibold text-amber-900 hover:text-amber-700 ms-1">
@@ -479,7 +584,6 @@
         <!-- Submit Button -->
         <div class="flex items-center gap-4 pt-1">
             <button type="submit" class="inline-flex items-center justify-center px-4 py-2.5 bg-pink-600 hover:bg-pink-700 text-white font-semibold text-sm rounded-xl shadow-sm shadow-pink-500/30 transition duration-150 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2">
-                
                 Lưu thay đổi
             </button>
 
@@ -489,10 +593,166 @@
                      x-transition
                      x-init="setTimeout(() => show = false, 3000)"
                      class="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                    
                     Đã cập nhật hồ sơ thành công!
                 </div>
             @endif
         </div>
     </form>
+
+    <!-- ============================================================= -->
+    <!-- MODAL ĐỔI EMAIL - YÊU CẦU NHẬP MẬT KHẨU / GỬI VỀ MAIL GỐC    -->
+    <!-- ============================================================= -->
+    <div x-show="showEmailModal" 
+         x-transition.opacity
+         class="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+         style="display: none;">
+        
+        <div @click.away="showEmailModal = false" 
+             class="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-pink-100 border border-pink-200 flex items-center justify-center text-pink-600 shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 tracking-tight">
+                            Thay đổi địa chỉ Email
+                        </h3>
+                        <p class="text-xs text-slate-500">
+                            Mail gốc hiện tại: <span class="font-semibold text-slate-700">{{ $user->email }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button" 
+                        @click="showEmailModal = false"
+                        class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition text-xl leading-none">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form method="POST" action="{{ route('profile.email.update') }}" class="p-6 space-y-4">
+                @csrf
+                @method('patch')
+
+                <!-- Thông báo gửi link reset mật khẩu thành công -->
+                <template x-if="resetSentMessage">
+                    <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-start gap-2.5">
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p class="font-bold text-emerald-900">Đã gửi email khôi phục mật khẩu!</p>
+                            <p x-text="resetSentMessage" class="mt-0.5"></p>
+                            <p class="mt-1 text-[11px] text-emerald-700">
+                                Vui lòng kiểm tra hộp thư đến (hoặc hòm thư Spam) của <strong>{{ $user->email }}</strong>, nhấp vào liên kết để đổi lại mật khẩu của bạn.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="resetErrorMessage">
+                    <div class="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-start gap-2">
+                        <svg class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p x-text="resetErrorMessage"></p>
+                    </div>
+                </template>
+
+                <!-- Input Email Mới -->
+                <div>
+                    <label for="modal_new_email" class="block font-bold text-xs uppercase tracking-wider text-slate-700 mb-1.5">
+                        Địa chỉ Email mới <span class="text-rose-500">*</span>
+                    </label>
+                    <input id="modal_new_email"
+                           name="email"
+                           type="email"
+                           x-model="newEmail"
+                           @input.debounce.350ms="checkNewEmail()"
+                           @blur="checkNewEmail()"
+                           required
+                           placeholder="nhap-email-moi@example.com"
+                           class="block w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition duration-150"
+                           :class="{ 'border-rose-400 ring-1 ring-rose-200': newEmailError }" />
+                    <template x-if="newEmailError">
+                        <p class="mt-1.5 text-xs text-rose-500 font-medium" x-text="newEmailError"></p>
+                    </template>
+                    <x-input-error :messages="$errors->changeEmail->get('email')" class="mt-1.5 text-xs text-rose-500" />
+                </div>
+
+                <!-- Input Mật khẩu hiện tại -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="modal_current_password" class="block font-bold text-xs uppercase tracking-wider text-slate-700">
+                            Mật khẩu hiện tại <span class="text-rose-500">*</span>
+                        </label>
+
+                        <!-- Nút Quên mật khẩu: Gửi mail về mail gốc -->
+                        <button type="button"
+                                @click="sendResetLink()"
+                                :disabled="isSendingReset"
+                                class="text-xs font-semibold text-pink-600 hover:text-pink-700 hover:underline disabled:opacity-50 transition flex items-center gap-1 cursor-pointer">
+                            <span x-show="!isSendingReset">Quên mật khẩu?</span>
+                            <span x-show="isSendingReset" class="inline-flex items-center gap-1 text-slate-500">
+                                <svg class="animate-spin h-3 w-3 text-pink-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span>Đang gửi mail...</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input id="modal_current_password"
+                               name="password"
+                               :type="showPassword ? 'text' : 'password'"
+                               type="password"
+                               required
+                               placeholder="Nhập mật khẩu hiện tại của bạn"
+                               class="block w-full px-3.5 py-2.5 pr-11 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition duration-150" />
+                        <button type="button"
+                                @click="showPassword = !showPassword"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            <svg x-show="!showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg x-show="showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 1.053 0 2.062.18 3 .512M7.5 7.5l9 9M10.125 10.125a3 3 0 114.25 4.25" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <p class="mt-1 text-[11px] text-slate-500">
+                        Vì lý do bảo mật, bạn cần nhập mật khẩu hiện tại trước khi hoàn tất đổi email. Nếu quên, nhấn <strong>Quên mật khẩu?</strong> ở trên để nhận thư khôi phục về mail gốc.
+                    </p>
+                    <x-input-error :messages="$errors->changeEmail->get('password')" class="mt-1.5 text-xs text-rose-500" />
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="button"
+                            @click="showEmailModal = false"
+                            class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider transition cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            :disabled="newEmailError !== ''"
+                            class="px-5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 active:scale-[0.98] text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-pink-500/25 transition disabled:opacity-50 cursor-pointer flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Xác nhận đổi Email</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </section>

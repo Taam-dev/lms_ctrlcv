@@ -173,6 +173,10 @@ class DashboardController extends Controller
             return back()->with('error', 'Bạn không thể tự hạ quyền Quản trị viên của chính tài khoản mình đang sử dụng!');
         }
 
+        if ($user->role === 'admin' && $validated['role'] !== 'admin') {
+            return back()->with('error', 'Bạn không được quyền hạ phân quyền của Quản trị viên khác!');
+        }
+
         $rolesMap = [
             'admin' => 'Quản trị viên',
             'teacher' => 'Giảng viên',

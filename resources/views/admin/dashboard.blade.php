@@ -1052,21 +1052,30 @@
                                             {{ $user->created_at->format('d/m/Y H:i') }}
                                         </td>
                                         <td class="py-4 px-6 text-center whitespace-nowrap">
-                                            <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-2 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">
-                                                @csrf
-                                                @method('PATCH')
-                                                <select name="role" class="text-xs font-medium py-1.5 pl-3 pr-8 w-36 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
-                                                    <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Học viên</option>
-                                                    <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }}>Giảng viên</option>
-                                                    <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
-                                                </select>
-                                                <button type="submit" class="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0" title="Cập nhật vai trò">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            @if($user->role === 'admin')
+                                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200" title="{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Không thể hạ phân quyền Quản trị viên khác trừ khi thay đổi trực tiếp trong database' }}">
+                                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                                     </svg>
-                                                    Lưu
-                                                </button>
-                                            </form>
+                                                    <span>{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Cố định (Chỉ đổi trong DB)' }}</span>
+                                                </div>
+                                            @else
+                                                <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-2 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <select name="role" class="text-xs font-medium py-1.5 pl-3 pr-8 w-36 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
+                                                        <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Học viên</option>
+                                                        <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }}>Giảng viên</option>
+                                                        <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
+                                                    </select>
+                                                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0" title="Cập nhật vai trò">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Lưu
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

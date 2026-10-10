@@ -40,6 +40,8 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/email', [ProfileController::class, 'updateEmail'])->name('profile.email.update');
+    Route::post('/profile/forgot-password', [ProfileController::class, 'sendPasswordResetLink'])->name('profile.forgot-password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Route học viên đăng ký khóa học và học bài giảng (hỗ trợ cả slug chuẩn SEO và ID)

@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -69,6 +73,63 @@ class ProfileController extends Controller
         $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's email address with current password confirmation.
+     */
+    public function updateEmail(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('changeEmail', [
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique(User::class)->ignore($request->user()->id),
+            ],
+            'password' => ['required', 'current_password'],
+        ], [
+            'email.required' => 'Vui lòng nhập địa chỉ email mới.',
+            'email.email' => 'Địa chỉ email không hợp lệ.',
+            'email.unique' => 'Email đã được sử dụng',
+            'password.required' => 'Vui lòng nhập mật khẩu hiện tại để xác nhận đổi email.',
+            'password.current_password' => 'Mật khẩu hiện tại không chính xác.',
+        ]);
+
+        $user = $request->user();
+        $user->email = $request->email;
+        $user->email_verified_at = null;
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('status', 'email-updated');
+    }
+
+    /**
+     * Send password reset link to user's original email.
+     */
+    public function sendPasswordResetLink(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        $message = $status === Password::RESET_LINK_SENT
+            ? 'Đã gửi liên kết đổi mật khẩu về email gốc ('.$user->email.'). Vui lòng kiểm tra hộp thư để đổi lại mật khẩu.'
+            : 'Không thể gửi email đặt lại mật khẩu: '.($status ? __($status) : '');
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => $status === Password::RESET_LINK_SENT,
+                'message' => $message,
+            ]);
+        }
+
+        return Redirect::route('profile.edit')
+            ->with('status', 'reset-link-sent')
+            ->with('reset_message', $message)
+            ->with('email_modal_open', true);
     }
 
     /**

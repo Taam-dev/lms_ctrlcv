@@ -31,4 +31,16 @@ class ProfileUpdateRequest extends FormRequest
             'remove_avatar' => ['nullable', 'boolean'],
         ];
     }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email.unique' => 'Email đã được sử dụng',
+        ];
+    }
 }

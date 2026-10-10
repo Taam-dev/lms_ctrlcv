@@ -232,6 +232,33 @@ class AdminManagementTest extends TestCase
     }
 
     /**
+     * Admin không được quyền hạ phân quyền của admin khác
+     */
+    public function test_admin_cannot_demote_another_admin(): void
+    {
+        $currentAdmin = User::factory()->create(['role' => 'admin']);
+        $otherAdmin = User::factory()->create(['name' => 'Admin Boss', 'role' => 'admin']);
+
+        $response = $this->actingAs($currentAdmin)->patch(route('admin.users.update-role', $otherAdmin), [
+            'role' => 'teacher',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('users', [
+            'id' => $otherAdmin->id,
+            'role' => 'admin',
+        ]);
+        $this->assertTrue($otherAdmin->fresh()->isAdmin());
+
+        // Kiểm tra trên giao diện hiển thị trạng thái cố định (Chỉ đổi trong DB)
+        $dashboardResponse = $this->actingAs($currentAdmin)->get(route('admin.dashboard', ['tab' => 'users']));
+        $dashboardResponse->assertOk();
+        $dashboardResponse->assertSee('Admin Boss');
+        $dashboardResponse->assertSee('Cố định (Chỉ đổi trong DB)');
+    }
+
+    /**
      * Người dùng không phải admin không thể gọi route cập nhật vai trò
      */
     public function test_non_admin_cannot_update_user_role(): void
