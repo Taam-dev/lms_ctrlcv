@@ -15,17 +15,9 @@
 
             <!-- Header -->
             <div class="text-center mb-8">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-950 border border-neutral-800 text-neutral-400 text-xs font-medium mb-3">
-                    <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-                    <span>Gia nhập cộng đồng Ctrl C+V</span>
-                </div>
-
                 <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     Tạo tài khoản mới
                 </h1>
-                <p class="mt-2 text-xs sm:text-sm text-neutral-400">
-                    Đăng ký để bắt đầu trải nghiệm học tập và thử sức với các bài thi trắc nghiệm Quizzes.
-                </p>
             </div>
 
             <!-- Form Grid: 2 Columns -->
