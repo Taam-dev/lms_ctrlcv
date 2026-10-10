@@ -1055,7 +1055,7 @@
                                             <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-2 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">
                                                 @csrf
                                                 @method('PATCH')
-                                                <select name="role" class="text-xs font-medium py-1.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
+                                                <select name="role" class="text-xs font-medium py-1.5 pl-3 pr-8 w-36 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
                                                     <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Học viên</option>
                                                     <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }}>Giảng viên</option>
                                                     <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
