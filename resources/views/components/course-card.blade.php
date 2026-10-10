@@ -66,12 +66,27 @@
         </div>
 
         <div class="mt-auto pt-4 border-t border-pink-50">
-            @if($isEnrolled)
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <!-- Bên dưới góc trái: Hình tròn tiến độ với số % ở giữa -->
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="relative shrink-0" style="width: 40px; height: 40px; min-width: 40px;">
-                            <svg class="-rotate-90 transform" style="width: 40px; height: 40px;" viewBox="0 0 38 38">
+            <div class="flex items-center justify-between gap-3 mb-4">
+                <!-- Thông tin Giảng viên (luôn hiển thị cho cả đã đăng ký và chưa đăng ký) -->
+                <div class="flex items-center gap-2.5 min-w-0">
+                    @if($course->teacher && $course->teacher->avatar_url)
+                        <img src="{{ $course->teacher->avatar_url }}" alt="{{ $teacherName }}" class="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-pink-100">
+                    @else
+                        <div class="w-8 h-8 rounded-full bg-neutral-950 text-pink-500 flex items-center justify-center font-black text-xs shrink-0 ring-2 ring-pink-100">
+                            {{ strtoupper(substr($teacherName, 0, 1)) }}
+                        </div>
+                    @endif
+                    <div class="min-w-0 text-xs leading-tight">
+                        <span class="block text-neutral-400 text-[10px] uppercase font-bold tracking-wider">Giảng viên</span>
+                        <span class="block font-bold text-neutral-800 truncate" title="{{ $teacherName }}">{{ $teacherName }}</span>
+                    </div>
+                </div>
+
+                @if($isEnrolled)
+                    <!-- Bên phải: Tiến độ học với hình tròn % -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="relative shrink-0" style="width: 38px; height: 38px; min-width: 38px;">
+                            <svg class="-rotate-90 transform" style="width: 38px; height: 38px;" viewBox="0 0 38 38">
                                 <circle cx="19" cy="19" r="16" stroke="#fce7f3" stroke-width="3.5" fill="transparent" />
                                 <circle cx="19" cy="19" r="16" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="transparent"
                                         class="{{ $progressPercent >= 100 ? 'text-emerald-500' : 'text-pink-600' }} transition-all duration-500"
@@ -81,45 +96,33 @@
                                 {{ $progressPercent }}%
                             </span>
                         </div>
-                        <div class="leading-tight">
+                        <div class="leading-tight text-right">
                             <span class="block text-[10px] uppercase font-black tracking-wider whitespace-nowrap {{ $progressPercent >= 100 ? 'text-emerald-600' : 'text-pink-600' }}">
-                                {{ $progressPercent >= 100 ? 'Đã hoàn thành' : 'Tiến độ học' }}
+                                {{ $progressPercent >= 100 ? 'Hoàn thành' : 'Tiến độ' }}
                             </span>
                             <span class="block text-xs font-bold text-neutral-800 whitespace-nowrap">
                                 {{ $completedCount }}/{{ $lessonsCount }} bài
                             </span>
                         </div>
                     </div>
-
-                    <!-- Bên phải: Huy hiệu Đã đăng ký dạng hàng ngang -->
+                @else
+                    <!-- Bên phải: Số bài giảng -->
                     <div class="shrink-0 text-right">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap rounded-md">
-                            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                            <span>Đã đăng ký</span>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-neutral-600 bg-neutral-100 rounded-md">
+                            <svg class="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            <span>{{ $lessonsCount }} bài</span>
                         </span>
                     </div>
-                </div>
+                @endif
+            </div>
 
+            @if($isEnrolled)
                 <a href="{{ route('courses.show', $course->slug ?: $course->id) }}"
                    class="flex items-center justify-between w-full px-5 py-3 bg-pink-600 hover:bg-pink-700 text-white text-xs font-extrabold uppercase tracking-[0.14em] transition-colors duration-300 shadow-md shadow-pink-600/20">
                     <span>{{ $progressPercent >= 100 ? 'Xem lại khóa học' : 'Vào học ngay' }}</span>
                     <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                 </a>
             @else
-                <div class="flex items-center gap-3 mb-4">
-                    @if($course->teacher && $course->teacher->avatar_url)
-                        <img src="{{ $course->teacher->avatar_url }}" alt="{{ $teacherName }}" class="w-8 h-8 rounded-full object-cover shrink-0">
-                    @else
-                        <div class="w-8 h-8 rounded-full bg-neutral-950 text-pink-500 flex items-center justify-center font-black text-xs shrink-0">
-                            {{ strtoupper(substr($teacherName, 0, 1)) }}
-                        </div>
-                    @endif
-                    <div class="min-w-0 text-xs leading-tight">
-                        <span class="block text-neutral-400 text-[10px] uppercase font-bold tracking-wider">Giảng viên</span>
-                        <span class="block font-bold text-neutral-800 truncate">{{ $teacherName }}</span>
-                    </div>
-                </div>
-
                 <a href="{{ route('courses.show', $course->slug ?: $course->id) }}"
                    class="flex items-center justify-between w-full px-5 py-3 bg-neutral-950 group-hover:bg-pink-600 text-white text-xs font-extrabold uppercase tracking-[0.14em] transition-colors duration-300">
                     <span>Xem chi tiết &amp; đăng ký</span>

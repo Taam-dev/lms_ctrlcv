@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -119,5 +120,35 @@ class CoursePagesTest extends TestCase
         $res4->assertOk();
         $res4->assertSee('Không tìm thấy khóa học nào phù hợp');
         $res4->assertSee('TuKhoaKhongTonTai123');
+    }
+
+    public function test_enrolled_course_card_displays_teacher_avatar_and_name(): void
+    {
+        $teacher = User::factory()->teacher()->create([
+            'name' => 'Thầy Giáo Ba',
+            'avatar' => 'https://example.com/avatar-ba.jpg',
+        ]);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa Học Vue 3 Pro',
+            'description' => 'Mô tả chi tiết',
+            'status' => 'approved',
+        ]);
+
+        $student = User::factory()->create(['role' => 'student']);
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('courses.index'));
+
+        $response->assertOk();
+        $response->assertSee('Thầy Giáo Ba');
+        $response->assertSee('https://example.com/avatar-ba.jpg');
+        $response->assertSee('Giảng viên');
+        $response->assertSee('Vào học ngay');
+        $response->assertSee('Tiến độ');
     }
 }

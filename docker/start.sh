@@ -15,7 +15,7 @@ fi
 
 # Đảm bảo các thư mục cache và session tồn tại và có quyền ghi
 echo "==> Cấp quyền thư mục storage và bootstrap/cache..."
-mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache storage/app/public/avatars storage/app/public/courses
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
