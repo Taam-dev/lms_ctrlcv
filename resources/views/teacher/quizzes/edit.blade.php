@@ -84,10 +84,10 @@
                     @php
                         $totalQuestionsCount = $quiz->questions()->count();
                     @endphp
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
                         <div>
-                            <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5">
-                                Thời gian làm bài (Phút) <span class="text-rose-500">*</span>
+                            <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center">
+                                Thời gian làm bài (Phút) <span class="text-rose-500 ml-0.5">*</span>
                             </label>
                             <input type="number" name="duration_minutes" id="duration_minutes" value="{{ old('duration_minutes', $quiz->duration_minutes) }}" min="1" max="300" required 
                                    class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
@@ -98,8 +98,8 @@
                         </div>
 
                         <div>
-                            <label for="passing_score" class="block text-sm font-bold text-slate-900 mb-1.5">
-                                Điểm chuẩn qua môn (Thang 10) <span class="text-rose-500">*</span>
+                            <label for="passing_score" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center">
+                                Điểm chuẩn đạt (Thang 10) <span class="text-rose-500 ml-0.5">*</span>
                             </label>
                             <input type="number" step="0.5" name="passing_score" id="passing_score" value="{{ old('passing_score', $quiz->passing_score) }}" min="0" max="10" required 
                                    class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
@@ -110,7 +110,7 @@
                         </div>
 
                         <div>
-                            <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center justify-between">
+                            <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center justify-between">
                                 <span>Số câu mỗi lượt thi</span>
                                 <span class="text-[11px] font-semibold text-pink-600">Kho: {{ $totalQuestionsCount }} câu</span>
                             </label>
@@ -127,7 +127,7 @@
                     </div>
 
                     <!-- Thời gian mở và hạn chót làm bài kiểm tra -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 p-4.5 rounded-2xl bg-slate-50/70 border border-slate-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label for="starts_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

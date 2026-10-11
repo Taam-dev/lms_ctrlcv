@@ -132,7 +132,7 @@
                 </div>
 
                 <!-- Thời gian mở và hạn chót làm bài kiểm tra -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 p-4.5 rounded-2xl bg-slate-50/70 border border-slate-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label for="starts_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -323,12 +323,14 @@ class QuizController extends Controller
             'api_key' => 'required|string|min:5',
             'model' => 'required|string|min:2',
             'content' => 'required|string|min:10',
-            'count' => 'required|integer|min:1|max:50',
+            'count' => 'required|integer|min:1',
             'difficulty' => 'nullable|string|in:easy,medium,hard,mixed',
         ], [
             'api_key.required' => 'Vui lòng nhập API Key để tiếp tục.',
             'content.required' => 'Vui lòng nhập nội dung tài liệu hoặc chủ đề để AI tạo câu hỏi.',
             'content.min' => 'Nội dung tài liệu cần tối thiểu 10 ký tự.',
+            'count.integer' => 'Số lượng câu hỏi phải là số nguyên (không được nhập số thập phân).',
+            'count.min' => 'Số lượng câu hỏi phải lớn hơn hoặc bằng 1 (không được nhập số âm).',
         ]);
 
         $result = $aiService->generate(

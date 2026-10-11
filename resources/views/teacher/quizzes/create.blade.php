@@ -128,17 +128,14 @@
 
                                 <!-- Option 3: Tạo câu hỏi AI -->
                                 <button type="button" @click="setMode('ai')"
-                                        :class="mode === 'ai' ? 'border-pink-600 bg-pink-50/70 ring-2 ring-pink-500/20 text-pink-900 shadow-xs' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
-                                        class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5 group">
-                                    <div :class="mode === 'ai' ? 'bg-gradient-to-tr from-pink-600 to-indigo-600 text-white' : 'bg-slate-200 text-slate-600 group-hover:bg-pink-100 group-hover:text-pink-600'" 
+                                        :class="mode === 'ai' ? 'border-pink-600 bg-pink-50/60 ring-2 ring-pink-500/20 text-pink-900' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5">
+                                    <div :class="mode === 'ai' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" 
                                          class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                     </div>
                                     <div>
-                                        <div class="font-bold text-xs flex items-center gap-1">
-                                            <span>Tạo bằng AI</span>
-                                            <span class="px-1 py-0.2 rounded-full text-[8px] font-extrabold uppercase bg-pink-600 text-white leading-tight">Mới</span>
-                                        </div>
+                                        <div class="font-bold text-xs">Tạo bằng AI</div>
                                         <div class="text-[10px] text-slate-500 mt-0.5">Gemini, OpenAI, Groq</div>
                                     </div>
                                 </button>
@@ -350,24 +347,6 @@
 
                         <!-- PANEL 4: TẠO CÂU HỎI TỰ ĐỘNG BẰNG AI -->
                         <div x-show="mode === 'ai'" x-transition class="space-y-5 pt-3 border-t border-slate-100">
-                            <!-- Banner Giới thiệu tính năng AI -->
-                            <div class="p-4 rounded-2xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 border border-pink-200/80 flex items-start gap-3.5">
-                                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                </div>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                        <span>Trợ lý AI tạo câu hỏi trắc nghiệm tự động</span>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-pink-600 text-white">Trí tuệ nhân tạo</span>
-                                    </h4>
-                                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                        Gắn mã API Key của bạn (hỗ trợ Google Gemini, OpenAI, Groq, OpenRouter), chọn mô hình và dán tài liệu bài học. AI sẽ tự động phân tích và tạo bộ câu hỏi trắc nghiệm 4 đáp án kèm lời giải chi tiết.
-                                    </p>
-                                </div>
-                            </div>
-
                             <!-- Khối 1: Chọn Nhà cung cấp AI & Mô hình -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
@@ -474,16 +453,19 @@
                             <!-- Khối 4: Cấu hình số lượng & mức độ câu hỏi AI -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-pink-50/50 border border-pink-100">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-800 mb-1">
+                                    <label for="ai_question_count_input" class="block text-xs font-bold text-slate-800 mb-1">
                                         Số lượng câu hỏi muốn tạo
                                     </label>
-                                    <select x-model="aiQuestionCount" class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
-                                        <option value="5">5 câu hỏi</option>
-                                        <option value="10" selected>10 câu hỏi</option>
-                                        <option value="15">15 câu hỏi</option>
-                                        <option value="20">20 câu hỏi</option>
-                                        <option value="30">30 câu hỏi (Ngân hàng đề)</option>
-                                    </select>
+                                    <input type="number" 
+                                           id="ai_question_count_input"
+                                           min="1" 
+                                           step="1"
+                                           x-model.number="aiQuestionCount"
+                                           @keydown="if(['-','+','e','E','.',','].includes($event.key)){ $event.preventDefault(); }"
+                                           @input="if(aiQuestionCount !== '' && aiQuestionCount !== null) { aiQuestionCount = Math.max(1, Math.floor(Math.abs(aiQuestionCount) || 1)); }"
+                                           placeholder="Nhập số câu (VD: 10, 20...)"
+                                           class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
+                                    <p class="text-[10px] text-slate-400 mt-1">Số nguyên dương (không nhập số âm, float).</p>
                                 </div>
 
                                 <div>
@@ -539,11 +521,11 @@
                                     Mẹo: Bạn có thể tạo nhiều đợt câu hỏi từ các tài liệu khác nhau để tạo ngân hàng đề phong phú.
                                 </span>
                                 <button type="button" @click="generateWithAi()" :disabled="isGeneratingAi"
-                                        :class="isGeneratingAi ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-pink-500/30 hover:scale-[1.01] active:scale-[0.99]'"
-                                        class="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-600 via-rose-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider shadow-md transition flex items-center gap-2">
+                                        :class="isGeneratingAi ? 'opacity-70 cursor-not-allowed' : 'hover:bg-pink-700 active:scale-[0.99]'"
+                                        class="px-6 py-2.5 rounded-xl bg-pink-600 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition flex items-center justify-center">
                                     <template x-if="isGeneratingAi">
                                         <span class="inline-flex items-center gap-2">
-                                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -551,12 +533,7 @@
                                         </span>
                                     </template>
                                     <template x-if="!isGeneratingAi">
-                                        <span class="inline-flex items-center gap-2">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                            <span>Tạo câu hỏi với AI ✨</span>
-                                        </span>
+                                        <span>Tạo câu hỏi với AI</span>
                                     </template>
                                 </button>
                             </div>
@@ -596,10 +573,10 @@
                         </div>
 
                         <!-- 3 Cột: Thời gian làm bài & Điểm đạt & Số lượng câu hỏi mỗi lượt thi -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
                             <div>
-                                <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5">
-                                    Thời gian làm bài (Phút) <span class="text-rose-500">*</span>
+                                <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center">
+                                    Thời gian làm bài (Phút) <span class="text-rose-500 ml-0.5">*</span>
                                 </label>
                                 <input type="number" name="duration_minutes" id="duration_minutes" x-model="durationMinutes" min="1" max="300" required 
                                        class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
@@ -610,8 +587,8 @@
                             </div>
 
                             <div>
-                                <label for="passing_score" class="block text-sm font-bold text-slate-900 mb-1.5">
-                                    Điểm chuẩn qua môn (Thang 10) <span class="text-rose-500">*</span>
+                                <label for="passing_score" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center">
+                                    Điểm chuẩn đạt (Thang 10) <span class="text-rose-500 ml-0.5">*</span>
                                 </label>
                                 <input type="number" step="0.5" name="passing_score" id="passing_score" x-model="passingScore" min="0" max="10" required 
                                        class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
@@ -622,9 +599,9 @@
                             </div>
 
                             <div>
-                                <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center justify-between">
+                                <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center justify-between">
                                     <span>Số câu mỗi lượt thi</span>
-                                    <span class="text-[11px] font-normal text-pink-600 font-semibold" x-show="totalQuestions > 0" x-text="'Kho: ' + totalQuestions + ' câu'"></span>
+                                    <span class="text-[11px] font-semibold text-pink-600" x-show="totalQuestions > 0" x-text="'Kho: ' + totalQuestions + ' câu'"></span>
                                 </label>
                                 <input type="number" name="question_limit" id="question_limit" x-model="questionLimit" min="1" :max="totalQuestions > 0 ? totalQuestions : ''"
                                        placeholder="Tất cả (mặc định)"
@@ -643,7 +620,7 @@
                         </div>
 
                         <!-- Thời gian mở và hạn chót làm bài kiểm tra -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 p-4.5 rounded-2xl bg-slate-50/70 border border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label for="starts_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
                                     <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -892,6 +869,12 @@
                         return;
                     }
 
+                    const rawCount = Number(this.aiQuestionCount);
+                    if (!this.aiQuestionCount || isNaN(rawCount) || rawCount <= 0 || !Number.isInteger(rawCount)) {
+                        this.aiError = 'Số lượng câu hỏi phải là số nguyên dương hợp lệ (từ 1 trở lên), không được nhập số âm hay số thập phân.';
+                        return;
+                    }
+
                     if (this.aiSaveKeyToBrowser) {
                         try {
                             localStorage.setItem('lms_ai_key_' + this.aiProvider, this.aiApiKey.trim());
@@ -907,7 +890,7 @@
                         api_key: this.aiApiKey.trim(),
                         model: this.aiModel === 'custom' ? this.aiCustomModel.trim() : this.aiModel,
                         content: this.aiContent.trim(),
-                        count: parseInt(this.aiQuestionCount, 10) || 10,
+                        count: Math.floor(rawCount),
                         difficulty: this.aiDifficulty || 'medium'
                     };
 

@@ -636,5 +636,27 @@ class QuizTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['api_key', 'content']);
+
+        // Kiểm tra không chấp nhận số âm
+        $negativeResponse = $this->actingAs($teacher)->postJson(route('teacher.quizzes.generate-ai-questions'), [
+            'provider' => 'gemini',
+            'api_key' => 'valid-api-key',
+            'model' => 'gemini-2.0-flash',
+            'content' => 'Nội dung kiến thức bài học để kiểm tra',
+            'count' => -5,
+        ]);
+        $negativeResponse->assertStatus(422);
+        $negativeResponse->assertJsonValidationErrors(['count']);
+
+        // Kiểm tra không chấp nhận số float (1.2)
+        $floatResponse = $this->actingAs($teacher)->postJson(route('teacher.quizzes.generate-ai-questions'), [
+            'provider' => 'gemini',
+            'api_key' => 'valid-api-key',
+            'model' => 'gemini-2.0-flash',
+            'content' => 'Nội dung kiến thức bài học để kiểm tra',
+            'count' => 1.2,
+        ]);
+        $floatResponse->assertStatus(422);
+        $floatResponse->assertJsonValidationErrors(['count']);
     }
 }
