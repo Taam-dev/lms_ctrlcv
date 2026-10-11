@@ -10,6 +10,7 @@ use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class QuizTest extends TestCase
@@ -658,5 +659,52 @@ class QuizTest extends TestCase
         ]);
         $floatResponse->assertStatus(422);
         $floatResponse->assertJsonValidationErrors(['count']);
+    }
+
+    /**
+     * Endpoint AI quét model kiểm tra validation
+     */
+    public function test_ai_fetch_models_endpoint_validation(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $response = $this->actingAs($teacher)->postJson(route('teacher.quizzes.fetch-ai-models'), [
+            'provider' => 'groq',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['api_key']);
+    }
+
+    /**
+     * Endpoint AI quét model trả về danh sách model thành công từ Groq
+     */
+    public function test_ai_fetch_models_groq_success(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        Http::fake([
+            'https://api.groq.com/openai/v1/models' => Http::response([
+                'data' => [
+                    ['id' => 'llama-3.1-8b-instant', 'active' => true],
+                    ['id' => 'openai/gpt-oss-120b', 'active' => true],
+                    ['id' => 'whisper-large-v3', 'active' => true], // should be filtered
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($teacher)->postJson(route('teacher.quizzes.fetch-ai-models'), [
+            'provider' => 'groq',
+            'api_key' => 'gsk_test1234567890',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'count' => 2,
+        ]);
+        $response->assertJsonFragment(['id' => 'llama-3.1-8b-instant']);
+        $response->assertJsonFragment(['id' => 'openai/gpt-oss-120b']);
+        $response->assertJsonMissing(['id' => 'whisper-large-v3']);
     }
 }

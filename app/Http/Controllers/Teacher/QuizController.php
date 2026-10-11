@@ -355,4 +355,33 @@ class QuizController extends Controller
             'count' => count($result['questions']),
         ]);
     }
+
+    /**
+     * Quét danh sách mô hình AI khả dụng từ nhà cung cấp thông qua API Key.
+     */
+    public function fetchAiModels(Request $request, AiQuizGeneratorService $aiService)
+    {
+        $validated = $request->validate([
+            'provider' => 'required|in:gemini,openai,openrouter,groq',
+            'api_key' => 'required|string|min:5',
+        ], [
+            'api_key.required' => 'Vui lòng nhập API Key để quét danh sách mô hình.',
+            'api_key.min' => 'API Key cần tối thiểu 5 ký tự.',
+        ]);
+
+        try {
+            $models = $aiService->fetchAvailableModels($validated['provider'], $validated['api_key']);
+
+            return response()->json([
+                'success' => true,
+                'models' => $models,
+                'count' => count($models),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
 }

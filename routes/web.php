@@ -74,6 +74,7 @@ Route::middleware(['auth', 'role:teacher'])->prefix('instructor')->name('instruc
     Route::delete('lessons/{lesson}', [TeacherLessonController::class, 'destroy'])->name('lessons.destroy');
 
     Route::post('quizzes/generate-ai-questions', [TeacherQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
+    Route::post('quizzes/fetch-ai-models', [TeacherQuizController::class, 'fetchAiModels'])->name('quizzes.fetch-ai-models');
     Route::resource('quizzes', TeacherQuizController::class);
     Route::get('quizzes/{quiz}/questions', [TeacherQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [TeacherQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
@@ -92,6 +93,7 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     Route::put('lessons/{lesson}', [TeacherLessonController::class, 'update'])->name('lessons.update');
     Route::delete('lessons/{lesson}', [TeacherLessonController::class, 'destroy'])->name('lessons.destroy');
     Route::post('quizzes/generate-ai-questions', [TeacherQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
+    Route::post('quizzes/fetch-ai-models', [TeacherQuizController::class, 'fetchAiModels'])->name('quizzes.fetch-ai-models');
     Route::resource('quizzes', TeacherQuizController::class);
     Route::get('quizzes/{quiz}/questions', [TeacherQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [TeacherQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');

@@ -49,12 +49,14 @@ class AiQuizGeneratorService
             ],
             'groq' => [
                 'name' => 'GroqCloud (LPU)',
-                'description' => 'Nền tảng xử lý AI với tốc độ tính bằng hàng trăm token/giây.',
+                'description' => 'Nền tảng xử lý AI siêu tốc bằng phần cứng Groq LPU.',
                 'placeholder' => 'gsk_...',
                 'models' => [
-                    'llama-3.3-70b-versatile' => 'Llama 3.3 70B Versatile (Khuyên dùng - Cực nhanh & chính xác)',
-                    'llama-3.1-8b-instant' => 'Llama 3.1 8B Instant (Siêu nhẹ & tốc độ cao)',
-                    'mixtral-8x7b-32768' => 'Mixtral 8x7B (Context dài 32k)',
+                    'llama-3.1-8b-instant' => 'Llama 3.1 8B Instant (Khuyên dùng - Cực nhanh & Ổn định)',
+                    'openai/gpt-oss-120b' => 'OpenAI GPT-OSS 120B (Thông minh nhất trên Groq)',
+                    'openai/gpt-oss-20b' => 'OpenAI GPT-OSS 20B (Nhanh & Tối ưu chi phí)',
+                    'deepseek-r1-distill-llama-70b' => 'DeepSeek R1 Distill 70B (Suy luận logic)',
+                    'gemma2-9b-it' => 'Google Gemma 2 9B (Nhẹ & Phản hồi nhanh)',
                 ],
             ],
         ];
@@ -200,6 +202,9 @@ class AiQuizGeneratorService
             if ($response->status() === 401) {
                 throw new Exception('API Key không hợp lệ hoặc không có quyền truy cập. Vui lòng kiểm tra lại API Key.');
             }
+            if ($response->status() === 404) {
+                throw new Exception("Mô hình '{$model}' không tồn tại hoặc đã bị nhà cung cấp gỡ bỏ (deprecated/không được cấp phép cho key này). Vui lòng bấm 'Quét model từ Key' hoặc đổi sang mô hình khác (như llama-3.1-8b-instant, openai/gpt-oss-120b) hoặc dùng Google Gemini.");
+            }
             if ($response->status() === 429) {
                 throw new Exception('Đã vượt quá hạn mức sử dụng (Rate limit / Quota) của nhà cung cấp. Vui lòng thử lại sau hoặc nạp thêm credit.');
             }
@@ -323,5 +328,184 @@ class AiQuizGeneratorService
             'success' => true,
             'questions' => $normalized,
         ];
+    }
+
+    /**
+     * Lấy danh sách các model đang hoạt động trực tiếp từ nhà cung cấp thông qua API Key.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    public function fetchAvailableModels(string $provider, string $apiKey): array
+    {
+        $apiKey = trim($apiKey);
+        if (empty($apiKey)) {
+            throw new Exception('Vui lòng cung cấp API Key để quét danh sách model.');
+        }
+
+        return match ($provider) {
+            'groq' => $this->fetchGroqModels($apiKey),
+            'gemini' => $this->fetchGeminiModels($apiKey),
+            'openai' => $this->fetchOpenAiModels($apiKey),
+            'openrouter' => $this->fetchOpenRouterModels($apiKey),
+            default => throw new Exception("Nhà cung cấp '{$provider}' không hỗ trợ quét model."),
+        };
+    }
+
+    /**
+     * Lấy danh sách model từ Groq.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    protected function fetchGroqModels(string $apiKey): array
+    {
+        $response = Http::timeout(15)
+            ->withHeaders([
+                'Authorization' => 'Bearer '.$apiKey,
+            ])
+            ->get('https://api.groq.com/openai/v1/models');
+
+        if (! $response->successful()) {
+            $errorMsg = $response->json('error.message') ?? $response->body();
+            if ($response->status() === 401) {
+                throw new Exception('Groq API Key không hợp lệ. Vui lòng kiểm tra lại mã API Key.');
+            }
+
+            throw new Exception("Lỗi từ Groq ({$response->status()}): {$errorMsg}");
+        }
+
+        $data = $response->json('data') ?? [];
+        $models = [];
+        foreach ($data as $item) {
+            $id = $item['id'] ?? null;
+            if ($id && ($item['active'] ?? true)) {
+                // Lọc bỏ mô hình whisper xử lý âm thanh không dùng để sinh câu hỏi trắc nghiệm
+                if (str_contains(strtolower($id), 'whisper')) {
+                    continue;
+                }
+                $models[] = [
+                    'id' => $id,
+                    'name' => "{$id} (Khả dụng)",
+                ];
+            }
+        }
+
+        if (empty($models)) {
+            throw new Exception('Không tìm thấy mô hình nào trong tài khoản Groq của bạn.');
+        }
+
+        return $models;
+    }
+
+    /**
+     * Lấy danh sách model từ Google Gemini.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    protected function fetchGeminiModels(string $apiKey): array
+    {
+        $response = Http::timeout(15)
+            ->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
+
+        if (! $response->successful()) {
+            $errorMsg = $response->json('error.message') ?? $response->body();
+            if ($response->status() === 400 && str_contains(strtolower($errorMsg), 'api_key_invalid')) {
+                throw new Exception('Google Gemini API Key không hợp lệ. Vui lòng kiểm tra lại.');
+            }
+
+            throw new Exception("Lỗi từ Google Gemini ({$response->status()}): {$errorMsg}");
+        }
+
+        $data = $response->json('models') ?? [];
+        $models = [];
+        foreach ($data as $item) {
+            $name = $item['name'] ?? '';
+            $methods = $item['supportedGenerationMethods'] ?? [];
+            if (in_array('generateContent', $methods, true)) {
+                $id = str_replace('models/', '', $name);
+                $displayName = $item['displayName'] ?? $id;
+                $models[] = [
+                    'id' => $id,
+                    'name' => "{$displayName} ({$id})",
+                ];
+            }
+        }
+
+        if (empty($models)) {
+            throw new Exception('Không tìm thấy mô hình Gemini khả dụng nào.');
+        }
+
+        return $models;
+    }
+
+    /**
+     * Lấy danh sách model từ OpenAI.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    protected function fetchOpenAiModels(string $apiKey): array
+    {
+        $response = Http::timeout(15)
+            ->withHeaders([
+                'Authorization' => 'Bearer '.$apiKey,
+            ])
+            ->get('https://api.openai.com/v1/models');
+
+        if (! $response->successful()) {
+            $errorMsg = $response->json('error.message') ?? $response->body();
+            if ($response->status() === 401) {
+                throw new Exception('OpenAI API Key không hợp lệ.');
+            }
+
+            throw new Exception("Lỗi từ OpenAI ({$response->status()}): {$errorMsg}");
+        }
+
+        $data = $response->json('data') ?? [];
+        $models = [];
+        foreach ($data as $item) {
+            $id = $item['id'] ?? null;
+            if ($id && (str_starts_with($id, 'gpt-') || str_starts_with($id, 'o1') || str_starts_with($id, 'o3'))) {
+                $models[] = [
+                    'id' => $id,
+                    'name' => "{$id} (Khả dụng)",
+                ];
+            }
+        }
+
+        return $models;
+    }
+
+    /**
+     * Lấy danh sách model từ OpenRouter.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    protected function fetchOpenRouterModels(string $apiKey): array
+    {
+        $response = Http::timeout(15)
+            ->withHeaders([
+                'Authorization' => 'Bearer '.$apiKey,
+            ])
+            ->get('https://openrouter.ai/api/v1/models');
+
+        if (! $response->successful()) {
+            $errorMsg = $response->json('error.message') ?? $response->body();
+
+            throw new Exception("Lỗi từ OpenRouter ({$response->status()}): {$errorMsg}");
+        }
+
+        $data = $response->json('data') ?? [];
+        $models = [];
+        foreach (array_slice($data, 0, 40) as $item) {
+            $id = $item['id'] ?? null;
+            $name = $item['name'] ?? $id;
+            if ($id) {
+                $models[] = [
+                    'id' => $id,
+                    'name' => "{$name} ({$id})",
+                ];
+            }
+        }
+
+        return $models;
     }
 }

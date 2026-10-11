@@ -357,7 +357,7 @@
                                             class="w-full text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-white">
                                         <option value="gemini">Google Gemini AI (Khuyên dùng - Miễn phí & Nhanh)</option>
                                         <option value="openai">OpenAI (ChatGPT - gpt-4o, gpt-4o-mini)</option>
-                                        <option value="groq">GroqCloud (Siêu tốc LPU - Llama 3.3)</option>
+                                        <option value="groq">GroqCloud (Siêu tốc LPU - Llama 3.1 & GPT-OSS)</option>
                                         <option value="openrouter">OpenRouter AI (Đa mô hình Claude, DeepSeek...)</option>
                                     </select>
                                     <p class="text-[11px] text-slate-400 mt-1" x-text="providerDescriptions[aiProvider]"></p>
@@ -366,6 +366,16 @@
                                 <div>
                                     <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                                         <span>2. Mô hình AI (Model) <span class="text-rose-500">*</span></span>
+                                        <button type="button" @click="fetchModelsFromKey()"
+                                                :disabled="isFetchingModels || !aiApiKey"
+                                                :class="!aiApiKey ? 'text-slate-400 cursor-not-allowed' : 'text-pink-600 hover:text-pink-700 cursor-pointer'"
+                                                class="text-[11px] normal-case font-semibold flex items-center gap-1 transition"
+                                                title="Tự động kết nối API Key và lấy danh sách model thực tế từ nhà cung cấp">
+                                            <svg class="w-3.5 h-3.5" :class="isFetchingModels ? 'animate-spin text-pink-600' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            <span x-text="isFetchingModels ? 'Đang quét...' : 'Quét model từ Key'"></span>
+                                        </button>
                                     </label>
                                     <select x-model="aiModel"
                                             class="w-full text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-white">
@@ -375,7 +385,7 @@
                                     </select>
                                     <!-- Input model tùy chỉnh nếu chọn custom -->
                                     <div x-show="aiModel === 'custom'" class="mt-2">
-                                        <input type="text" x-model="aiCustomModel" placeholder="Nhập mã model (VD: gemini-2.0-flash-thinking-exp)"
+                                        <input type="text" x-model="aiCustomModel" placeholder="Nhập mã model (VD: llama-3.1-8b-instant, openai/gpt-oss-120b...)"
                                                class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
                                     </div>
                                 </div>
@@ -721,13 +731,14 @@
                 aiShowApiKey: false,
                 aiSaveKeyToBrowser: true,
                 isGeneratingAi: false,
+                isFetchingModels: false,
                 aiError: '',
                 aiSuccess: '',
 
                 providerDescriptions: {
                     gemini: 'Mô hình tiên tiến của Google, tốc độ cao, hỗ trợ tiếng Việt mượt mà và hoàn toàn miễn phí.',
                     openai: 'Mô hình GPT-4o / GPT-4o-mini tiêu chuẩn chất lượng cao của OpenAI.',
-                    groq: 'Mô hình Llama 3.3 siêu tốc độ xử lý tính bằng mili-giây trên phần cứng Groq LPU.',
+                    groq: 'Nền tảng xử lý AI siêu tốc Groq LPU (Llama 3.1, GPT-OSS 120B... phản hồi hàng trăm token/s).',
                     openrouter: 'Cổng AI đa mô hình toàn cầu (DeepSeek V3, Claude 3.5, Llama 3.3, Gemini...).'
                 },
 
@@ -752,9 +763,11 @@
                         { id: 'custom', name: 'Nhập model khác...' }
                     ],
                     groq: [
-                        { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Cực thông minh)' },
-                        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Tốc độ ánh sáng)' },
-                        { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B 32k' },
+                        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Khuyên dùng - Cực nhanh & Ổn định)' },
+                        { id: 'openai/gpt-oss-120b', name: 'OpenAI GPT-OSS 120B (Thông minh nhất trên Groq)' },
+                        { id: 'openai/gpt-oss-20b', name: 'OpenAI GPT-OSS 20B (Nhanh & Tối ưu chi phí)' },
+                        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (Suy luận logic)' },
+                        { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B (Nhẹ & Phản hồi nhanh)' },
                         { id: 'custom', name: 'Nhập model khác...' }
                     ],
                     openrouter: [
@@ -935,6 +948,53 @@
                         this.aiError = err.message || 'Đã xảy ra lỗi không xác định khi kết nối với AI.';
                     } finally {
                         this.isGeneratingAi = false;
+                    }
+                },
+
+                async fetchModelsFromKey() {
+                    if (!this.aiApiKey || !this.aiApiKey.trim()) {
+                        this.aiError = 'Vui lòng nhập API Key trước khi quét danh sách model.';
+                        return;
+                    }
+
+                    this.isFetchingModels = true;
+                    this.aiError = '';
+                    this.aiSuccess = '';
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                        const response = await fetch('{{ route('teacher.quizzes.fetch-ai-models') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                provider: this.aiProvider,
+                                api_key: this.aiApiKey.trim()
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Không thể quét danh sách model từ API Key.');
+                        }
+
+                        if (data.models && data.models.length > 0) {
+                            this.providerModels[this.aiProvider] = [
+                                ...data.models,
+                                { id: 'custom', name: 'Nhập model khác...' }
+                            ];
+                            this.aiModel = data.models[0].id;
+                            this.aiSuccess = `Đã tìm thấy ${data.models.length} model khả dụng trong tài khoản ${this.aiProvider.toUpperCase()} của bạn!`;
+                        } else {
+                            throw new Error('Không tìm thấy model nào khả dụng cho API Key này.');
+                        }
+                    } catch (err) {
+                        this.aiError = err.message || 'Lỗi khi quét danh sách model từ API Key.';
+                    } finally {
+                        this.isFetchingModels = false;
                     }
                 },
 
