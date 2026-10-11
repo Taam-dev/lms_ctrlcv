@@ -114,7 +114,8 @@
                             $lastAttempt = $attempts->first();
                             $bestScore = $attempts->max('score');
                             $hasPassed = $attempts->contains('is_passed', true);
-                            $quizTeacher = $quiz->course?->teacher ?? $quiz->teacher;
+                            $quizTeacher = $quiz->teacher ?? $quiz->course?->teacher;
+                            $teacherName = $quizTeacher?->name ?? 'Ban Giảng Huấn';
                         @endphp
                         <article x-show="matches({{ $quiz->id }})"
                                  class="bg-white border border-pink-100 hover:border-pink-500 hover:shadow-xl hover:shadow-pink-100/60 transition-all duration-300 flex flex-col justify-between">
@@ -146,9 +147,24 @@
                                     {{ $quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do' }}
                                 </div>
 
-                                <h3 class="text-xl font-black text-neutral-900 mb-3 line-clamp-2 hover:text-pink-600 transition">
+                                <h3 class="text-xl font-black text-neutral-900 mb-2 line-clamp-2 hover:text-pink-600 transition">
                                     {{ $quiz->title }}
                                 </h3>
+
+                                <!-- Thông tin Giảng viên ra đề -->
+                                <div class="flex items-center gap-2.5 mb-3.5 pb-3 border-b border-neutral-100">
+                                    @if($quizTeacher && $quizTeacher->avatar_url)
+                                        <img src="{{ $quizTeacher->avatar_url }}" alt="{{ $teacherName }}" class="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-pink-200">
+                                    @else
+                                        <div class="w-7 h-7 rounded-full bg-neutral-950 text-pink-500 flex items-center justify-center font-black text-[11px] shrink-0 ring-1 ring-pink-200">
+                                            {{ strtoupper(mb_substr($teacherName, 0, 1, 'UTF-8')) }}
+                                        </div>
+                                    @endif
+                                    <div class="min-w-0 text-xs">
+                                        <span class="block text-neutral-400 text-[10px] uppercase font-bold tracking-wider leading-none">Giảng viên</span>
+                                        <span class="block font-bold text-neutral-800 truncate text-xs mt-0.5" title="{{ $teacherName }}">{{ $teacherName }}</span>
+                                    </div>
+                                </div>
 
                                 <p class="text-sm text-neutral-500 mb-6 line-clamp-2 leading-relaxed">
                                     {{ $quiz->description ?? 'Bài kiểm tra trắc nghiệm đánh giá kiến thức lý thuyết và thực hành.' }}
@@ -261,9 +277,21 @@
                         <h3 class="text-lg sm:text-xl font-black text-white leading-snug line-clamp-2" x-text="pendingQuiz.title">
                             Tên bài kiểm tra
                         </h3>
-                        <p class="text-xs text-neutral-400 mt-1">
-                            <span x-text="pendingQuiz.course"></span> &bull; Thời gian: <strong class="text-pink-400" x-text="pendingQuiz.duration + ' phút'"></strong>
-                        </p>
+                        <div class="text-xs text-neutral-400 mt-1.5 flex items-center gap-2 flex-wrap">
+                            <span x-text="pendingQuiz.course"></span>
+                            <span>&bull;</span>
+                            <div class="inline-flex items-center gap-1.5 text-neutral-200">
+                                <template x-if="pendingQuiz.teacherAvatar">
+                                    <img :src="pendingQuiz.teacherAvatar" class="w-4 h-4 rounded-full object-cover">
+                                </template>
+                                <template x-if="!pendingQuiz.teacherAvatar">
+                                    <span class="w-4 h-4 rounded-full bg-pink-600/40 text-pink-300 text-[9px] font-bold inline-flex items-center justify-center" x-text="pendingQuiz.teacherInitial"></span>
+                                </template>
+                                <span>GV: <strong class="text-white" x-text="pendingQuiz.teacherName"></strong></span>
+                            </div>
+                            <span>&bull;</span>
+                            <span>Thời gian: <strong class="text-pink-400" x-text="pendingQuiz.duration + ' phút'"></strong></span>
+                        </div>
                     </div>
                 </div>
 
@@ -308,17 +336,31 @@
                 scope: @json($scope ?? 'all'),
                 quizzes: [
                     @foreach($enrolledQuizzes as $q)
+                    @php
+                        $t = $q->teacher ?? $q->course?->teacher;
+                        $tName = $t?->name ?? 'Ban Giảng Huấn';
+                        $tAvatar = $t?->avatar_url;
+                        $tInitial = strtoupper(mb_substr($tName, 0, 1, 'UTF-8'));
+                        $tLower = mb_strtolower($tName, 'UTF-8');
+                        $qTitleLower = mb_strtolower($q->title, 'UTF-8');
+                        $qDescLower = mb_strtolower($q->description ?? '', 'UTF-8');
+                        $qCourseLower = mb_strtolower($q->course ? $q->course->title : 'tự do', 'UTF-8');
+                    @endphp
                     {
                         id: {{ $q->id }},
-                        title: @json(mb_strtolower($q->title, 'UTF-8')),
+                        title: @json($qTitleLower),
                         rawTitle: @json($q->title),
-                        desc: @json(mb_strtolower($q->description ?? '', 'UTF-8')),
-                        course: @json(mb_strtolower($q->course ? $q->course->title : 'tự do', 'UTF-8')),
+                        desc: @json($qDescLower),
+                        course: @json($qCourseLower),
                         rawCourse: @json($q->course ? $q->course->title : 'Bài kiểm tra Tự do'),
                         duration: {{ (int)$q->duration_minutes }},
                         url: @json(route('student.quizzes.take', $q->id)),
                         type: @json($q->type),
-                        scope: @json($q->course_id ? 'course' : 'free')
+                        scope: @json($q->course_id ? 'course' : 'free'),
+                        teacher: @json($tLower),
+                        rawTeacher: @json($tName),
+                        teacherAvatar: @json($tAvatar),
+                        teacherInitial: @json($tInitial)
                     },
                     @endforeach
                 ],
@@ -329,7 +371,7 @@
                     if (this.scope !== 'all' && item.scope !== this.scope) return false;
                     if (!this.search || !this.search.trim()) return true;
                     const q = this.search.toLowerCase().trim();
-                    return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q);
+                    return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q) || (item.teacher && item.teacher.includes(q));
                 },
                 countVisible() {
                     return this.quizzes.filter(item => {
@@ -337,7 +379,7 @@
                         if (this.scope !== 'all' && item.scope !== this.scope) return false;
                         if (!this.search || !this.search.trim()) return true;
                         const q = this.search.toLowerCase().trim();
-                        return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q);
+                        return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q) || (item.teacher && item.teacher.includes(q));
                     }).length;
                 },
                 resetFilters() {
@@ -350,7 +392,10 @@
                     title: '',
                     duration: 0,
                     course: '',
-                    url: ''
+                    url: '',
+                    teacherName: '',
+                    teacherAvatar: '',
+                    teacherInitial: ''
                 },
                 askStartQuiz(id) {
                     const item = this.quizzes.find(x => x.id === id);
@@ -359,7 +404,10 @@
                             url: item.url,
                             title: item.rawTitle,
                             duration: item.duration,
-                            course: item.rawCourse
+                            course: item.rawCourse,
+                            teacherName: item.rawTeacher,
+                            teacherAvatar: item.teacherAvatar,
+                            teacherInitial: item.teacherInitial
                         };
                         this.confirmModalOpen = true;
                     }

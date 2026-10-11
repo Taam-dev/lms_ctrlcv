@@ -14,9 +14,24 @@
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
                     {{ $quiz->title }}
                 </h1>
-                <p class="text-xs text-neutral-400 mt-1">
-                    Nộp bài lúc: {{ $attempt->completed_at ? $attempt->completed_at->format('H:i d/m/Y') : $attempt->created_at->format('H:i d/m/Y') }}
-                </p>
+                <div class="text-xs text-neutral-400 mt-2 flex items-center gap-2 flex-wrap">
+                    @php
+                        $quizTeacher = $quiz->teacher ?? $quiz->course?->teacher;
+                        $teacherName = $quizTeacher?->name ?? 'Ban Giảng Huấn';
+                    @endphp
+                    <div class="inline-flex items-center gap-1.5 text-neutral-200">
+                        @if($quizTeacher && $quizTeacher->avatar_url)
+                            <img src="{{ $quizTeacher->avatar_url }}" alt="{{ $teacherName }}" class="w-4 h-4 rounded-full object-cover ring-1 ring-pink-500/40">
+                        @else
+                            <span class="w-4 h-4 rounded-full bg-pink-600/30 text-pink-300 text-[9px] font-bold inline-flex items-center justify-center ring-1 ring-pink-500/40">
+                                {{ strtoupper(mb_substr($teacherName, 0, 1, 'UTF-8')) }}
+                            </span>
+                        @endif
+                        <span>Giảng viên: <strong class="text-white">{{ $teacherName }}</strong></span>
+                    </div>
+                    <span>&bull;</span>
+                    <span>Nộp bài lúc: {{ $attempt->completed_at ? $attempt->completed_at->format('H:i d/m/Y') : $attempt->created_at->format('H:i d/m/Y') }}</span>
+                </div>
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 <a href="{{ route('student.quizzes.index') }}" 
@@ -46,8 +61,10 @@
                  class="w-full max-w-lg bg-neutral-900 border-2 border-pink-600 text-white shadow-2xl p-6 sm:p-8 space-y-6 text-left">
                 
                 <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-pink-600/20 border border-pink-500 text-pink-500 flex items-center justify-center shrink-0 text-2xl font-black">
-                        ⚠️
+                    <div class="w-12 h-12 bg-pink-600/20 border border-pink-500 text-pink-500 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
                     </div>
                     <div class="flex-1 min-w-0">
                         <span class="text-[10px] uppercase font-black tracking-widest text-pink-400 block mb-1">Xác nhận làm lại đề thi</span>

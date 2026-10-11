@@ -8,7 +8,16 @@
                     </span>
                     <span>Khóa học: {{ $quiz->course->title ?? 'Tự do (Không thuộc khóa học)' }}</span>
                     <span>&bull;</span>
-                    <span>Giảng viên: {{ $quiz->teacher->name ?? 'N/A' }}</span>
+                    <span class="inline-flex items-center gap-1.5 text-slate-700">
+                        @if($quiz->teacher && $quiz->teacher->avatar_url)
+                            <img src="{{ $quiz->teacher->avatar_url }}" alt="{{ $quiz->teacher->name }}" class="w-4 h-4 rounded-full object-cover">
+                        @else
+                            <span class="w-4 h-4 rounded-full bg-slate-900 text-pink-400 text-[9px] font-bold inline-flex items-center justify-center">
+                                {{ strtoupper(mb_substr($quiz->teacher->name ?? 'G', 0, 1, 'UTF-8')) }}
+                            </span>
+                        @endif
+                        <span>Giảng viên: {{ $quiz->teacher->name ?? 'N/A' }}</span>
+                    </span>
                 </div>
                 <h1 class="font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">
                     Xem Trước Đề Thi: {{ $quiz->title }}

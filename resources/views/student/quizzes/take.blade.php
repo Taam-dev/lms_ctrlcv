@@ -3,13 +3,28 @@
     <section class="bg-neutral-950 text-white border-b border-white/10 sticky top-16 z-30 shadow-md">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div class="min-w-0">
-                <div class="flex items-center gap-2 mb-1">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
                     <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-pink-600 text-white">
                         {{ $quiz->type_name }}
                     </span>
                     <span class="text-xs text-neutral-400 font-bold truncate">
                         {{ $quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do' }}
                     </span>
+                    @php
+                        $quizTeacher = $quiz->teacher ?? $quiz->course?->teacher;
+                        $teacherName = $quizTeacher?->name ?? 'Ban Giảng Huấn';
+                    @endphp
+                    <span class="text-neutral-600 text-xs">&bull;</span>
+                    <div class="inline-flex items-center gap-1.5 text-xs text-neutral-300">
+                        @if($quizTeacher && $quizTeacher->avatar_url)
+                            <img src="{{ $quizTeacher->avatar_url }}" alt="{{ $teacherName }}" class="w-4 h-4 rounded-full object-cover ring-1 ring-pink-500/30">
+                        @else
+                            <span class="w-4 h-4 rounded-full bg-pink-600/30 text-pink-300 text-[9px] font-bold inline-flex items-center justify-center ring-1 ring-pink-500/30">
+                                {{ strtoupper(mb_substr($teacherName, 0, 1, 'UTF-8')) }}
+                            </span>
+                        @endif
+                        <span class="text-neutral-400 text-[11px]">GV: <strong class="text-neutral-200">{{ $teacherName }}</strong></span>
+                    </div>
                 </div>
                 <h1 class="text-base sm:text-lg font-black tracking-tight text-white line-clamp-1">
                     {{ $quiz->title }}

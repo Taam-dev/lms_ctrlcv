@@ -176,8 +176,19 @@
                                         @endif
                                     </td>
                                     <td class="py-4 px-4 whitespace-nowrap">
-                                        <div class="font-semibold text-slate-800">{{ $quiz->teacher->name ?? 'Không rõ' }}</div>
-                                        <div class="text-xs text-slate-400">{{ $quiz->teacher->email ?? '' }}</div>
+                                        <div class="flex items-center gap-2.5">
+                                            @if($quiz->teacher && $quiz->teacher->avatar_url)
+                                                <img src="{{ $quiz->teacher->avatar_url }}" alt="{{ $quiz->teacher->name }}" class="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200">
+                                            @else
+                                                <div class="w-8 h-8 rounded-full bg-slate-900 text-pink-400 flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-slate-200">
+                                                    {{ strtoupper(mb_substr($quiz->teacher->name ?? 'G', 0, 1, 'UTF-8')) }}
+                                                </div>
+                                            @endif
+                                            <div>
+                                                <div class="font-semibold text-slate-800">{{ $quiz->teacher->name ?? 'Không rõ' }}</div>
+                                                <div class="text-xs text-slate-400">{{ $quiz->teacher->email ?? '' }}</div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         @if($quiz->question_limit)

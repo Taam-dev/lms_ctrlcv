@@ -68,6 +68,8 @@ class QuizController extends Controller
      */
     public function take(Quiz $quiz)
     {
+        $quiz->loadMissing(['teacher', 'course.teacher']);
+
         // Kiểm tra bài quiz đã được admin duyệt chưa
         if ($quiz->status !== 'approved') {
             $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
@@ -211,7 +213,7 @@ class QuizController extends Controller
             abort(403, 'Bạn không có quyền xem kết quả bài làm này.');
         }
 
-        $quiz->load(['course', 'questions.options']);
+        $quiz->load(['course.teacher', 'teacher', 'questions.options']);
 
         return view('student.quizzes.result', compact('quiz', 'attempt'));
     }
