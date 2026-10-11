@@ -75,11 +75,13 @@ Route::middleware(['auth', 'role:teacher'])->prefix('instructor')->name('instruc
 
     Route::post('quizzes/generate-ai-questions', [TeacherQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
     Route::post('quizzes/fetch-ai-models', [TeacherQuizController::class, 'fetchAiModels'])->name('quizzes.fetch-ai-models');
+    Route::post('quizzes/ai-suggest-question', [TeacherQuizController::class, 'suggestOrRefineAiQuestion'])->name('quizzes.ai-suggest-question');
     Route::resource('quizzes', TeacherQuizController::class);
     Route::get('quizzes/{quiz}/questions', [TeacherQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [TeacherQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
     Route::post('quizzes/{quiz}/questions/import', [TeacherQuizController::class, 'importQuestions'])->name('quizzes.questions.import');
     Route::delete('quizzes/{quiz}/questions/{question}', [TeacherQuizController::class, 'destroyQuestion'])->name('quizzes.questions.destroy');
+    Route::put('quizzes/{quiz}/questions/{question}', [TeacherQuizController::class, 'updateQuestion'])->name('quizzes.questions.update');
     Route::get('quizzes/{quiz}/results', [TeacherQuizController::class, 'results'])->name('quizzes.results');
 });
 
@@ -94,11 +96,13 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     Route::delete('lessons/{lesson}', [TeacherLessonController::class, 'destroy'])->name('lessons.destroy');
     Route::post('quizzes/generate-ai-questions', [TeacherQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
     Route::post('quizzes/fetch-ai-models', [TeacherQuizController::class, 'fetchAiModels'])->name('quizzes.fetch-ai-models');
+    Route::post('quizzes/ai-suggest-question', [TeacherQuizController::class, 'suggestOrRefineAiQuestion'])->name('quizzes.ai-suggest-question');
     Route::resource('quizzes', TeacherQuizController::class);
     Route::get('quizzes/{quiz}/questions', [TeacherQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [TeacherQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
     Route::post('quizzes/{quiz}/questions/import', [TeacherQuizController::class, 'importQuestions'])->name('quizzes.questions.import');
     Route::delete('quizzes/{quiz}/questions/{question}', [TeacherQuizController::class, 'destroyQuestion'])->name('quizzes.questions.destroy');
+    Route::put('quizzes/{quiz}/questions/{question}', [TeacherQuizController::class, 'updateQuestion'])->name('quizzes.questions.update');
     Route::get('quizzes/{quiz}/results', [TeacherQuizController::class, 'results'])->name('quizzes.results');
 });
 

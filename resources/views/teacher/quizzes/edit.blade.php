@@ -1,12 +1,17 @@
 <x-teacher-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-black text-2xl text-slate-900 tracking-tight">
                 Chỉnh sửa Bài kiểm tra: {{ $quiz->title }}
             </h2>
-            <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes']) }}" class="text-sm font-semibold text-slate-600 hover:text-pink-600 transition">
-                &larr; Quay lại danh sách
-            </a>
+            <div class="flex items-center gap-2.5">
+                <a href="{{ route('teacher.quizzes.questions', ['quiz' => $quiz->id, 'tab' => 'ai']) }}" class="px-3.5 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold transition flex items-center gap-1.5 border border-pink-200 shadow-xs">
+                    <span class="text-pink-600">✨</span> Soạn câu hỏi AI
+                </a>
+                <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes']) }}" class="text-sm font-semibold text-slate-600 hover:text-pink-600 transition">
+                    &larr; Quay lại danh sách
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -175,11 +180,43 @@
                         </label>
                     </div>
 
+                    <!-- Có thể xem kết quả sau khi hoàn thành (Có hoặc Không) -->
+                    <div class="p-4 rounded-2xl bg-pink-50/70 border border-pink-200/80">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <span class="font-bold text-slate-900 text-sm block">Có thể xem kết quả sau khi hoàn thành</span>
+                                <span class="text-slate-500 text-xs block leading-relaxed mt-0.5">
+                                    Quy định xem học viên có được phép xem lại kết quả và đáp án chi tiết sau khi nộp bài hay không.
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-4 shrink-0 bg-white px-3.5 py-1.5 rounded-xl border border-pink-200">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="show_result_after_completion" value="1" 
+                                           {{ old('show_result_after_completion', $quiz->show_result_after_completion ? '1' : '0') == '1' ? 'checked' : '' }}
+                                           class="text-pink-600 border-slate-300 focus:ring-pink-500 w-4 h-4">
+                                    <span class="text-xs font-bold text-slate-800">Có</span>
+                                </label>
+                                <span class="text-slate-300 text-xs">|</span>
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                    <input type="radio" name="show_result_after_completion" value="0" 
+                                           {{ old('show_result_after_completion', $quiz->show_result_after_completion ? '1' : '0') == '0' ? 'checked' : '' }}
+                                           class="text-pink-600 border-slate-300 focus:ring-pink-500 w-4 h-4">
+                                    <span class="text-xs font-bold text-slate-800">Không</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Buttons -->
-                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                        <a href="{{ route('teacher.quizzes.questions', $quiz->id) }}" class="text-sm font-bold text-pink-600 hover:underline">
-                            Quản lý câu hỏi ({{ $quiz->questions()->count() }} câu) &rarr;
-                        </a>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('teacher.quizzes.questions', $quiz->id) }}" class="text-sm font-bold text-pink-600 hover:underline">
+                                Quản lý câu hỏi ({{ $quiz->questions()->count() }} câu) &rarr;
+                            </a>
+                            <a href="{{ route('teacher.quizzes.questions', ['quiz' => $quiz->id, 'tab' => 'ai']) }}" class="text-xs font-bold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1">
+                                <span>✨</span> Soạn với AI
+                            </a>
+                        </div>
                         <div class="flex items-center gap-3">
                             <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes']) }}" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">
                                 Hủy

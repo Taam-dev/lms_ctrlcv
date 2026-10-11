@@ -391,7 +391,7 @@
                                     </select>
                                     <!-- Input model tùy chỉnh nếu chọn custom -->
                                     <div x-show="aiModel === 'custom'" class="mt-2">
-                                        <input type="text" x-model="aiCustomModel" placeholder="Nhập mã model (VD: llama-3.1-8b-instant, openai/gpt-oss-120b...)"
+                                        <input type="text" x-model="aiCustomModel" placeholder="Nhập mã model tùy chỉnh..."
                                                class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
                                     </div>
                                 </div>
@@ -738,6 +738,31 @@
                                 </div>
                             </label>
                         </div>
+
+                        <!-- Có thể xem kết quả sau khi hoàn thành (Có hoặc Không) -->
+                        <div class="p-4 rounded-2xl bg-pink-50/70 border border-pink-200/80">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <span class="font-bold text-slate-900 text-sm block">Có thể xem kết quả sau khi hoàn thành</span>
+                                    <span class="text-slate-500 text-xs block leading-relaxed mt-0.5">
+                                        Quy định xem học viên có được phép xem lại kết quả và đáp án chi tiết sau khi nộp bài hay không.
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-4 shrink-0 bg-white px-3.5 py-1.5 rounded-xl border border-pink-200">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                        <input type="radio" name="show_result_after_completion" value="1" x-model="showResultAfterCompletion"
+                                               class="text-pink-600 border-slate-300 focus:ring-pink-500 w-4 h-4">
+                                        <span class="text-xs font-bold text-slate-800">Có</span>
+                                    </label>
+                                    <span class="text-slate-300 text-xs">|</span>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                        <input type="radio" name="show_result_after_completion" value="0" x-model="showResultAfterCompletion"
+                                               class="text-pink-600 border-slate-300 focus:ring-pink-500 w-4 h-4">
+                                        <span class="text-xs font-bold text-slate-800">Không</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Action Buttons -->
@@ -777,6 +802,7 @@
                 startsAt: @json(old('starts_at', '')),
                 endsAt: @json(old('ends_at', '')),
                 randomizeQuestions: true,
+                showResultAfterCompletion: @json(old('show_result_after_completion', '1')),
                 parsedQuestions: [],
                 parseError: '',
                 timer: null,
@@ -1375,6 +1401,9 @@
                         }
                         if (quizObj.randomize_questions !== undefined) {
                             this.randomizeQuestions = Boolean(quizObj.randomize_questions);
+                        }
+                        if (quizObj.show_result_after_completion !== undefined) {
+                            this.showResultAfterCompletion = quizObj.show_result_after_completion ? '1' : '0';
                         }
                         if (quizObj.starts_at && !this.startsAt) {
                             this.startsAt = quizObj.starts_at;

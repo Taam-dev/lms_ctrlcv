@@ -13,23 +13,46 @@ class QuizController extends Controller
     /**
      * Danh sách các bài kiểm tra trắc nghiệm dành cho học viên
      */
-    public function index()
+    public function index(Request $request)
     {
         $studentId = auth()->id();
+        $search = trim((string) $request->query('search', ''));
+        $type = $request->query('type');
+        $scope = $request->query('scope');
 
         // Lấy danh sách ID các khóa học học viên đã đăng ký
         $enrolledCourseIds = Enrollment::where('student_id', $studentId)->pluck('course_id');
 
         // Các bài quiz đã duyệt: thuộc khóa học học viên đã đăng ký HOẶC bài quiz tự do (course_id IS NULL)
-        $enrolledQuizzes = Quiz::with(['course.teacher', 'teacher'])
+        $query = Quiz::with(['course.teacher', 'teacher'])
             ->withCount('questions')
             ->where('status', 'approved')
             ->where(function ($query) use ($enrolledCourseIds) {
                 $query->whereIn('course_id', $enrolledCourseIds)
                     ->orWhereNull('course_id');
-            })
-            ->latest()
-            ->get();
+            });
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('course', function ($cq) use ($search) {
+                        $cq->where('title', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($type && in_array($type, ['quiz', 'midterm', 'final'])) {
+            $query->where('type', $type);
+        }
+
+        if ($scope === 'free') {
+            $query->whereNull('course_id');
+        } elseif ($scope === 'course') {
+            $query->whereNotNull('course_id');
+        }
+
+        $enrolledQuizzes = $query->latest()->get();
 
         // Lịch sử điểm cao nhất của học viên trên từng bài quiz
         $userAttempts = QuizAttempt::where('student_id', $studentId)
@@ -37,7 +60,7 @@ class QuizController extends Controller
             ->get()
             ->groupBy('quiz_id');
 
-        return view('student.quizzes.index', compact('enrolledQuizzes', 'userAttempts'));
+        return view('student.quizzes.index', compact('enrolledQuizzes', 'userAttempts', 'search', 'type', 'scope'));
     }
 
     /**

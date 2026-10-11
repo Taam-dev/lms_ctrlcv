@@ -15,6 +15,7 @@ class Quiz extends Model
         'duration_minutes',
         'passing_score',
         'randomize_questions',
+        'show_result_after_completion',
         'status',
         'question_limit',
         'starts_at',
@@ -58,6 +59,7 @@ class Quiz extends Model
     {
         return [
             'randomize_questions' => 'boolean',
+            'show_result_after_completion' => 'boolean',
             'passing_score' => 'float',
             'duration_minutes' => 'integer',
             'question_limit' => 'integer',

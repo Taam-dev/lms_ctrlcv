@@ -50,6 +50,7 @@ class QuizController extends Controller
         $duration = $request->input('duration_minutes') ? (int) $request->input('duration_minutes') : ($extracted['quiz']['duration_minutes'] ?? 15);
         $passingScore = $request->input('passing_score') !== null ? (float) $request->input('passing_score') : ($extracted['quiz']['passing_score'] ?? 5.0);
         $randomize = $request->has('randomize_questions') ? $request->boolean('randomize_questions') : ($extracted['quiz']['randomize_questions'] ?? true);
+        $showResult = $request->has('show_result_after_completion') ? $request->boolean('show_result_after_completion') : ($extracted['quiz']['show_result_after_completion'] ?? true);
         $type = $request->input('type') ?: ($extracted['quiz']['type'] ?? 'quiz');
         if (! in_array($type, ['quiz', 'midterm', 'final'])) {
             $type = 'quiz';
@@ -108,6 +109,7 @@ class QuizController extends Controller
             'duration_minutes' => $duration,
             'passing_score' => $passingScore,
             'randomize_questions' => $randomize,
+            'show_result_after_completion' => $showResult,
             'status' => 'pending', // Mặc định chờ admin duyệt
             'question_limit' => $questionLimit,
             'starts_at' => $startsAt,
@@ -197,6 +199,7 @@ class QuizController extends Controller
             'passing_score' => $request->passing_score,
             'question_limit' => $questionLimit,
             'randomize_questions' => $request->boolean('randomize_questions'),
+            'show_result_after_completion' => $request->boolean('show_result_after_completion'),
             'starts_at' => $request->filled('starts_at') ? $request->starts_at : null,
             'ends_at' => $request->filled('ends_at') ? $request->ends_at : null,
         ]);
@@ -283,6 +286,46 @@ class QuizController extends Controller
         $count = $jsonService->importQuestionsToQuiz($quiz, $extracted['questions']);
 
         return back()->with('success', "Đã nhập thành công {$count} câu hỏi từ JSON vào bài kiểm tra!");
+    }
+
+    /**
+     * Cập nhật nội dung câu hỏi và các phương án trả lời
+     */
+    public function updateQuestion(Request $request, Quiz $quiz, QuizQuestion $question)
+    {
+        abort_if($quiz->teacher_id !== auth()->id() || $question->quiz_id !== $quiz->id, 403, 'Bạn không có quyền chỉnh sửa câu hỏi này.');
+
+        $request->validate([
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'options' => 'required|array|min:2',
+            'options.*' => 'required|string',
+            'correct_option' => 'required|integer|min:0',
+        ], [
+            'question_text.required' => 'Nội dung câu hỏi không được để trống.',
+            'options.required' => 'Vui lòng nhập các phương án trả lời.',
+            'options.min' => 'Cần tối thiểu 2 phương án trả lời.',
+        ]);
+
+        DB::transaction(function () use ($request, $question) {
+            $question->update([
+                'question_text' => $request->question_text,
+                'explanation' => $request->explanation,
+            ]);
+
+            // Cập nhật các đáp án
+            $question->options()->delete();
+
+            foreach ($request->options as $index => $optionText) {
+                QuizOption::create([
+                    'quiz_question_id' => $question->id,
+                    'option_text' => $optionText,
+                    'is_correct' => ((int) $request->correct_option === $index),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Đã cập nhật câu hỏi trắc nghiệm thành công!');
     }
 
     /**
@@ -383,5 +426,47 @@ class QuizController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * Dùng AI để gợi ý 4 đáp án hoặc tối ưu hóa/viết lại một câu hỏi trắc nghiệm cụ thể.
+     */
+    public function suggestOrRefineAiQuestion(Request $request, AiQuizGeneratorService $aiService)
+    {
+        $validated = $request->validate([
+            'provider' => 'required|in:gemini,openai,openrouter,groq',
+            'api_key' => 'required|string|min:5',
+            'model' => 'required|string|min:2',
+            'question_text' => 'required|string|min:3',
+            'options' => 'nullable|array',
+            'explanation' => 'nullable|string',
+            'action' => 'nullable|string|in:suggest_options,refine',
+        ], [
+            'api_key.required' => 'Vui lòng cung cấp API Key để sử dụng AI.',
+            'question_text.required' => 'Vui lòng nhập nội dung câu hỏi trước khi nhờ AI gợi ý.',
+            'question_text.min' => 'Nội dung câu hỏi cần tối thiểu 3 ký tự.',
+        ]);
+
+        $result = $aiService->suggestOrRefineQuestion(
+            $validated['provider'],
+            $validated['api_key'],
+            $validated['model'],
+            $validated['question_text'],
+            $validated['options'] ?? [],
+            $validated['explanation'] ?? '',
+            $validated['action'] ?? 'suggest_options'
+        );
+
+        if (! $result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Không thể nhận phản hồi từ AI cho câu hỏi này.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'question' => $result['question'],
+        ]);
     }
 }

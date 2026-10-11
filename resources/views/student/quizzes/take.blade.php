@@ -1,29 +1,58 @@
 <x-app-layout>
-    <!-- Quiz Header Banner -->
-    <section class="bg-neutral-950 text-white border-b border-white/10 sticky top-16 z-30">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-                <div class="flex items-center gap-2 mb-1.5">
+    <!-- Quiz Header Banner (Sticky Top) -->
+    <section class="bg-neutral-950 text-white border-b border-white/10 sticky top-16 z-30 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-1">
                     <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-pink-600 text-white">
                         {{ $quiz->type_name }}
                     </span>
-                    <span class="text-xs text-neutral-400 font-bold">
+                    <span class="text-xs text-neutral-400 font-bold truncate">
                         {{ $quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do' }}
                     </span>
                 </div>
-                <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white line-clamp-1">
+                <h1 class="text-base sm:text-lg font-black tracking-tight text-white line-clamp-1">
                     {{ $quiz->title }}
                 </h1>
             </div>
 
-            <!-- Digital Countdown Timer -->
-            <div id="timer-box" class="flex items-center gap-3 bg-white/5 border border-white/15 px-4 py-2 self-start sm:self-auto shrink-0">
-                <div class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div>
-                <div class="text-left">
-                    <span class="text-[9px] text-neutral-400 uppercase font-extrabold tracking-widest block leading-none">Thời gian còn lại</span>
-                    <span id="countdown-timer" class="font-mono font-black text-xl text-pink-400 leading-tight">
-                        {{ sprintf('%02d:00', $quiz->duration_minutes) }}
+            <!-- Header Controls: Timer, Progress & Actions -->
+            <div class="flex items-center gap-2.5 sm:gap-3 shrink-0 flex-wrap sm:flex-nowrap justify-between md:justify-end">
+                <!-- Digital Countdown Timer -->
+                <div id="timer-box" class="flex items-center gap-2 bg-white/5 border border-white/15 px-3 py-1.5 shrink-0">
+                    <div class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div>
+                    <div class="text-left">
+                        <span class="text-[8px] text-neutral-400 uppercase font-extrabold tracking-widest block leading-none">Thời gian</span>
+                        <span id="countdown-timer" class="font-mono font-black text-sm sm:text-base text-pink-400 leading-tight">
+                            {{ sprintf('%02d:00', $quiz->duration_minutes) }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Progress Pill -->
+                <div class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-bold shrink-0">
+                    <span id="progress-indicator-dot" class="w-2 h-2 bg-pink-500 rounded-full transition-colors shrink-0"></span>
+                    <span class="text-[11px] uppercase tracking-wider text-neutral-300">
+                        Đã làm: <strong id="answered-count" class="text-pink-400 text-xs font-black">0</strong>/{{ $questions->count() }}
                     </span>
+                    <span id="unanswered-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                        còn <span id="unanswered-count-text">0</span>
+                    </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" 
+                            class="px-2.5 py-1.5 text-xs font-bold text-neutral-400 hover:text-rose-400 transition cursor-pointer"
+                            onclick="triggerLeaveQuiz('{{ $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index') }}', 'Thoát bài thi')">
+                        Thoát bài thi
+                    </button>
+                    <button type="button" 
+                            id="btn-submit-quiz"
+                            class="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-xs whitespace-nowrap"
+                            onclick="validateAndSubmitQuiz()">
+                        Nộp bài &rarr;
+                    </button>
                 </div>
             </div>
         </div>
@@ -127,33 +156,122 @@
                     </fieldset>
                 @endforeach
 
-                <!-- Thanh xác nhận nộp bài cố định dưới màn hình -->
-                <div class="sticky bottom-6 z-20 bg-neutral-950 text-white p-4 sm:p-5 border border-white/10 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs uppercase tracking-wider font-bold">
-                        <span id="progress-indicator-dot" class="w-2.5 h-2.5 bg-pink-500 rounded-full transition-colors shrink-0"></span>
-                        <span>Đã làm: <strong id="answered-count" class="text-pink-400 text-sm font-black">0</strong> / {{ $questions->count() }} câu</span>
-                        <span id="unanswered-badge" class="hidden px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                            Còn <span id="unanswered-count-text">0</span> câu chưa khoanh
-                        </span>
+                <!-- Khối xác nhận nộp bài ở cuối bài thi (Tĩnh - Không trôi nổi che tầm nhìn) -->
+                <div class="bg-white border-2 border-dashed border-pink-200 p-6 sm:p-8 text-center space-y-4 shadow-sm mt-8">
+                    <div class="max-w-md mx-auto space-y-1.5">
+                        <h3 class="text-lg font-black text-neutral-900">Hoàn thành bài kiểm tra</h3>
+                        <p class="text-xs text-neutral-500">
+                            Hãy kiểm tra lại tất cả các câu trả lời trước khi nộp. Hệ thống sẽ chấm điểm và hiển thị kết quả ngay lập tức.
+                        </p>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-50 border border-pink-200 text-xs font-bold text-pink-700 mt-1">
+                            <span>Tiến độ làm bài:</span>
+                            <span><strong id="bottom-answered-count" class="font-black text-pink-600">0</strong> / {{ $questions->count() }} câu</span>
+                            <span id="bottom-unanswered-badge" class="hidden text-rose-600 font-extrabold">(Còn <span id="bottom-unanswered-count">0</span> câu chưa làm)</span>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <a href="{{ $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index') }}" 
-                           class="w-1/2 sm:w-auto text-center px-5 py-3 text-xs font-bold uppercase tracking-wider border border-white/20 hover:border-white text-neutral-300 hover:text-white transition"
-                           onclick="return confirm('Bạn có chắc chắn muốn thoát? Các câu trả lời chưa nộp sẽ bị mất.')">
-                            Hủy bỏ
-                        </a>
+                    <div class="flex items-center justify-center gap-4 pt-2">
                         <button type="button" 
-                                id="btn-submit-quiz"
-                                class="w-1/2 sm:w-auto px-7 py-3 bg-pink-600 hover:bg-pink-500 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-xs"
+                                class="px-5 py-2.5 text-xs font-bold uppercase tracking-wider border border-neutral-300 hover:border-rose-600 text-neutral-600 hover:text-rose-600 transition cursor-pointer"
+                                onclick="triggerLeaveQuiz('{{ $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index') }}', 'Rời bài thi')">
+                            Rời bài thi
+                        </button>
+                        <button type="button" 
+                                id="bottom-btn-submit-quiz"
+                                class="px-8 py-2.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-md shadow-pink-500/20"
                                 onclick="validateAndSubmitQuiz()">
-                            Nộp bài thi &rarr;
+                            Nộp bài thi ngay &rarr;
                         </button>
                     </div>
                 </div>
 
             </form>
 
+        </div>
+    </div>
+
+    <!-- Modal 1: Cảnh báo khi ấn Header hoặc rời trang (Bắt buộc phải nộp bài) -->
+    <div id="leave-guard-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-neutral-950/85 backdrop-blur-md">
+        <div class="w-full max-w-lg bg-neutral-900 border-2 border-rose-500 text-white shadow-2xl p-6 sm:p-8 space-y-6">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-rose-600/20 border border-rose-500 text-rose-500 flex items-center justify-center shrink-0 text-2xl font-black">
+                    ⚠️
+                </div>
+                <div class="flex-1 min-w-0">
+                    <span class="text-[10px] uppercase font-black tracking-widest text-rose-400 block mb-1">Cảnh báo quy chế thi</span>
+                    <h3 class="text-lg sm:text-xl font-black text-white leading-snug">
+                        Bắt buộc nộp bài trước khi rời trang!
+                    </h3>
+                    <p class="text-xs text-neutral-400 mt-1">
+                        Bạn vừa bấm chuyển sang trang khác trong khi bài thi đang diễn ra.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-rose-950/50 border-l-4 border-rose-500 border-y border-r border-rose-900/60 p-4 space-y-2">
+                <p class="text-xs text-rose-100 font-bold leading-relaxed">
+                    Một khi đã bắt đầu làm bài thì <span class="text-white underline decoration-rose-400">không thể hủy giữa chừng</span>! Nếu chuyển sang trang này, bạn <span class="text-rose-300 underline font-black">BẮT BUỘC PHẢI NỘP BÀI</span> trước khi rời đi!
+                </p>
+                <p class="text-[11px] text-neutral-300 leading-normal">
+                    Hệ thống sẽ tự động thu bài và chấm điểm toàn bộ các câu hỏi bạn đã làm cho đến thời điểm hiện tại.
+                </p>
+                <div id="leave-target-container" class="hidden pt-1.5 border-t border-rose-900/40 text-[11px] text-neutral-400">
+                    Trang định đến: <span id="leave-target-name" class="font-bold text-neutral-200"></span>
+                </div>
+            </div>
+
+            <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2 border-t border-white/10">
+                <button type="button" 
+                        id="btn-stay-and-quiz"
+                        class="w-full sm:w-auto px-6 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-black uppercase tracking-wider transition cursor-pointer text-center border border-white/10">
+                    Ở lại tiếp tục làm bài
+                </button>
+                <button type="button" 
+                        id="btn-force-submit-and-leave"
+                        class="w-full sm:w-auto px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black uppercase tracking-wider transition shadow-lg shadow-rose-600/30 cursor-pointer text-center">
+                    Nộp bài &amp; Rời đi &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Cảnh báo khi chuyển qua Tab khác trong lúc làm bài -->
+    <div id="tab-switch-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-neutral-950/85 backdrop-blur-md">
+        <div class="w-full max-w-lg bg-neutral-900 border-2 border-amber-500 text-white shadow-2xl p-6 sm:p-8 space-y-6">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-amber-500/20 border border-amber-500 text-amber-400 flex items-center justify-center shrink-0 text-2xl font-black">
+                    👁️
+                </div>
+                <div class="flex-1 min-w-0">
+                    <span class="text-[10px] uppercase font-black tracking-widest text-amber-400 block mb-1">Cảnh báo vi phạm quy chế</span>
+                    <h3 class="text-lg sm:text-xl font-black text-white leading-snug">
+                        Phát hiện bạn vừa chuyển tab / rời màn hình thi!
+                    </h3>
+                    <p class="text-xs text-neutral-400 mt-1">
+                        Số lần hệ thống ghi nhận rời bài thi: <strong id="tab-switch-count-text" class="text-amber-400 text-sm font-black">1</strong> lần
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-amber-950/50 border-l-4 border-amber-500 border-y border-r border-amber-900/60 p-4 space-y-2">
+                <p class="text-xs text-amber-100 font-bold leading-relaxed">
+                    Hệ thống phát hiện bạn vừa chuyển sang tab khác trong trình duyệt!
+                </p>
+                <p class="text-xs text-amber-200 leading-relaxed font-semibold">
+                    Quy chế thi trực tuyến nghiêm cấm học viên rời khỏi giao diện làm bài. Nếu bạn tiếp tục chuyển tab hay chuyển sang trang khác, bạn <span class="text-white underline font-black">sẽ bắt buộc phải nộp bài</span> trước khi làm xong!
+                </p>
+                <p class="text-[11px] text-neutral-400 leading-normal">
+                    Hãy tập trung hoàn thành bài thi trên giao diện này để kết quả bài làm được công nhận hợp lệ.
+                </p>
+            </div>
+
+            <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2 border-t border-white/10">
+                <button type="button" 
+                        id="btn-close-tab-warning"
+                        class="w-full sm:w-auto px-7 py-2.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-black uppercase tracking-wider transition shadow-lg shadow-pink-600/30 cursor-pointer text-center">
+                    Tôi đã hiểu, ở lại làm tiếp &rarr;
+                </button>
+            </div>
         </div>
     </div>
 
@@ -186,12 +304,18 @@
                 const answeredRadios = document.querySelectorAll('input[type="radio"]:checked');
                 const answeredCount = answeredRadios.length;
                 const counter = document.getElementById('answered-count');
+                const bottomCounter = document.getElementById('bottom-answered-count');
                 const dot = document.getElementById('progress-indicator-dot');
                 const unansweredBadge = document.getElementById('unanswered-badge');
                 const unansweredCountText = document.getElementById('unanswered-count-text');
+                const bottomUnansweredBadge = document.getElementById('bottom-unanswered-badge');
+                const bottomUnansweredCount = document.getElementById('bottom-unanswered-count');
 
                 if (counter) {
                     counter.innerText = answeredCount;
+                }
+                if (bottomCounter) {
+                    bottomCounter.innerText = answeredCount;
                 }
 
                 const remaining = totalQuestions - answeredCount;
@@ -201,6 +325,14 @@
                         unansweredCountText.innerText = remaining;
                     } else if (remaining === 0) {
                         unansweredBadge.classList.add('hidden');
+                    }
+                }
+                if (bottomUnansweredBadge && bottomUnansweredCount) {
+                    if (remaining > 0 && answeredCount > 0) {
+                        bottomUnansweredBadge.classList.remove('hidden');
+                        bottomUnansweredCount.innerText = remaining;
+                    } else if (remaining === 0) {
+                        bottomUnansweredBadge.classList.add('hidden');
                     }
                 }
 
@@ -338,6 +470,113 @@
                     timerEl.classList.add('text-rose-400');
                 }
             }, 1000);
+
+            // ========================================================
+            // Quản lý Cảnh báo khi ấn Header hoặc Rời trang (Bắt buộc nộp bài)
+            // ========================================================
+            const leaveGuardModal = document.getElementById('leave-guard-modal');
+            const leaveTargetContainer = document.getElementById('leave-target-container');
+            const leaveTargetName = document.getElementById('leave-target-name');
+            const btnStayAndQuiz = document.getElementById('btn-stay-and-quiz');
+            const btnForceSubmitAndLeave = document.getElementById('btn-force-submit-and-leave');
+            let pendingLeaveDestination = null;
+
+            window.triggerLeaveQuiz = function(destinationUrl, destinationLabel) {
+                pendingLeaveDestination = destinationUrl || null;
+                if (destinationLabel && leaveTargetContainer && leaveTargetName) {
+                    leaveTargetName.innerText = destinationLabel;
+                    leaveTargetContainer.classList.remove('hidden');
+                } else if (leaveTargetContainer) {
+                    leaveTargetContainer.classList.add('hidden');
+                }
+                if (leaveGuardModal) {
+                    leaveGuardModal.classList.remove('hidden');
+                }
+            };
+
+            if (btnStayAndQuiz) {
+                btnStayAndQuiz.addEventListener('click', function() {
+                    if (leaveGuardModal) {
+                        leaveGuardModal.classList.add('hidden');
+                    }
+                    pendingLeaveDestination = null;
+                });
+            }
+
+            if (btnForceSubmitAndLeave) {
+                btnForceSubmitAndLeave.addEventListener('click', function() {
+                    // Bắt buộc nộp bài ngay lập tức khi rời đi
+                    isSubmitting = true;
+                    if (leaveGuardModal) {
+                        leaveGuardModal.classList.add('hidden');
+                    }
+                    form.submit();
+                });
+            }
+
+            // Chặn tất cả các click chuyển trang (đặc biệt là Header: Logo, Menu, Dropdown...)
+            document.addEventListener('click', function(e) {
+                if (isSubmitting) return;
+
+                const link = e.target.closest('a');
+                if (!link) return;
+
+                const href = link.getAttribute('href');
+                if (!href || href === '#' || href.startsWith('javascript:') || href.startsWith('#')) {
+                    return;
+                }
+
+                // Ngăn chặn điều hướng và mở cảnh báo bắt buộc nộp bài
+                e.preventDefault();
+                e.stopPropagation();
+
+                const label = link.innerText.trim() || link.getAttribute('title') || href;
+                triggerLeaveQuiz(link.href, label);
+            }, true);
+
+            // ========================================================
+            // Quản lý Cảnh báo khi Chuyển sang Tab khác (visibilitychange)
+            // ========================================================
+            let tabSwitchCount = 0;
+            const tabSwitchModal = document.getElementById('tab-switch-modal');
+            const tabSwitchCountText = document.getElementById('tab-switch-count-text');
+            const btnCloseTabWarning = document.getElementById('btn-close-tab-warning');
+
+            document.addEventListener('visibilitychange', function() {
+                if (isSubmitting) return;
+
+                if (document.hidden) {
+                    // Học viên vừa rời tab hoặc chuyển sang ứng dụng khác
+                    tabSwitchCount++;
+                } else {
+                    // Học viên quay lại bài thi -> Hiện cảnh báo vi phạm quy chế
+                    if (tabSwitchCount > 0) {
+                        if (tabSwitchCountText) {
+                            tabSwitchCountText.innerText = tabSwitchCount;
+                        }
+                        if (tabSwitchModal) {
+                            tabSwitchModal.classList.remove('hidden');
+                        }
+                    }
+                }
+            });
+
+            if (btnCloseTabWarning) {
+                btnCloseTabWarning.addEventListener('click', function() {
+                    if (tabSwitchModal) {
+                        tabSwitchModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Cảnh báo trình duyệt native khi người dùng reload hoặc đóng tab
+            window.addEventListener('beforeunload', function(e) {
+                if (!isSubmitting) {
+                    e.preventDefault();
+                    e.returnValue = 'Bài kiểm tra đang diễn ra! Nếu bạn rời đi hoặc chuyển trang, bạn sẽ bắt buộc phải nộp bài.';
+                    return e.returnValue;
+                }
+            });
         });
     </script>
 </x-app-layout>

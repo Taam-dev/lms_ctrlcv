@@ -121,6 +121,9 @@ class QuizJsonService
             if (isset($quizSource['randomize_questions'])) {
                 $quizInfo['randomize_questions'] = (bool) $quizSource['randomize_questions'];
             }
+            if (isset($quizSource['show_result_after_completion'])) {
+                $quizInfo['show_result_after_completion'] = (bool) $quizSource['show_result_after_completion'];
+            }
             if (isset($quizSource['question_limit']) && is_numeric($quizSource['question_limit'])) {
                 $quizInfo['question_limit'] = (int) $quizSource['question_limit'];
             }
@@ -322,6 +325,7 @@ class QuizJsonService
             'duration_minutes' => 20,
             'passing_score' => 6.0,
             'randomize_questions' => true,
+            'show_result_after_completion' => true,
             'questions' => [
                 [
                     'question_text' => 'Eloquent trong Laravel đóng vai trò gì?',

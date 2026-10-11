@@ -77,6 +77,12 @@
                 </strong>
             </div>
             <div>
+                <span class="text-xs text-slate-400 block mb-1">Xem kết quả sau khi làm</span>
+                <strong class="text-base {{ $quiz->show_result_after_completion ? 'text-emerald-600' : 'text-slate-500' }} font-black">
+                    {{ $quiz->show_result_after_completion ? 'Có (Cho phép)' : 'Không (Ẩn)' }}
+                </strong>
+            </div>
+            <div>
                 <span class="text-xs text-slate-400 block mb-1">Trạng thái</span>
                 @if($quiz->status === 'pending')
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">

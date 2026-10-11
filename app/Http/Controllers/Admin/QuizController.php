@@ -77,6 +77,7 @@ class QuizController extends Controller
         $duration = $request->input('duration_minutes') ? (int) $request->input('duration_minutes') : ($extracted['quiz']['duration_minutes'] ?? 15);
         $passingScore = $request->input('passing_score') !== null ? (float) $request->input('passing_score') : ($extracted['quiz']['passing_score'] ?? 5.0);
         $randomize = $request->has('randomize_questions') ? $request->boolean('randomize_questions') : ($extracted['quiz']['randomize_questions'] ?? true);
+        $showResult = $request->has('show_result_after_completion') ? $request->boolean('show_result_after_completion') : ($extracted['quiz']['show_result_after_completion'] ?? true);
         $status = $request->input('status', 'approved');
         $type = $request->input('type') ?: ($extracted['quiz']['type'] ?? 'quiz');
         if (! in_array($type, ['quiz', 'midterm', 'final'])) {
@@ -138,6 +139,7 @@ class QuizController extends Controller
             'duration_minutes' => $duration,
             'passing_score' => $passingScore,
             'randomize_questions' => $randomize,
+            'show_result_after_completion' => $showResult,
             'status' => $status,
             'question_limit' => $questionLimit,
             'starts_at' => $startsAt,
@@ -228,6 +230,7 @@ class QuizController extends Controller
             'passing_score' => $request->passing_score,
             'question_limit' => $questionLimit,
             'randomize_questions' => $request->boolean('randomize_questions'),
+            'show_result_after_completion' => $request->boolean('show_result_after_completion'),
             'status' => $request->status,
             'starts_at' => $request->filled('starts_at') ? $request->starts_at : null,
             'ends_at' => $request->filled('ends_at') ? $request->ends_at : null,

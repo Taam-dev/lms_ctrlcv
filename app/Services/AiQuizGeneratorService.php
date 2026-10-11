@@ -154,8 +154,12 @@ class AiQuizGeneratorService
 
         if (! $response->successful()) {
             $errorMsg = $response->json('error.message') ?? $response->body();
-            if ($response->status() === 400 && str_contains(strtolower($errorMsg), 'api_key_invalid')) {
+            $lowerError = strtolower($errorMsg);
+            if ($response->status() === 400 && str_contains($lowerError, 'api_key_invalid')) {
                 throw new Exception('Google Gemini API Key không hợp lệ. Vui lòng kiểm tra lại mã API key của bạn.');
+            }
+            if ($response->status() === 404 || str_contains($lowerError, 'not found') || str_contains($lowerError, 'models/')) {
+                throw new Exception('Model hiện tại không xử lý được, hãy thử dùng model khác.');
             }
             if ($response->status() === 429) {
                 throw new Exception('Tài khoản Google Gemini của bạn đã hết hạn mức (Quota/Rate limit) tạm thời. Vui lòng thử lại sau.');
@@ -199,14 +203,19 @@ class AiQuizGeneratorService
 
         if (! $response->successful()) {
             $errorMsg = $response->json('error.message') ?? $response->body();
-            if ($response->status() === 400 && str_contains(strtolower($errorMsg), 'terms acceptance')) {
-                throw new Exception("Mô hình '{$model}' yêu cầu chấp nhận điều khoản bên thứ ba trên Groq. Vui lòng chọn mô hình tiêu chuẩn như 'llama-3.1-8b-instant' hoặc 'openai/gpt-oss-120b'.");
-            }
+            $lowerError = strtolower($errorMsg);
+
             if ($response->status() === 401) {
                 throw new Exception('API Key không hợp lệ hoặc không có quyền truy cập. Vui lòng kiểm tra lại API Key.');
             }
-            if ($response->status() === 404) {
-                throw new Exception("Mô hình '{$model}' không tồn tại hoặc đã bị nhà cung cấp gỡ bỏ (deprecated/không được cấp phép cho key này). Vui lòng bấm 'Quét model từ Key' hoặc đổi sang mô hình khác (như llama-3.1-8b-instant, openai/gpt-oss-120b) hoặc dùng Google Gemini.");
+            if ($response->status() === 404
+                || str_contains($lowerError, 'not found')
+                || str_contains($lowerError, 'does not exist')
+                || str_contains($lowerError, 'decommissioned')
+                || str_contains($lowerError, 'deprecated')
+                || str_contains($lowerError, 'model_not_found')
+                || str_contains($lowerError, 'terms acceptance')) {
+                throw new Exception('Model hiện tại không xử lý được, hãy thử dùng model khác.');
             }
             if ($response->status() === 429) {
                 throw new Exception('Đã vượt quá hạn mức sử dụng (Rate limit / Quota) của nhà cung cấp. Vui lòng thử lại sau hoặc nạp thêm credit.');
@@ -565,5 +574,158 @@ class AiQuizGeneratorService
         }
 
         return $models;
+    }
+
+    /**
+     * Gợi ý đáp án hoặc tối ưu hóa/viết lại một câu hỏi trắc nghiệm cụ thể bằng AI.
+     *
+     * @param  array<int, mixed>  $currentOptions
+     * @return array{success: bool, question?: array{question_text: string, explanation: string, options: array<int, array{option_text: string, is_correct: bool}>}, message?: string}
+     */
+    public function suggestOrRefineQuestion(
+        string $provider,
+        string $apiKey,
+        string $model,
+        string $questionText,
+        array $currentOptions = [],
+        ?string $currentExplanation = '',
+        string $action = 'suggest_options'
+    ): array {
+        if ($action === 'refine') {
+            $optionsListStr = '';
+            foreach ($currentOptions as $idx => $opt) {
+                $text = is_array($opt) ? ($opt['option_text'] ?? '') : (string) $opt;
+                $optionsListStr .= chr(65 + $idx).". {$text}\n";
+            }
+
+            $prompt = "Bạn là chuyên gia sư phạm và biên soạn đề thi trắc nghiệm chuẩn mực.\n"
+                ."Nhiệm vụ: Hãy chỉnh sửa, tối ưu và làm rõ nghĩa câu hỏi trắc nghiệm tiếng Việt sau đây để tăng tính sư phạm, tránh hiểu nhầm:\n\n"
+                ."CÂU HỎI HIỆN TẠI:\n\"{$questionText}\"\n\n"
+                .($optionsListStr ? "CÁC ĐÁP ÁN HIỆN TẠI:\n{$optionsListStr}\n" : '')
+                .($currentExplanation ? "GIẢI THÍCH HIỆN TẠI:\n\"{$currentExplanation}\"\n\n" : "\n")
+                ."YÊU CẦU ĐẦU RA:\n"
+                ."1. 'question_text': Viết lại câu hỏi sao cho rõ ràng, trong sáng, chuẩn ngữ pháp tiếng Việt.\n"
+                ."2. 'options': Đúng 4 phương án A, B, C, D (ngắn gọn, phân loại tốt). CHỈ CÓ DUY NHẤT 1 phương án đúng ('is_correct': true), 3 phương án còn lại là false.\n"
+                ."3. 'explanation': Giải thích ngắn gọn, súc tích vì sao đáp án đúng là chính xác.\n\n"
+                ."ĐỊNH DẠNG JSON BẮT BUỘC (không kèm giải thích ngoài JSON):\n"
+                ."{\n"
+                ."  \"question_text\": \"Câu hỏi sau khi tối ưu...\",\n"
+                ."  \"explanation\": \"Lời giải thích...\",\n"
+                ."  \"options\": [\n"
+                ."    {\"option_text\": \"Đáp án A\", \"is_correct\": true},\n"
+                ."    {\"option_text\": \"Đáp án B\", \"is_correct\": false},\n"
+                ."    {\"option_text\": \"Đáp án C\", \"is_correct\": false},\n"
+                ."    {\"option_text\": \"Đáp án D\", \"is_correct\": false}\n"
+                ."  ]\n"
+                .'}';
+        } else {
+            // suggest_options
+            $prompt = "Bạn là chuyên gia sư phạm và biên soạn đề thi trắc nghiệm.\n"
+                ."Nhiệm vụ: Dựa vào câu hỏi trắc nghiệm dưới đây, hãy tạo ra 4 phương án lựa chọn A, B, C, D chất lượng cao và lời giải thích đáp án đúng.\n\n"
+                ."CÂU HỎI:\n\"{$questionText}\"\n\n"
+                ."YÊU CẦU ĐẦU RA:\n"
+                ."1. 'question_text': Giữ nguyên hoặc chuẩn hóa nhẹ câu hỏi trên nếu có lỗi chính tả.\n"
+                ."2. 'options': Đúng 4 phương án A, B, C, D có tính phân loại cao. CHỈ CÓ DUY NHẤT 1 phương án đúng ('is_correct': true), 3 phương án còn lại là sai ('is_correct': false).\n"
+                ."3. 'explanation': Giải thích ngắn gọn, chính xác vì sao phương án đó đúng.\n\n"
+                ."ĐỊNH DẠNG JSON BẮT BUỘC (không kèm giải thích ngoài JSON):\n"
+                ."{\n"
+                ."  \"question_text\": \"{$questionText}\",\n"
+                ."  \"explanation\": \"Lời giải thích...\",\n"
+                ."  \"options\": [\n"
+                ."    {\"option_text\": \"Đáp án A\", \"is_correct\": true},\n"
+                ."    {\"option_text\": \"Đáp án B\", \"is_correct\": false},\n"
+                ."    {\"option_text\": \"Đáp án C\", \"is_correct\": false},\n"
+                ."    {\"option_text\": \"Đáp án D\", \"is_correct\": false}\n"
+                ."  ]\n"
+                .'}';
+        }
+
+        try {
+            $rawJson = match ($provider) {
+                'gemini' => $this->callGemini($apiKey, $model, $prompt),
+                'openai' => $this->callOpenAiCompatible('https://api.openai.com/v1/chat/completions', $apiKey, $model, $prompt),
+                'openrouter' => $this->callOpenAiCompatible('https://openrouter.ai/api/v1/chat/completions', $apiKey, $model, $prompt),
+                'groq' => $this->callOpenAiCompatible('https://api.groq.com/openai/v1/chat/completions', $apiKey, $model, $prompt),
+                default => throw new Exception("Nhà cung cấp AI '{$provider}' không được hỗ trợ."),
+            };
+
+            $cleaned = trim($rawJson);
+            if (str_starts_with($cleaned, '```')) {
+                $cleaned = preg_replace('/^```(?:json)?\s*/i', '', $cleaned);
+                $cleaned = preg_replace('/\s*```$/', '', $cleaned);
+                $cleaned = trim($cleaned);
+            }
+
+            $decoded = json_decode($cleaned, true);
+            if (! is_array($decoded)) {
+                if (preg_match('/\{[\s\S]*\}/', $cleaned, $matches)) {
+                    $decoded = json_decode($matches[0], true);
+                }
+            }
+
+            if (! is_array($decoded)) {
+                throw new Exception('Mô hình AI phản hồi không đúng cấu trúc JSON.');
+            }
+
+            if (array_is_list($decoded) && isset($decoded[0]) && is_array($decoded[0])) {
+                $decoded = $decoded[0];
+            }
+
+            $resQText = trim($decoded['question_text'] ?? $decoded['question'] ?? $questionText);
+            $resExplanation = trim($decoded['explanation'] ?? $decoded['explain'] ?? '');
+            $rawOptions = $decoded['options'] ?? $decoded['answers'] ?? [];
+
+            $options = [];
+            $hasCorrect = false;
+            if (is_array($rawOptions)) {
+                $rawList = array_is_list($rawOptions) ? $rawOptions : array_values($rawOptions);
+                foreach (array_slice($rawList, 0, 4) as $oIdx => $opt) {
+                    if (is_array($opt)) {
+                        $optText = trim($opt['option_text'] ?? $opt['text'] ?? '');
+                        $isCorrect = (bool) ($opt['is_correct'] ?? false);
+                    } else {
+                        $optText = trim((string) $opt);
+                        $isCorrect = ($oIdx === 0);
+                    }
+                    if ($optText === '') {
+                        $optText = 'Phương án '.chr(65 + $oIdx);
+                    }
+                    if ($isCorrect) {
+                        $hasCorrect = true;
+                    }
+                    $options[] = [
+                        'option_text' => $optText,
+                        'is_correct' => $isCorrect,
+                    ];
+                }
+            }
+
+            while (count($options) < 4) {
+                $options[] = [
+                    'option_text' => 'Phương án '.chr(65 + count($options)),
+                    'is_correct' => false,
+                ];
+            }
+
+            if (! $hasCorrect) {
+                $options[0]['is_correct'] = true;
+            }
+
+            return [
+                'success' => true,
+                'question' => [
+                    'question_text' => $resQText !== '' ? $resQText : $questionText,
+                    'explanation' => $resExplanation,
+                    'options' => $options,
+                ],
+            ];
+        } catch (Exception $e) {
+            Log::warning('AI suggest or refine question failed: '.$e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }

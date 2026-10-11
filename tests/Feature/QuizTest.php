@@ -713,4 +713,282 @@ class QuizTest extends TestCase
         $models = $response->json('models');
         $this->assertEquals('llama-3.1-8b-instant', $models[0]['id']);
     }
+
+    /**
+     * Giảng viên có thể cập nhật câu hỏi và các đáp án của đề thi
+     */
+    public function test_teacher_can_update_quiz_question(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài kiểm tra sửa câu hỏi',
+            'type' => 'quiz',
+            'duration_minutes' => 30,
+            'passing_score' => 5,
+        ]);
+
+        $question = $quiz->questions()->create([
+            'question_text' => 'Câu hỏi ban đầu',
+            'explanation' => 'Giải thích cũ',
+            'order_number' => 1,
+        ]);
+
+        $question->options()->createMany([
+            ['option_text' => 'Đáp án cũ 1', 'is_correct' => true],
+            ['option_text' => 'Đáp án cũ 2', 'is_correct' => false],
+        ]);
+
+        $response = $this->actingAs($teacher)->put(route('teacher.quizzes.questions.update', [$quiz->id, $question->id]), [
+            'question_text' => 'Câu hỏi đã được cập nhật',
+            'explanation' => 'Giải thích mới',
+            'options' => [
+                'Đáp án mới A',
+                'Đáp án mới B',
+                'Đáp án mới C',
+                'Đáp án mới D',
+            ],
+            'correct_option' => 2, // Đáp án C
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('quiz_questions', [
+            'id' => $question->id,
+            'question_text' => 'Câu hỏi đã được cập nhật',
+            'explanation' => 'Giải thích mới',
+        ]);
+
+        $this->assertEquals(4, $question->fresh()->options()->count());
+        $this->assertDatabaseHas('quiz_options', [
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Đáp án mới C',
+            'is_correct' => true,
+        ]);
+        $this->assertDatabaseHas('quiz_options', [
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Đáp án mới A',
+            'is_correct' => false,
+        ]);
+    }
+
+    /**
+     * Endpoint AI gợi ý / tối ưu câu hỏi kiểm tra validation
+     */
+    public function test_ai_suggest_or_refine_question_validation(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $response = $this->actingAs($teacher)->postJson(route('teacher.quizzes.ai-suggest-question'), [
+            'provider' => 'gemini',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['api_key', 'question_text']);
+    }
+
+    /**
+     * Endpoint AI gợi ý đáp án trả về câu hỏi và 4 đáp án thành công
+     */
+    public function test_ai_suggest_or_refine_question_success(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'question_text' => 'Hà Nội là thủ đô của quốc gia nào?',
+                                        'explanation' => 'Hà Nội là thủ đô của nước CHXHCN Việt Nam.',
+                                        'options' => [
+                                            ['option_text' => 'Việt Nam', 'is_correct' => true],
+                                            ['option_text' => 'Lào', 'is_correct' => false],
+                                            ['option_text' => 'Campuchia', 'is_correct' => false],
+                                            ['option_text' => 'Thái Lan', 'is_correct' => false],
+                                        ],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($teacher)->postJson(route('teacher.quizzes.ai-suggest-question'), [
+            'provider' => 'gemini',
+            'api_key' => 'valid-api-key-12345',
+            'model' => 'gemini-1.5-flash',
+            'question_text' => 'Hà Nội là thủ đô của quốc gia nào?',
+            'action' => 'suggest_options',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+        $this->assertEquals('Hà Nội là thủ đô của quốc gia nào?', $response->json('question.question_text'));
+        $this->assertCount(4, $response->json('question.options'));
+        $this->assertTrue($response->json('question.options.0.is_correct'));
+    }
+
+    /**
+     * Học viên có thể tìm kiếm bài kiểm tra theo tên đề thi
+     */
+    public function test_student_can_search_quizzes(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz1 = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Mrbeast 1 Thử Thách',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $quiz2 = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Laravel Framework Cơ Bản',
+            'type' => 'quiz',
+            'duration_minutes' => 20,
+            'passing_score' => 6.0,
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($student)->get(route('student.quizzes.index', ['search' => 'Mrbeast']));
+        $response->assertOk();
+        $response->assertSee('Mrbeast 1 Thử Thách');
+        $response->assertDontSee('Laravel Framework Cơ Bản');
+    }
+
+    /**
+     * Bài kiểm tra có thời gian mở trong quá khứ hoặc hiện tại được mở thành công
+     */
+    public function test_quiz_with_past_or_current_starts_at_is_open(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài thi đã đến giờ mở',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'starts_at' => now()->subMinute(),
+            'ends_at' => now()->addDay(),
+        ]);
+
+        $this->assertFalse($quiz->isNotStarted());
+        $this->assertFalse($quiz->isExpired());
+        $this->assertTrue($quiz->isAvailable());
+    }
+
+    /**
+     * Giảng viên có thể thiết lập quyền xem kết quả sau khi hoàn thành
+     */
+    public function test_teacher_can_create_and_update_quiz_with_show_result_after_completion(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Vue 3',
+            'description' => 'Mô tả',
+            'status' => 'approved',
+        ]);
+
+        // Tạo với lựa chọn Không cho xem kết quả
+        $response = $this->actingAs($teacher)->post(route('teacher.quizzes.store'), [
+            'course_id' => $course->id,
+            'title' => 'Kiểm tra không cho xem kết quả',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'show_result_after_completion' => '0',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'title' => 'Kiểm tra không cho xem kết quả',
+            'show_result_after_completion' => 0,
+        ]);
+
+        $quiz = Quiz::where('title', 'Kiểm tra không cho xem kết quả')->first();
+
+        // Cập nhật lại thành Có cho xem kết quả
+        $updateResponse = $this->actingAs($teacher)->put(route('teacher.quizzes.update', $quiz->id), [
+            'course_id' => $course->id,
+            'title' => 'Kiểm tra đã cho xem kết quả',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'show_result_after_completion' => '1',
+        ]);
+
+        $updateResponse->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'id' => $quiz->id,
+            'title' => 'Kiểm tra đã cho xem kết quả',
+            'show_result_after_completion' => 1,
+        ]);
+    }
+
+    /**
+     * Học viên không thể xem chi tiết đáp án khi show_result_after_completion bị tắt
+     */
+    public function test_student_result_view_hides_detailed_questions_when_show_result_is_disabled(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài thi bảo mật đáp án',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'show_result_after_completion' => false,
+            'status' => 'approved',
+        ]);
+
+        $q = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Câu hỏi bảo mật 1?',
+            'explanation' => 'Giải thích bí mật',
+            'order_number' => 1,
+        ]);
+
+        $optA = QuizOption::create([
+            'quiz_question_id' => $q->id,
+            'option_text' => 'Đáp án đúng',
+            'is_correct' => true,
+        ]);
+
+        $optB = QuizOption::create([
+            'quiz_question_id' => $q->id,
+            'option_text' => 'Đáp án sai',
+            'is_correct' => false,
+        ]);
+
+        $attempt = QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'total_questions' => 1,
+            'correct_answers' => 1,
+            'score' => 10.0,
+            'is_passed' => true,
+            'answers' => [$q->id => $optA->id],
+            'completed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($student)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
+        $response->assertOk();
+        $response->assertSee('Kết quả bài thi được bảo mật');
+        $response->assertDontSee('Đối chiếu đáp án chi tiết');
+        $response->assertDontSee('Giải thích bí mật');
+    }
 }

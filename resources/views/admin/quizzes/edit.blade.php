@@ -179,6 +179,32 @@
                     </label>
                 </div>
 
+                <div class="p-4 rounded-2xl bg-pink-50/70 border border-pink-200/80">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <span class="font-bold text-slate-900 text-sm block">Có thể xem kết quả sau khi hoàn thành</span>
+                            <span class="text-slate-500 text-xs block leading-relaxed mt-0.5">
+                                Cho phép học viên xem lại kết quả và đáp án chi tiết sau khi nộp bài.
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-4 shrink-0 bg-white px-3.5 py-1.5 rounded-xl border border-pink-200">
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name="show_result_after_completion" value="1" 
+                                       {{ old('show_result_after_completion', $quiz->show_result_after_completion ? '1' : '0') == '1' ? 'checked' : '' }}
+                                       class="text-pink-600 border-slate-300 focus:ring-pink-500 w-4 h-4">
+                                <span class="text-xs font-bold text-slate-800">Có</span>
+                            </label>
+                            <span class="text-slate-300 text-xs">|</span>
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name="show_result_after_completion" value="0" 
+                                       {{ old('show_result_after_completion', $quiz->show_result_after_completion ? '1' : '0') == '0' ? 'checked' : '' }}
+                                       class="text-pink-600 border-slate-300 focus:ring-pink-500 w-4 h-4">
+                                <span class="text-xs font-bold text-slate-800">Không</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                     <a href="{{ route('admin.quizzes.index') }}" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition">
                         Hủy bỏ

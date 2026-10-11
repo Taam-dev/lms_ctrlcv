@@ -301,7 +301,14 @@
                 </div>
 
                 <!-- Cột phải (lg:col-span-5): Danh sách Quizzes & Bài kiểm tra -->
-                <div class="lg:col-span-5 space-y-4">
+                <div class="lg:col-span-5 space-y-4" x-data="{
+                    confirmModalOpen: false,
+                    pendingQuiz: { title: '', duration: 0, url: '' },
+                    askStartQuiz(url, title, duration) {
+                        this.pendingQuiz = { url, title, duration };
+                        this.confirmModalOpen = true;
+                    }
+                }">
                     <div class="flex items-center justify-between">
                         <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                             
@@ -394,9 +401,11 @@
                                                     Chưa mở
                                                 </span>
                                             @else
-                                                <a href="{{ route('student.quizzes.take', $quiz->id) }}" class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition">
+                                                <button type="button" 
+                                                        @click="askStartQuiz('{{ route('student.quizzes.take', $quiz->id) }}', '{{ addslashes($quiz->title) }}', {{ (int)$quiz->duration_minutes }})"
+                                                        class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
                                                     <span>{{ $attempts->isNotEmpty() ? 'Làm lại' : 'Làm bài thi' }}</span>
-                                                </a>
+                                                </button>
                                             @endif
                                         @else
                                             <span class="text-xs text-slate-400 italic">Đăng ký khóa học để làm</span>
@@ -406,6 +415,59 @@
                             @endforeach
                         </div>
                     @endif
+
+                    <!-- Modal Xác nhận Bắt đầu Làm bài Kiểm tra -->
+                    <div x-show="confirmModalOpen" 
+                         x-cloak
+                         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-sm"
+                         style="display: none;">
+                        <div @click.away="confirmModalOpen = false"
+                             class="w-full max-w-lg bg-neutral-900 border-2 border-pink-600 text-white shadow-2xl p-6 sm:p-8 space-y-6">
+                            
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-pink-600/20 border border-pink-500 text-pink-500 flex items-center justify-center shrink-0 text-2xl font-black">
+                                    ⚠️
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-[10px] uppercase font-black tracking-widest text-pink-400 block mb-1">Xác nhận làm bài kiểm tra</span>
+                                    <h3 class="text-lg sm:text-xl font-black text-white leading-snug line-clamp-2" x-text="pendingQuiz.title">
+                                        Tên bài kiểm tra
+                                    </h3>
+                                    <p class="text-xs text-neutral-400 mt-1">
+                                        Thời gian: <strong class="text-pink-400" x-text="pendingQuiz.duration + ' phút'"></strong>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="bg-rose-950/50 border-l-4 border-rose-500 border-y border-r border-rose-900/60 p-4 space-y-2">
+                                <div class="flex items-center gap-2 text-rose-300 font-black text-xs uppercase tracking-wider">
+                                    <svg class="w-4 h-4 shrink-0 text-rose-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span>Quy chế thi bắt buộc</span>
+                                </div>
+                                <p class="text-xs text-rose-100 font-semibold leading-relaxed">
+                                    Một khi đã bắt đầu thì <strong class="text-white underline decoration-rose-400">bắt buộc phải nộp bài</strong>, <strong class="text-rose-300">không thể hủy giữa chừng</strong>!
+                                </p>
+                                <p class="text-[11px] text-neutral-300 leading-normal">
+                                    Thời gian sẽ bắt đầu đếm ngược ngay lập tức. Trong khi làm bài, nếu chuyển tab hoặc chuyển trang khác, bạn sẽ bắt buộc phải nộp bài.
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2 border-t border-white/10">
+                                <button type="button" 
+                                        @click="confirmModalOpen = false"
+                                        class="w-full sm:w-auto px-6 py-2.5 border border-white/20 hover:border-white text-neutral-300 hover:text-white text-xs font-black uppercase tracking-wider transition cursor-pointer text-center">
+                                    Không
+                                </button>
+                                <a :href="pendingQuiz.url"
+                                   class="w-full sm:w-auto px-7 py-2.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-black uppercase tracking-wider transition shadow-lg shadow-pink-600/30 cursor-pointer text-center">
+                                    Làm &rarr;
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
 
             </div>
