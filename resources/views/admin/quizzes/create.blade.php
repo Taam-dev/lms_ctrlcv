@@ -107,42 +107,58 @@
                                 Bạn có thể dán nội dung JSON, tải tệp tin JSON (.json) hoặc nhập biểu mẫu thủ công.
                             </p>
 
-                            <!-- Selector 3 tabs -->
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Selector 4 tabs -->
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                                 <!-- Option 1: Paste JSON -->
                                 <button type="button" @click="setMode('paste')"
                                         :class="mode === 'paste' ? 'border-pink-600 bg-pink-50/60 ring-2 ring-pink-500/20 text-pink-900' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
-                                        class="p-4 rounded-2xl border text-left transition flex items-start gap-3">
-                                    <div :class="mode === 'paste' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0">
-                                        
+                                        class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5">
+                                    <div :class="mode === 'paste' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     </div>
                                     <div>
-                                        <div class="font-bold text-sm">Dán mã JSON</div>
-                                        <div class="text-[11px] text-slate-500 mt-0.5">Paste chuỗi JSON trực tiếp</div>
+                                        <div class="font-bold text-xs">Dán mã JSON</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Paste chuỗi JSON</div>
                                     </div>
                                 </button>
 
                                 <!-- Option 2: Upload File JSON -->
                                 <button type="button" @click="setMode('file')"
                                         :class="mode === 'file' ? 'border-pink-600 bg-pink-50/60 ring-2 ring-pink-500/20 text-pink-900' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
-                                        class="p-4 rounded-2xl border text-left transition flex items-start gap-3">
-                                    <div :class="mode === 'file' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0">
-                                        
+                                        class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5">
+                                    <div :class="mode === 'file' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                                     </div>
                                     <div>
-                                        <div class="font-bold text-sm">Tải file .JSON</div>
-                                        <div class="text-[11px] text-slate-500 mt-0.5">Upload tệp .json từ máy</div>
+                                        <div class="font-bold text-xs">Tải file .JSON</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Upload từ máy tính</div>
                                     </div>
                                 </button>
 
-                                <!-- Option 3: Manual Input -->
+                                <!-- Option 3: Tạo câu hỏi AI -->
+                                <button type="button" @click="setMode('ai')"
+                                        :class="mode === 'ai' ? 'border-pink-600 bg-pink-50/60 ring-2 ring-pink-500/20 text-pink-900' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
+                                        class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5">
+                                    <div :class="mode === 'ai' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" 
+                                         class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-xs">Tạo bằng AI</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Gemini, OpenAI, Groq</div>
+                                    </div>
+                                </button>
+
+                                <!-- Option 4: Manual Input -->
                                 <button type="button" @click="setMode('manual')"
                                         :class="mode === 'manual' ? 'border-pink-600 bg-pink-50/60 ring-2 ring-pink-500/20 text-pink-900' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
-                                        class="p-4 rounded-2xl border text-left transition flex items-start gap-3">
-                                    
+                                        class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5">
+                                    <div :class="mode === 'manual' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </div>
                                     <div>
-                                        <div class="font-bold text-sm">Nhập thủ công</div>
-                                        <div class="text-[11px] text-slate-500 mt-0.5">Soạn trực tiếp khi tạo</div>
+                                        <div class="font-bold text-xs">Nhập thủ công</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Soạn từng câu hỏi</div>
                                     </div>
                                 </button>
                             </div>
@@ -334,6 +350,273 @@
                                     Thêm câu hỏi tiếp theo
                                 </button>
                                 <span class="text-xs text-slate-500 font-semibold" x-text="manualQuestions.length + ' câu hỏi đã soạn'"></span>
+                            </div>
+                        </div>
+
+                        <!-- PANEL 4: TẠO CÂU HỎI TỰ ĐỘNG BẰNG AI -->
+                        <div x-show="mode === 'ai'" x-transition class="space-y-5 pt-3 border-t border-slate-100">
+                            <!-- Khối 1: Chọn Nhà cung cấp AI & Mô hình -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                        <span>1. Nhà cung cấp AI (Provider) <span class="text-rose-500">*</span></span>
+                                    </label>
+                                    <select x-model="aiProvider" @change="onProviderChange()"
+                                            class="w-full text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-white">
+                                        <option value="gemini">Google Gemini AI (Khuyên dùng - Miễn phí & Nhanh)</option>
+                                        <option value="openai">OpenAI (ChatGPT - gpt-4o, gpt-4o-mini)</option>
+                                        <option value="groq">GroqCloud (Siêu tốc LPU - Llama 3.1 & GPT-OSS)</option>
+                                        <option value="openrouter">OpenRouter AI (Đa mô hình Claude, DeepSeek...)</option>
+                                    </select>
+                                    <p class="text-[11px] text-slate-400 mt-1" x-text="providerDescriptions[aiProvider]"></p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5">
+                                            <span>2. Mô hình AI (Model) <span class="text-rose-500">*</span></span>
+                                            <span x-show="isFetchingModels" class="text-[10px] text-pink-600 bg-pink-50 font-medium px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse" title="Đang tự động quét model">
+                                                <svg class="w-3 h-3 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                                Tự động quét...
+                                            </span>
+                                        </span>
+                                        <button type="button" @click="fetchModelsFromKey(false)"
+                                                :disabled="isFetchingModels || !aiApiKey"
+                                                :class="!aiApiKey ? 'text-slate-400 cursor-not-allowed' : 'text-pink-600 hover:text-pink-700 cursor-pointer'"
+                                                class="text-[11px] normal-case font-semibold flex items-center gap-1 transition"
+                                                title="Quét lại danh sách mô hình từ API Key">
+                                            <svg class="w-3.5 h-3.5" :class="isFetchingModels ? 'animate-spin text-pink-600' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            <span x-text="isFetchingModels ? 'Đang quét...' : 'Quét lại'"></span>
+                                        </button>
+                                    </label>
+                                    <select x-model="aiModel"
+                                            class="w-full text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-white">
+                                        <template x-for="m in (providerModels[aiProvider] || [])" :key="m.id">
+                                            <option :value="m.id" x-text="m.name"></option>
+                                        </template>
+                                    </select>
+                                    <!-- Input model tùy chỉnh nếu chọn custom -->
+                                    <div x-show="aiModel === 'custom'" class="mt-2">
+                                        <input type="text" x-model="aiCustomModel" placeholder="Nhập mã model tùy chỉnh..."
+                                               class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Khối 2: Nhập API Key -->
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <label for="ai_api_key_input" class="block text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                        </svg>
+                                        <span>Gắn API Key của bạn <span class="text-rose-500">*</span></span>
+                                    </label>
+                                    <div class="flex items-center gap-3">
+                                        <template x-if="aiProvider === 'gemini'">
+                                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                                               class="text-[11px] text-pink-600 hover:text-pink-700 underline font-semibold flex items-center gap-1">
+                                                Lấy Gemini API Key miễn phí &rarr;
+                                            </a>
+                                        </template>
+                                        <template x-if="aiProvider === 'openai'">
+                                            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer"
+                                               class="text-[11px] text-pink-600 hover:text-pink-700 underline font-semibold flex items-center gap-1">
+                                                Lấy OpenAI API Key &rarr;
+                                            </a>
+                                        </template>
+                                        <template x-if="aiProvider === 'groq'">
+                                            <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
+                                               class="text-[11px] text-pink-600 hover:text-pink-700 underline font-semibold flex items-center gap-1">
+                                                Lấy Groq API Key &rarr;
+                                            </a>
+                                        </template>
+                                        <template x-if="aiProvider === 'openrouter'">
+                                            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer"
+                                               class="text-[11px] text-pink-600 hover:text-pink-700 underline font-semibold flex items-center gap-1">
+                                                Lấy OpenRouter Key &rarr;
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="relative">
+                                    <input :type="aiShowApiKey ? 'text' : 'password'"
+                                           id="ai_api_key_input"
+                                           x-model="aiApiKey"
+                                           @input="onApiKeyInput()"
+                                           @change="onApiKeyChange()"
+                                           @paste="onApiKeyPaste()"
+                                           :placeholder="providerPlaceholders[aiProvider] || 'Dán mã API Key của bạn vào đây...'"
+                                           class="w-full font-mono text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 pl-3.5 pr-20 bg-white shadow-2xs">
+                                    <button type="button" @click="aiShowApiKey = !aiShowApiKey"
+                                            class="absolute inset-y-0 right-2 px-2.5 my-1.5 flex items-center text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 rounded-lg">
+                                        <span x-text="aiShowApiKey ? 'Ẩn' : 'Hiện'"></span>
+                                    </button>
+                                </div>
+
+                                <!-- Trạng thái quét tự động -->
+                                <div x-show="isFetchingModels" x-transition class="text-[11px] text-pink-600 font-medium flex items-center gap-1.5 pt-0.5">
+                                    <svg class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    <span>Đang tự động kết nối và quét danh sách mô hình từ API Key của bạn...</span>
+                                </div>
+                                <div x-show="!isFetchingModels && lastFetchedSuccess" x-transition class="text-[11px] text-emerald-600 font-medium flex items-center gap-1.5 pt-0.5">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <span>Đã tự động nạp <strong x-text="fetchedModelsCount"></strong> mô hình khả dụng từ tài khoản của bạn.</span>
+                                </div>
+
+                                <div class="flex items-center justify-between text-[11px] text-slate-500">
+                                    <label class="flex items-center gap-1.5 cursor-pointer">
+                                        <input type="checkbox" x-model="aiSaveKeyToBrowser" class="rounded text-pink-600 border-slate-300 focus:ring-pink-500 w-3.5 h-3.5">
+                                        <span>Ghi nhớ API Key trên trình duyệt của tôi (chỉ lưu trong LocalStorage máy bạn)</span>
+                                    </label>
+                                    <span class="text-slate-400">Không lưu vĩnh viễn trên máy chủ</span>
+                                </div>
+                            </div>
+
+                            <!-- Khối 3: Nội dung tài liệu bài giảng / Chủ đề -->
+                            <div>
+                                <label for="ai_content_input" class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                    <span>Nội dung tài liệu / Chủ đề cần tạo câu hỏi <span class="text-rose-500">*</span></span>
+                                    <span class="text-[11px] text-slate-400 font-normal" x-text="aiContent.length + ' ký tự'"></span>
+                                </label>
+                                <textarea id="ai_content_input" rows="7" x-model="aiContent"
+                                          placeholder="Dán đề cương, nội dung tóm tắt bài giảng, slide bài học, hoặc các kiến thức bạn muốn kiểm tra... Ví dụ:&#10;- Các khái niệm cơ bản về Eloquent ORM trong Laravel&#10;- Quan hệ HasOne, HasMany, BelongsTo, BelongsToMany&#10;- Eager Loading với phương thức with() để chống lỗi N+1 Query..."
+                                          class="w-full text-xs rounded-2xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 p-3.5 bg-white shadow-2xs placeholder:text-slate-400"></textarea>
+                            </div>
+
+                            <!-- Khối 4: Cấu hình số lượng & mức độ câu hỏi AI -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-pink-50/50 border border-pink-100">
+                                <div>
+                                    <label for="ai_question_count_input" class="block text-xs font-bold text-slate-800 mb-1">
+                                        Số lượng câu hỏi muốn tạo
+                                    </label>
+                                    <input type="number" 
+                                           id="ai_question_count_input"
+                                           min="1" 
+                                           step="1"
+                                           x-model.number="aiQuestionCount"
+                                           @keydown="if(['-','+','e','E','.',','].includes($event.key)){ $event.preventDefault(); }"
+                                           @input="if(aiQuestionCount !== '' && aiQuestionCount !== null) { aiQuestionCount = Math.max(1, Math.floor(Math.abs(aiQuestionCount) || 1)); }"
+                                           placeholder="Nhập số câu (VD: 10, 20...)"
+                                           class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
+                                    <p class="text-[10px] text-slate-400 mt-1">Số nguyên dương (không nhập số âm, float).</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-800 mb-1">
+                                        Độ khó câu hỏi
+                                    </label>
+                                    <select x-model="aiDifficulty" class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
+                                        <option value="medium" selected>Tiêu chuẩn / Trung bình</option>
+                                        <option value="easy">Cơ bản / Nhận biết</option>
+                                        <option value="hard">Nâng cao / Vận dụng cao</option>
+                                        <option value="mixed">Đa dạng (Cơ bản đến nâng cao)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-800 mb-1">
+                                        Chế độ nạp câu hỏi
+                                    </label>
+                                    <select x-model="aiAppendMode" class="w-full text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2 bg-white">
+                                        <option :value="false">Thay thế danh sách câu hỏi hiện tại</option>
+                                        <option :value="true">Thêm tiếp vào câu hỏi đã có (Tạo thêm)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Banner Thông báo lỗi AI nếu có -->
+                            <div x-show="aiError" x-transition class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start justify-between gap-3">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <div>
+                                        <span class="font-bold">Lỗi tạo câu hỏi: </span>
+                                        <span x-text="aiError"></span>
+                                    </div>
+                                </div>
+                                <button type="button" @click="aiError = ''" class="text-rose-500 hover:text-rose-700 font-bold">&times;</button>
+                            </div>
+
+                            <!-- Banner Thông báo thành công -->
+                            <div x-show="aiSuccess" x-transition class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start justify-between gap-3">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <div>
+                                        <span class="font-bold">Thành công! </span>
+                                        <span x-text="aiSuccess"></span>
+                                    </div>
+                                </div>
+                                <button type="button" @click="aiSuccess = ''" class="text-emerald-500 hover:text-emerald-700 font-bold">&times;</button>
+                            </div>
+
+                            <!-- Nút hành động Bắt đầu tạo câu hỏi với AI -->
+                            <div class="flex items-center justify-between pt-2">
+                                <span class="text-xs text-slate-500 font-medium">
+                                    Mẹo: Bạn có thể tạo nhiều đợt câu hỏi từ các tài liệu khác nhau để tạo ngân hàng đề phong phú.
+                                </span>
+                                <button type="button" @click="generateWithAi()" :disabled="isGeneratingAi"
+                                        :class="isGeneratingAi ? 'opacity-70 cursor-not-allowed' : 'hover:bg-pink-700 active:scale-[0.99]'"
+                                        class="px-6 py-2.5 rounded-xl bg-pink-600 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition flex items-center justify-center">
+                                    <template x-if="isGeneratingAi">
+                                        <span class="inline-flex items-center gap-2">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Đang tạo câu hỏi với AI...</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="!isGeneratingAi">
+                                        <span>Tạo câu hỏi với AI</span>
+                                    </template>
+                                </button>
+                            </div>
+
+                            <!-- LIVE PREVIEW PARSED QUESTIONS KHI TẠO XONG TỪ AI -->
+                            <div x-show="parsedQuestions.length > 0" x-transition class="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-4 pt-4 mt-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                                        <h4 class="font-bold text-emerald-900 text-sm">
+                                            Đã nạp thành công <span class="text-emerald-700 font-black" x-text="parsedQuestions.length"></span> câu hỏi trắc nghiệm vào đề thi!
+                                        </h4>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="setMode('manual')" class="text-xs text-pink-600 hover:text-pink-800 underline font-semibold">
+                                            Chuyển sang sửa thủ công &rarr;
+                                        </button>
+                                        <span class="text-slate-300">|</span>
+                                        <button type="button" @click="setMode('paste')" class="text-xs text-pink-600 hover:text-pink-800 underline font-semibold">
+                                            Xem mã JSON &rarr;
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                                    <template x-for="(q, idx) in parsedQuestions" :key="idx">
+                                        <div class="p-3 bg-white rounded-xl border border-emerald-100 text-xs space-y-1.5 shadow-xs">
+                                            <div class="font-bold text-slate-800 flex items-start gap-2">
+                                                <span class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px] shrink-0" x-text="idx + 1"></span>
+                                                <span x-text="q.question_text"></span>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-7">
+                                                <template x-for="(opt, oIdx) in q.options" :key="oIdx">
+                                                    <div :class="opt.is_correct ? 'bg-emerald-50 text-emerald-800 font-bold border-emerald-300' : 'bg-slate-50 text-slate-600 border-slate-200'"
+                                                         class="px-2 py-1 rounded-lg border text-[11px] flex items-center justify-between">
+                                                        <span x-text="String.fromCharCode(65 + oIdx) + '. ' + opt.option_text"></span>
+                                                        <span x-show="opt.is_correct" class="text-emerald-600 text-[10px]">✓ Đúng</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div x-show="q.explanation" class="pl-7 text-[11px] text-slate-500 italic">
+                                                Giải thích: <span x-text="q.explanation"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -551,6 +834,70 @@
                 timer: null,
                 isSubmitting: false,
 
+                // Cấu hình AI tạo câu hỏi
+                aiProvider: 'gemini',
+                aiModel: 'gemini-2.0-flash',
+                aiCustomModel: '',
+                aiApiKey: '',
+                aiContent: '',
+                aiQuestionCount: 10,
+                aiDifficulty: 'medium',
+                aiAppendMode: false,
+                aiShowApiKey: false,
+                aiSaveKeyToBrowser: true,
+                isGeneratingAi: false,
+                isFetchingModels: false,
+                lastFetchedKey: '',
+                lastFetchedSuccess: false,
+                fetchedModelsCount: 0,
+                apiKeyDebounceTimer: null,
+                aiError: '',
+                aiSuccess: '',
+
+                providerDescriptions: {
+                    gemini: 'Mô hình tiên tiến của Google, tốc độ cao, hỗ trợ tiếng Việt mượt mà và hoàn toàn miễn phí.',
+                    openai: 'Mô hình GPT-4o / GPT-4o-mini tiêu chuẩn chất lượng cao của OpenAI.',
+                    groq: 'Nền tảng xử lý AI siêu tốc Groq LPU (Llama 3.1, GPT-OSS 120B... phản hồi hàng trăm token/s).',
+                    openrouter: 'Cổng AI đa mô hình toàn cầu (DeepSeek V3, Claude 3.5, Llama 3.3, Gemini...).'
+                },
+
+                providerPlaceholders: {
+                    gemini: 'Dán Google Gemini API Key (Bắt đầu bằng AIzaSy...)',
+                    openai: 'Dán OpenAI API Key (Bắt đầu bằng sk-...)',
+                    groq: 'Dán Groq API Key (Bắt đầu bằng gsk_...)',
+                    openrouter: 'Dán OpenRouter API Key (Bắt đầu bằng sk-or-v1-...)'
+                },
+
+                providerModels: {
+                    gemini: [
+                        { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Khuyên dùng - Siêu nhanh & Thông minh)' },
+                        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Tiêu chuẩn, hạn mức cao)' },
+                        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (Phân tích chuyên sâu)' },
+                        { id: 'custom', name: 'Nhập model khác...' }
+                    ],
+                    openai: [
+                        { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Khuyên dùng - Nhanh & Tiết kiệm)' },
+                        { id: 'gpt-4o', name: 'GPT-4o (Đỉnh cao phân tích lý luận)' },
+                        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo (Cơ bản)' },
+                        { id: 'custom', name: 'Nhập model khác...' }
+                    ],
+                    groq: [
+                        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant (Khuyên dùng - Cực nhanh & Ổn định)' },
+                        { id: 'openai/gpt-oss-120b', name: 'OpenAI GPT-OSS 120B (Thông minh nhất trên Groq)' },
+                        { id: 'openai/gpt-oss-20b', name: 'OpenAI GPT-OSS 20B (Nhanh & Tối ưu chi phí)' },
+                        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B (Suy luận logic)' },
+                        { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B (Nhẹ & Phản hồi nhanh)' },
+                        { id: 'custom', name: 'Nhập model khác...' }
+                    ],
+                    openrouter: [
+                        { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3 (Rất thông minh)' },
+                        { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free qua OpenRouter)' },
+                        { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Meta Llama 3.3 70B' },
+                        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
+                        { id: 'custom', name: 'Nhập model khác...' }
+                    ]
+                },
+
                 get totalQuestions() {
                     if (this.mode === 'manual') {
                         return this.manualQuestions.filter(q => q.question_text && q.question_text.trim() !== '').length;
@@ -579,8 +926,276 @@
                 ],
 
                 init() {
+                    this.loadSavedApiKey();
+
                     if (this.jsonText) {
                         this.parseJsonString(this.jsonText);
+                    }
+                },
+
+                loadSavedApiKey() {
+                    try {
+                        const savedKey = localStorage.getItem('lms_ai_key_' + this.aiProvider);
+                        if (savedKey) {
+                            this.aiApiKey = savedKey;
+                            this.$nextTick(() => {
+                                if (this.aiApiKey && this.aiApiKey.trim().length >= 10) {
+                                    this.fetchModelsFromKey(true);
+                                }
+                            });
+                        } else {
+                            this.aiApiKey = '';
+                            this.lastFetchedKey = '';
+                            this.lastFetchedSuccess = false;
+                        }
+                    } catch (e) {
+                        // ignore local storage restrictions
+                    }
+                },
+
+                onProviderChange() {
+                    const models = this.providerModels[this.aiProvider];
+                    if (models && models.length > 0) {
+                        this.aiModel = models[0].id;
+                    }
+                    this.lastFetchedKey = '';
+                    this.lastFetchedSuccess = false;
+                    this.loadSavedApiKey();
+                    this.aiError = '';
+                    this.aiSuccess = '';
+                },
+
+                onApiKeyInput() {
+                    this.lastFetchedSuccess = false;
+                    clearTimeout(this.apiKeyDebounceTimer);
+                    const key = (this.aiApiKey || '').trim();
+                    if (!key || key.length < 15) {
+                        return;
+                    }
+                    this.apiKeyDebounceTimer = setTimeout(() => {
+                        this.fetchModelsFromKey(true);
+                    }, 600);
+                },
+
+                onApiKeyChange() {
+                    clearTimeout(this.apiKeyDebounceTimer);
+                    const key = (this.aiApiKey || '').trim();
+                    if (key && key.length >= 10) {
+                        this.fetchModelsFromKey(false);
+                    }
+                },
+
+                onApiKeyPaste() {
+                    this.$nextTick(() => {
+                        clearTimeout(this.apiKeyDebounceTimer);
+                        const key = (this.aiApiKey || '').trim();
+                        if (key && key.length >= 10) {
+                            this.fetchModelsFromKey(false);
+                        }
+                    });
+                },
+
+                syncParsedToJson() {
+                    const payload = {
+                        title: this.quizTitle || 'Bài kiểm tra trắc nghiệm AI',
+                        description: this.quizDescription || '',
+                        duration_minutes: parseInt(this.durationMinutes, 10) || 15,
+                        passing_score: parseFloat(this.passingScore) || 5.0,
+                        question_limit: this.questionLimit ? parseInt(this.questionLimit, 10) : null,
+                        randomize_questions: this.randomizeQuestions,
+                        show_result_after_completion: this.showResultAfterCompletion === '1',
+                        questions: this.parsedQuestions
+                    };
+                    this.jsonText = JSON.stringify(payload, null, 2);
+                },
+
+                syncParsedToManual() {
+                    if (this.parsedQuestions && this.parsedQuestions.length > 0) {
+                        this.manualQuestions = this.parsedQuestions.map(q => ({
+                            question_text: q.question_text || '',
+                            explanation: q.explanation || '',
+                            options: (q.options || []).map(o => ({
+                                option_text: o.option_text || '',
+                                is_correct: Boolean(o.is_correct)
+                            }))
+                        }));
+                    }
+                },
+
+                async generateWithAi() {
+                    this.aiError = '';
+                    this.aiSuccess = '';
+
+                    if (!this.aiApiKey || !this.aiApiKey.trim()) {
+                        this.aiError = 'Vui lòng nhập API Key để kết nối với dịch vụ AI.';
+                        return;
+                    }
+
+                    if (!this.aiContent || !this.aiContent.trim()) {
+                        this.aiError = 'Vui lòng nhập nội dung tài liệu hoặc chủ đề cần tạo câu hỏi.';
+                        return;
+                    }
+
+                    if (this.aiModel === 'custom' && (!this.aiCustomModel || !this.aiCustomModel.trim())) {
+                        this.aiError = 'Vui lòng nhập mã mô hình tùy chỉnh.';
+                        return;
+                    }
+
+                    const rawCount = Number(this.aiQuestionCount);
+                    if (!this.aiQuestionCount || isNaN(rawCount) || rawCount <= 0 || !Number.isInteger(rawCount)) {
+                        this.aiError = 'Số lượng câu hỏi phải là số nguyên dương hợp lệ (từ 1 trở lên), không được nhập số âm hay số thập phân.';
+                        return;
+                    }
+
+                    if (this.aiSaveKeyToBrowser) {
+                        try {
+                            localStorage.setItem('lms_ai_key_' + this.aiProvider, this.aiApiKey.trim());
+                        } catch (e) {
+                            // ignore local storage error
+                        }
+                    }
+
+                    this.isGeneratingAi = true;
+
+                    const requestPayload = {
+                        provider: this.aiProvider,
+                        api_key: this.aiApiKey.trim(),
+                        model: this.aiModel === 'custom' ? this.aiCustomModel.trim() : this.aiModel,
+                        content: this.aiContent.trim(),
+                        count: Math.floor(rawCount),
+                        difficulty: this.aiDifficulty || 'medium'
+                    };
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                        const response = await fetch('{{ route('admin.quizzes.generate-ai-questions') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify(requestPayload)
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Không thể tạo câu hỏi từ AI. Vui lòng kiểm tra lại API Key hoặc nội dung.');
+                        }
+
+                        const newQuestions = data.questions || [];
+                        if (newQuestions.length === 0) {
+                            throw new Error('AI không trả về câu hỏi hợp lệ nào. Vui lòng thử lại với nội dung rõ ràng hơn.');
+                        }
+
+                        if (this.aiAppendMode && this.parsedQuestions.length > 0) {
+                            this.parsedQuestions = [...this.parsedQuestions, ...newQuestions];
+                        } else {
+                            this.parsedQuestions = newQuestions;
+                        }
+
+                        if (data.quiz_title && !this.quizTitle) {
+                            this.quizTitle = data.quiz_title;
+                        }
+
+                        this.syncParsedToJson();
+                        this.syncParsedToManual();
+
+                        this.aiSuccess = `Đã tạo thành công ${newQuestions.length} câu hỏi bằng AI! Tổng ngân hàng hiện có: ${this.parsedQuestions.length} câu hỏi.`;
+                    } catch (err) {
+                        this.aiError = err.message || 'Đã xảy ra lỗi không xác định khi kết nối với AI.';
+                    } finally {
+                        this.isGeneratingAi = false;
+                    }
+                },
+
+                async fetchModelsFromKey(isAuto = false) {
+                    const key = (this.aiApiKey || '').trim();
+                    if (!key) {
+                        if (!isAuto) {
+                            this.aiError = 'Vui lòng nhập API Key trước khi quét danh sách model.';
+                        }
+                        return;
+                    }
+
+                    const cacheKey = this.aiProvider + ':::' + key;
+                    if (this.lastFetchedKey === cacheKey && isAuto) {
+                        return; // Đã quét thành công cho key này rồi thì không quét lại khi auto
+                    }
+
+                    if (this.isFetchingModels) {
+                        return;
+                    }
+
+                    this.isFetchingModels = true;
+                    if (!isAuto) {
+                        this.aiError = '';
+                        this.aiSuccess = '';
+                    }
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                        const response = await fetch('{{ route('admin.quizzes.fetch-ai-models') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                provider: this.aiProvider,
+                                api_key: key
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Không thể quét danh sách model từ API Key.');
+                        }
+
+                        if (data.models && data.models.length > 0) {
+                            this.lastFetchedKey = cacheKey;
+                            this.lastFetchedSuccess = true;
+                            this.fetchedModelsCount = data.models.length;
+
+                            this.providerModels[this.aiProvider] = [
+                                ...data.models,
+                                { id: 'custom', name: 'Nhập model khác...' }
+                            ];
+                            const currentExists = data.models.some(m => m.id === this.aiModel);
+                            if (!currentExists || this.aiModel === 'custom') {
+                                const preferred = data.models.find(m => m.id === 'llama-3.1-8b-instant')
+                                    || data.models.find(m => m.id.includes('llama-3.1-8b'))
+                                    || data.models.find(m => m.id.includes('gpt-oss-120b'))
+                                    || data.models[0];
+                                this.aiModel = preferred ? preferred.id : data.models[0].id;
+                            }
+                            this.aiError = '';
+
+                            if (this.aiSaveKeyToBrowser) {
+                                try {
+                                    localStorage.setItem('lms_ai_key_' + this.aiProvider, key);
+                                } catch (e) {
+                                    // ignore storage restriction
+                                }
+                            }
+
+                            if (!isAuto) {
+                                this.aiSuccess = `Đã tìm thấy ${data.models.length} model khả dụng trong tài khoản ${this.aiProvider.toUpperCase()} của bạn!`;
+                            }
+                        } else {
+                            throw new Error('Không tìm thấy model nào khả dụng cho API Key này.');
+                        }
+                    } catch (err) {
+                        this.lastFetchedSuccess = false;
+                        if (!isAuto) {
+                            this.aiError = err.message || 'Lỗi khi quét danh sách model từ API Key.';
+                        } else if (key.length >= 25) {
+                            this.aiError = err.message || 'Không thể quét model từ API Key này.';
+                        }
+                    } finally {
+                        this.isFetchingModels = false;
                     }
                 },
 

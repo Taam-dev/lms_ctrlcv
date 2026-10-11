@@ -450,4 +450,76 @@ class AdminCourseQuizCreationTest extends TestCase
         $showResponse->assertOk();
         $showResponse->assertSee($teacher->avatar_url);
     }
+
+    /**
+     * Admin có thể cập nhật câu hỏi trắc nghiệm
+     */
+    public function test_admin_can_update_quiz_question(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Đề thi trắc nghiệm',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $question = $quiz->questions()->create([
+            'question_text' => 'Nội dung ban đầu?',
+            'explanation' => 'Giải thích cũ',
+        ]);
+        $question->options()->createMany([
+            ['option_text' => 'Đáp án A cũ', 'is_correct' => true],
+            ['option_text' => 'Đáp án B cũ', 'is_correct' => false],
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('admin.quizzes.questions.update', [$quiz->id, $question->id]), [
+            'question_text' => 'Nội dung đã sửa đổi?',
+            'explanation' => 'Giải thích mới',
+            'options' => ['Đáp án 1 mới', 'Đáp án 2 mới', 'Đáp án 3 mới'],
+            'correct_option' => 1,
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('quiz_questions', [
+            'id' => $question->id,
+            'question_text' => 'Nội dung đã sửa đổi?',
+            'explanation' => 'Giải thích mới',
+        ]);
+        $this->assertDatabaseHas('quiz_options', [
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Đáp án 2 mới',
+            'is_correct' => true,
+        ]);
+    }
+
+    /**
+     * Giao diện tạo đề thi và soạn câu hỏi của Admin hiển thị đầy đủ tính năng AI
+     */
+    public function test_admin_views_contain_ai_features(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Đề thi kiểm tra AI Views',
+            'duration_minutes' => 20,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        // Trang create quiz
+        $createResponse = $this->actingAs($admin)->get(route('admin.quizzes.create'));
+        $createResponse->assertOk();
+        $createResponse->assertSee('Tạo bằng AI');
+        $createResponse->assertSee('Google Gemini AI');
+        $createResponse->assertSee('GroqCloud');
+
+        // Trang questions
+        $questionsResponse = $this->actingAs($admin)->get(route('admin.quizzes.questions', $quiz->id));
+        $questionsResponse->assertOk();
+        $questionsResponse->assertSee('✨ Tạo bằng AI');
+        $questionsResponse->assertSee('AI gợi ý 4 đáp án');
+        $questionsResponse->assertSee('Trợ lý AI hỗ trợ sửa câu hỏi');
+    }
 }

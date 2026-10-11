@@ -125,6 +125,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Quản lý & duyệt bài kiểm tra (Quizzes)
     Route::post('quizzes/generate-ai-questions', [AdminQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
+    Route::post('quizzes/fetch-ai-models', [AdminQuizController::class, 'fetchAiModels'])->name('quizzes.fetch-ai-models');
+    Route::post('quizzes/ai-suggest-question', [AdminQuizController::class, 'suggestOrRefineAiQuestion'])->name('quizzes.ai-suggest-question');
     Route::resource('quizzes', AdminQuizController::class)->except(['show']);
     Route::get('quizzes/{quiz}/preview', [AdminQuizController::class, 'preview'])->name('quizzes.preview');
     Route::post('quizzes/{id}/approve', [AdminQuizController::class, 'approve'])->name('quizzes.approve');
@@ -132,6 +134,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('quizzes/{id}/remove', [AdminQuizController::class, 'remove'])->name('quizzes.remove');
     Route::get('quizzes/{quiz}/questions', [AdminQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [AdminQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
+    Route::put('quizzes/{quiz}/questions/{question}', [AdminQuizController::class, 'updateQuestion'])->name('quizzes.questions.update');
     Route::post('quizzes/{quiz}/questions/import', [AdminQuizController::class, 'importQuestions'])->name('quizzes.questions.import');
     Route::delete('quizzes/{quiz}/questions/{question}', [AdminQuizController::class, 'destroyQuestion'])->name('quizzes.questions.destroy');
     Route::get('quizzes/{quiz}/results', [AdminQuizController::class, 'results'])->name('quizzes.results');

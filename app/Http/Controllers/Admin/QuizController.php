@@ -314,6 +314,46 @@ class QuizController extends Controller
     }
 
     /**
+     * Cập nhật nội dung câu hỏi và các phương án trả lời (Admin)
+     */
+    public function updateQuestion(Request $request, Quiz $quiz, QuizQuestion $question)
+    {
+        abort_if($question->quiz_id !== $quiz->id, 404);
+
+        $request->validate([
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'options' => 'required|array|min:2',
+            'options.*' => 'required|string',
+            'correct_option' => 'required|integer|min:0',
+        ], [
+            'question_text.required' => 'Nội dung câu hỏi không được để trống.',
+            'options.required' => 'Vui lòng nhập các phương án trả lời.',
+            'options.min' => 'Cần tối thiểu 2 phương án trả lời.',
+        ]);
+
+        DB::transaction(function () use ($request, $question) {
+            $question->update([
+                'question_text' => $request->question_text,
+                'explanation' => $request->explanation,
+            ]);
+
+            // Cập nhật các đáp án
+            $question->options()->delete();
+
+            foreach ($request->options as $index => $optionText) {
+                QuizOption::create([
+                    'quiz_question_id' => $question->id,
+                    'option_text' => $optionText,
+                    'is_correct' => ((int) $request->correct_option === $index),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Đã cập nhật câu hỏi trắc nghiệm thành công!');
+    }
+
+    /**
      * Xóa câu hỏi (Admin)
      */
     public function destroyQuestion(Quiz $quiz, QuizQuestion $question)
@@ -412,6 +452,77 @@ class QuizController extends Controller
             'success' => true,
             'questions' => $result['questions'],
             'count' => count($result['questions']),
+        ]);
+    }
+
+    /**
+     * Quét danh sách mô hình AI khả dụng từ nhà cung cấp thông qua API Key.
+     */
+    public function fetchAiModels(Request $request, AiQuizGeneratorService $aiService)
+    {
+        $validated = $request->validate([
+            'provider' => 'required|in:gemini,openai,openrouter,groq',
+            'api_key' => 'required|string|min:5',
+        ], [
+            'api_key.required' => 'Vui lòng nhập API Key để quét danh sách mô hình.',
+            'api_key.min' => 'API Key cần tối thiểu 5 ký tự.',
+        ]);
+
+        try {
+            $models = $aiService->fetchAvailableModels($validated['provider'], $validated['api_key']);
+
+            return response()->json([
+                'success' => true,
+                'models' => $models,
+                'count' => count($models),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Dùng AI để gợi ý 4 đáp án hoặc tối ưu hóa/viết lại một câu hỏi trắc nghiệm cụ thể.
+     */
+    public function suggestOrRefineAiQuestion(Request $request, AiQuizGeneratorService $aiService)
+    {
+        $validated = $request->validate([
+            'provider' => 'required|in:gemini,openai,openrouter,groq',
+            'api_key' => 'required|string|min:5',
+            'model' => 'required|string|min:2',
+            'question_text' => 'required|string|min:3',
+            'options' => 'nullable|array',
+            'explanation' => 'nullable|string',
+            'action' => 'nullable|string|in:suggest_options,refine',
+        ], [
+            'api_key.required' => 'Vui lòng cung cấp API Key để sử dụng AI.',
+            'question_text.required' => 'Vui lòng nhập nội dung câu hỏi trước khi nhờ AI gợi ý.',
+            'question_text.min' => 'Nội dung câu hỏi cần tối thiểu 3 ký tự.',
+        ]);
+
+        $result = $aiService->suggestOrRefineQuestion(
+            $validated['provider'],
+            $validated['api_key'],
+            $validated['model'],
+            $validated['question_text'],
+            $validated['options'] ?? [],
+            $validated['explanation'] ?? '',
+            $validated['action'] ?? 'suggest_options'
+        );
+
+        if (! $result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Không thể nhận phản hồi từ AI cho câu hỏi này.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'question' => $result['question'],
         ]);
     }
 }
