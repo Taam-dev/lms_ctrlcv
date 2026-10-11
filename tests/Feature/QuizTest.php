@@ -477,4 +477,164 @@ class QuizTest extends TestCase
         $takeResponse->assertRedirect(route('student.quizzes.index'));
         $takeResponse->assertSessionHas('error');
     }
+
+    /**
+     * Giảng viên có thể tạo quiz với số lượng câu hỏi mỗi lượt làm (question_limit)
+     */
+    public function test_teacher_can_create_quiz_with_question_limit(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $sampleQuestions = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $sampleQuestions[] = [
+                'question_text' => "Câu hỏi số {$i}",
+                'options' => ['A', 'B', 'C', 'D'],
+                'correct_option' => 0,
+            ];
+        }
+
+        $response = $this->actingAs($teacher)->post(route('teacher.quizzes.store'), [
+            'title' => 'Bài kiểm tra có giới hạn số câu',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'question_limit' => 3,
+            'json_content' => json_encode($sampleQuestions),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài kiểm tra có giới hạn số câu',
+            'question_limit' => 3,
+        ]);
+
+        $quiz = Quiz::where('title', 'Bài kiểm tra có giới hạn số câu')->first();
+        $this->assertCount(5, $quiz->questions);
+        $this->assertEquals(3, $quiz->question_limit);
+    }
+
+    /**
+     * Không thể lưu quiz nếu question_limit lớn hơn số lượng câu hỏi đang có
+     */
+    public function test_question_limit_cannot_exceed_total_questions(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $sampleQuestions = [
+            [
+                'question_text' => 'Câu 1',
+                'options' => ['A', 'B'],
+                'correct_option' => 0,
+            ],
+            [
+                'question_text' => 'Câu 2',
+                'options' => ['A', 'B'],
+                'correct_option' => 1,
+            ],
+        ];
+
+        $response = $this->actingAs($teacher)->post(route('teacher.quizzes.store'), [
+            'title' => 'Bài kiểm tra giới hạn câu hỏi sai',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'question_limit' => 5, // Lớn hơn 2 câu
+            'json_content' => json_encode($sampleQuestions),
+        ]);
+
+        $response->assertSessionHasErrors('question_limit');
+    }
+
+    /**
+     * Học viên làm bài có question_limit chỉ nhận đúng số lượng câu và tính điểm chuẩn xác
+     */
+    public function test_student_taking_quiz_with_question_limit_is_scored_against_assigned_questions(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Đề thi 4 câu lấy từ 10 câu',
+            'duration_minutes' => 20,
+            'passing_score' => 5.0,
+            'question_limit' => 4,
+            'randomize_questions' => true,
+            'status' => 'approved',
+        ]);
+
+        $createdQuestions = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $q = QuizQuestion::create([
+                'quiz_id' => $quiz->id,
+                'question_text' => "Câu hỏi {$i}",
+                'order_number' => $i,
+            ]);
+            $optCorrect = QuizOption::create([
+                'quiz_question_id' => $q->id,
+                'option_text' => 'Đúng',
+                'is_correct' => true,
+            ]);
+            $optWrong = QuizOption::create([
+                'quiz_question_id' => $q->id,
+                'option_text' => 'Sai',
+                'is_correct' => false,
+            ]);
+            $createdQuestions[] = [
+                'question' => $q,
+                'correct_id' => $optCorrect->id,
+                'wrong_id' => $optWrong->id,
+            ];
+        }
+
+        // Vào trang làm bài
+        $takeResponse = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertOk();
+        $assignedQuestions = $takeResponse->viewData('questions');
+        $this->assertCount(4, $assignedQuestions);
+
+        // Giả sử học viên trả lời 3 câu đúng và 1 câu sai trong số 4 câu được giao
+        $answers = [];
+        $questionIds = [];
+        foreach ($assignedQuestions as $index => $qItem) {
+            $questionIds[] = $qItem->id;
+            $matched = collect($createdQuestions)->firstWhere('question.id', $qItem->id);
+            if ($index < 3) {
+                // 3 câu đúng
+                $answers[$qItem->id] = $matched['correct_id'];
+            } else {
+                // 1 câu sai
+                $answers[$qItem->id] = $matched['wrong_id'];
+            }
+        }
+
+        $submitResponse = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => $answers,
+            'question_ids' => $questionIds,
+        ]);
+
+        $submitResponse->assertRedirect();
+
+        $attempt = QuizAttempt::where('student_id', $student->id)->where('quiz_id', $quiz->id)->first();
+        $this->assertNotNull($attempt);
+        $this->assertEquals(3, $attempt->correct_answers); // 3 câu đúng
+        $this->assertEquals(4, $attempt->total_questions); // 4 câu được giao
+        // Điểm theo thang 10: (3 / 4) * 10 = 7.5
+        $this->assertEquals(7.5, (float) $attempt->score);
+        $this->assertTrue((bool) $attempt->is_passed);
+    }
+
+    /**
+     * Endpoint AI tạo câu hỏi kiểm tra validation dữ liệu gửi lên
+     */
+    public function test_ai_question_generation_endpoint_validation(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $response = $this->actingAs($teacher)->postJson(route('teacher.quizzes.generate-ai-questions'), [
+            // Không gửi api_key và content
+            'provider' => 'gemini',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['api_key', 'content']);
+    }
 }

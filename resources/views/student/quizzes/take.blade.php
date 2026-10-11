@@ -77,6 +77,7 @@
                 @csrf
 
                 @foreach($questions as $index => $question)
+                    <input type="hidden" name="question_ids[]" value="{{ $question->id }}">
                     <fieldset id="question-card-{{ $question->id }}"
                               data-question-id="{{ $question->id }}"
                               data-question-number="{{ $index + 1 }}"

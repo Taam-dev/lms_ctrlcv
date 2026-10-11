@@ -80,14 +80,18 @@
                         @enderror
                     </div>
 
-                    <!-- Thời gian & Điểm đạt -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <!-- Thời gian & Điểm đạt & Số lượng câu hỏi mỗi lượt thi -->
+                    @php
+                        $totalQuestionsCount = $quiz->questions()->count();
+                    @endphp
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                         <div>
                             <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5">
                                 Thời gian làm bài (Phút) <span class="text-rose-500">*</span>
                             </label>
-                            <input type="number" name="duration_minutes" id="duration_minutes" value="{{ old('duration_minutes', $quiz->duration_minutes) }}" min="1" max="180" required 
-                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">
+                            <input type="number" name="duration_minutes" id="duration_minutes" value="{{ old('duration_minutes', $quiz->duration_minutes) }}" min="1" max="300" required 
+                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                            <p class="text-slate-400 text-xs mt-1">Đồng hồ đếm ngược khi làm bài.</p>
                             @error('duration_minutes')
                                 <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -95,11 +99,28 @@
 
                         <div>
                             <label for="passing_score" class="block text-sm font-bold text-slate-900 mb-1.5">
-                                Điểm chuẩn qua môn (Thang điểm 10) <span class="text-rose-500">*</span>
+                                Điểm chuẩn qua môn (Thang 10) <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" step="0.5" name="passing_score" id="passing_score" value="{{ old('passing_score', $quiz->passing_score) }}" min="0" max="10" required 
-                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">
+                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                            <p class="text-slate-400 text-xs mt-1">Điểm tối thiểu để Đạt bài thi.</p>
                             @error('passing_score')
+                                <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center justify-between">
+                                <span>Số câu mỗi lượt thi</span>
+                                <span class="text-[11px] font-semibold text-pink-600">Kho: {{ $totalQuestionsCount }} câu</span>
+                            </label>
+                            <input type="number" name="question_limit" id="question_limit" value="{{ old('question_limit', $quiz->question_limit) }}" min="1" {{ $totalQuestionsCount > 0 ? "max=$totalQuestionsCount" : '' }}
+                                   placeholder="Tất cả (mặc định)"
+                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                            <p class="text-slate-400 text-xs mt-1">
+                                Để trống để thi tất cả {{ $totalQuestionsCount }} câu hỏi.
+                            </p>
+                            @error('question_limit')
                                 <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>

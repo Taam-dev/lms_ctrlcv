@@ -73,7 +73,7 @@ Route::middleware(['auth', 'role:teacher'])->prefix('instructor')->name('instruc
     Route::put('lessons/{lesson}', [TeacherLessonController::class, 'update'])->name('lessons.update');
     Route::delete('lessons/{lesson}', [TeacherLessonController::class, 'destroy'])->name('lessons.destroy');
 
-    // Quản lý bài kiểm tra (Quizzes CRUD & questions & results)
+    Route::post('quizzes/generate-ai-questions', [TeacherQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
     Route::resource('quizzes', TeacherQuizController::class);
     Route::get('quizzes/{quiz}/questions', [TeacherQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [TeacherQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
@@ -91,6 +91,7 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     Route::get('lessons/{lesson}/edit', [TeacherLessonController::class, 'edit'])->name('lessons.edit');
     Route::put('lessons/{lesson}', [TeacherLessonController::class, 'update'])->name('lessons.update');
     Route::delete('lessons/{lesson}', [TeacherLessonController::class, 'destroy'])->name('lessons.destroy');
+    Route::post('quizzes/generate-ai-questions', [TeacherQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
     Route::resource('quizzes', TeacherQuizController::class);
     Route::get('quizzes/{quiz}/questions', [TeacherQuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [TeacherQuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
@@ -117,6 +118,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('lessons/{id}', [AdminCourseController::class, 'destroyLesson'])->name('lessons.destroy');
 
     // Quản lý & duyệt bài kiểm tra (Quizzes)
+    Route::post('quizzes/generate-ai-questions', [AdminQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
     Route::resource('quizzes', AdminQuizController::class)->except(['show']);
     Route::get('quizzes/{quiz}/preview', [AdminQuizController::class, 'preview'])->name('quizzes.preview');
     Route::post('quizzes/{id}/approve', [AdminQuizController::class, 'approve'])->name('quizzes.approve');

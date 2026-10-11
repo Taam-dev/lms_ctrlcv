@@ -82,6 +82,7 @@ class QuizJsonService
             'duration_minutes' => null,
             'passing_score' => null,
             'randomize_questions' => null,
+            'question_limit' => null,
             'starts_at' => null,
             'ends_at' => null,
         ];
@@ -119,6 +120,9 @@ class QuizJsonService
             }
             if (isset($quizSource['randomize_questions'])) {
                 $quizInfo['randomize_questions'] = (bool) $quizSource['randomize_questions'];
+            }
+            if (isset($quizSource['question_limit']) && is_numeric($quizSource['question_limit'])) {
+                $quizInfo['question_limit'] = (int) $quizSource['question_limit'];
             }
             if (isset($quizSource['starts_at']) && is_string($quizSource['starts_at'])) {
                 $quizInfo['starts_at'] = trim($quizSource['starts_at']);

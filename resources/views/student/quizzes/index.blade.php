@@ -85,7 +85,13 @@
                                 <dl class="grid grid-cols-3 gap-px bg-neutral-100 border border-neutral-100 text-center text-xs">
                                     <div class="bg-white p-3">
                                         <dt class="text-[10px] uppercase font-bold text-neutral-400">Số câu</dt>
-                                        <dd class="font-black text-neutral-900 mt-0.5">{{ $quiz->questions_count }}</dd>
+                                        <dd class="font-black text-neutral-900 mt-0.5">
+                                            @if($quiz->question_limit && $quiz->question_limit < $quiz->questions_count)
+                                                {{ $quiz->question_limit }} <span class="text-[10px] text-neutral-400 font-normal">/{{ $quiz->questions_count }}</span>
+                                            @else
+                                                {{ $quiz->questions_count }}
+                                            @endif
+                                        </dd>
                                     </div>
                                     <div class="bg-white p-3">
                                         <dt class="text-[10px] uppercase font-bold text-neutral-400">Thời gian</dt>

@@ -8,6 +8,7 @@ use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
+use App\Services\AiQuizGeneratorService;
 use App\Services\QuizJsonService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +58,7 @@ class QuizController extends Controller
         $courseId = $request->filled('course_id') ? $request->input('course_id') : null;
         $startsAt = $request->filled('starts_at') ? $request->input('starts_at') : ($extracted['quiz']['starts_at'] ?? null);
         $endsAt = $request->filled('ends_at') ? $request->input('ends_at') : ($extracted['quiz']['ends_at'] ?? null);
+        $questionLimit = $request->filled('question_limit') ? (int) $request->input('question_limit') : ($extracted['quiz']['question_limit'] ?? null);
 
         $validator = validator([
             'course_id' => $courseId,
@@ -64,6 +66,7 @@ class QuizController extends Controller
             'title' => $title,
             'duration_minutes' => $duration,
             'passing_score' => $passingScore,
+            'question_limit' => $questionLimit,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
         ], [
@@ -72,12 +75,20 @@ class QuizController extends Controller
             'title' => 'required|string|max:255',
             'duration_minutes' => 'required|integer|min:1|max:300',
             'passing_score' => 'required|numeric|min:0|max:10',
+            'question_limit' => 'nullable|integer|min:1',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
+        }
+
+        $qCount = count($extracted['questions']);
+        if ($questionLimit !== null && $qCount > 0 && $questionLimit > $qCount) {
+            return back()->withErrors([
+                'question_limit' => "Số lượng câu hỏi mỗi lượt thi ({$questionLimit}) không được lớn hơn tổng số câu hỏi đã tạo ({$qCount} câu).",
+            ])->withInput();
         }
 
         // Nếu có chọn khóa học, kiểm tra quyền sở hữu của giảng viên
@@ -98,6 +109,7 @@ class QuizController extends Controller
             'passing_score' => $passingScore,
             'randomize_questions' => $randomize,
             'status' => 'pending', // Mặc định chờ admin duyệt
+            'question_limit' => $questionLimit,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
         ], $extracted['questions']);
@@ -134,6 +146,7 @@ class QuizController extends Controller
         if (! in_array($type, ['quiz', 'midterm', 'final'])) {
             $type = 'quiz';
         }
+        $questionLimit = $request->filled('question_limit') ? (int) $request->input('question_limit') : null;
 
         $validator = validator([
             'course_id' => $courseId,
@@ -142,6 +155,7 @@ class QuizController extends Controller
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'passing_score' => $request->passing_score,
+            'question_limit' => $questionLimit,
             'starts_at' => $request->starts_at,
             'ends_at' => $request->ends_at,
         ], [
@@ -151,12 +165,20 @@ class QuizController extends Controller
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1|max:300',
             'passing_score' => 'required|numeric|min:0|max:10',
+            'question_limit' => 'nullable|integer|min:1',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
+        }
+
+        $currentQuestionCount = $quiz->questions()->count();
+        if ($questionLimit !== null && $currentQuestionCount > 0 && $questionLimit > $currentQuestionCount) {
+            return back()->withErrors([
+                'question_limit' => "Số lượng câu hỏi mỗi lượt thi ({$questionLimit}) không được lớn hơn tổng số câu hỏi hiện có trong đề ({$currentQuestionCount} câu).",
+            ])->withInput();
         }
 
         // Đảm bảo khóa học chọn thuộc về giảng viên nếu có chọn
@@ -173,6 +195,7 @@ class QuizController extends Controller
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'passing_score' => $request->passing_score,
+            'question_limit' => $questionLimit,
             'randomize_questions' => $request->boolean('randomize_questions'),
             'starts_at' => $request->filled('starts_at') ? $request->starts_at : null,
             'ends_at' => $request->filled('ends_at') ? $request->ends_at : null,
@@ -288,5 +311,46 @@ class QuizController extends Controller
             ->get();
 
         return view('teacher.quizzes.results', compact('quiz', 'attempts'));
+    }
+
+    /**
+     * Tạo câu hỏi tự động bằng mô hình trí tuệ nhân tạo (AI).
+     */
+    public function generateAiQuestions(Request $request, AiQuizGeneratorService $aiService)
+    {
+        $validated = $request->validate([
+            'provider' => 'required|in:gemini,openai,openrouter,groq',
+            'api_key' => 'required|string|min:5',
+            'model' => 'required|string|min:2',
+            'content' => 'required|string|min:10',
+            'count' => 'required|integer|min:1|max:50',
+            'difficulty' => 'nullable|string|in:easy,medium,hard,mixed',
+        ], [
+            'api_key.required' => 'Vui lòng nhập API Key để tiếp tục.',
+            'content.required' => 'Vui lòng nhập nội dung tài liệu hoặc chủ đề để AI tạo câu hỏi.',
+            'content.min' => 'Nội dung tài liệu cần tối thiểu 10 ký tự.',
+        ]);
+
+        $result = $aiService->generate(
+            $validated['provider'],
+            $validated['api_key'],
+            $validated['model'],
+            $validated['content'],
+            (int) $validated['count'],
+            $validated['difficulty'] ?? 'medium'
+        );
+
+        if (! $result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Không thể tạo câu hỏi từ mô hình AI.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'questions' => $result['questions'],
+            'count' => count($result['questions']),
+        ]);
     }
 }

@@ -83,15 +83,19 @@
                         Đối chiếu đáp án chi tiết
                     </h2>
                     <span class="text-xs text-neutral-500 font-semibold">
-                        {{ $quiz->questions->count() }} câu hỏi
+                        {{ $attempt->total_questions ?? $quiz->questions->count() }} câu hỏi
                     </span>
                 </div>
 
                 @php
                     $userAnswers = $attempt->answers ?? [];
+                    $attemptQuestionIds = array_keys($userAnswers);
+                    $resultQuestions = (!empty($attemptQuestionIds) && count($attemptQuestionIds) < $quiz->questions->count())
+                        ? $quiz->questions->whereIn('id', $attemptQuestionIds)->values()
+                        : $quiz->questions;
                 @endphp
 
-                @foreach($quiz->questions as $index => $question)
+                @foreach($resultQuestions as $index => $question)
                     @php
                         $selectedOptionId = $userAnswers[$question->id] ?? null;
                         $correctOption = $question->options->firstWhere('is_correct', true);

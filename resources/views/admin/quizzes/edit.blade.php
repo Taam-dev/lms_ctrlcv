@@ -64,7 +64,7 @@
                         </label>
                         <select name="type" id="type" required class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2.5">
                             <option value="quiz" {{ old('type', $quiz->type) === 'quiz' ? 'selected' : '' }}>Kiểm tra (Thường kỳ / Luyện tập)</option>
-                            <option value="midterm" {{ old('type', $quiz->type) === 'midterm' ? 'selected' : '' }}>⏱️ Kiểm tra giữa kỳ</option>
+                            <option value="midterm" {{ old('type', $quiz->type) === 'midterm' ? 'selected' : '' }}>Kiểm tra giữa kỳ</option>
                             <option value="final" {{ old('type', $quiz->type) === 'final' ? 'selected' : '' }}>Kiểm tra cuối kỳ</option>
                         </select>
                         @error('type')
@@ -89,7 +89,10 @@
                               class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">{{ old('description', $quiz->description) }}</textarea>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                @php
+                    $totalQuestionsCount = $quiz->questions()->count();
+                @endphp
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <div>
                         <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5">
                             Thời gian (Phút) <span class="text-rose-500">*</span>
@@ -103,6 +106,16 @@
                             Điểm đạt (Thang 10) <span class="text-rose-500">*</span>
                         </label>
                         <input type="number" step="0.5" name="passing_score" id="passing_score" value="{{ old('passing_score', $quiz->passing_score) }}" min="0" max="10" required 
+                               class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                    </div>
+
+                    <div>
+                        <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center justify-between">
+                            <span>Số câu mỗi lượt</span>
+                            <span class="text-[10px] font-semibold text-pink-600">Kho: {{ $totalQuestionsCount }}</span>
+                        </label>
+                        <input type="number" name="question_limit" id="question_limit" value="{{ old('question_limit', $quiz->question_limit) }}" min="1" {{ $totalQuestionsCount > 0 ? "max=$totalQuestionsCount" : '' }}
+                               placeholder="Tất cả"
                                class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
                     </div>
 

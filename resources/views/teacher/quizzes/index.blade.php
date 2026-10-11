@@ -99,9 +99,18 @@
                                             </div>
                                         </td>
                                         <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap shrink-0 {{ $quiz->questions_count > 0 ? 'bg-pink-50 text-pink-700 border border-pink-200' : 'bg-amber-50 text-amber-700 border border-amber-200' }}">
-                                                {{ $quiz->questions_count }} câu
-                                            </span>
+                                            @if($quiz->question_limit)
+                                                <div class="flex flex-col items-center">
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap shrink-0 bg-pink-50 text-pink-700 border border-pink-200" title="Đề thi lấy ngẫu nhiên {{ $quiz->question_limit }} trong tổng số {{ $quiz->questions_count }} câu hỏi">
+                                                        {{ $quiz->question_limit }} / {{ $quiz->questions_count }} câu
+                                                    </span>
+                                                    <span class="text-[10px] text-pink-600 font-medium mt-0.5">Thi {{ $quiz->question_limit }} câu</span>
+                                                </div>
+                                            @else
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap shrink-0 {{ $quiz->questions_count > 0 ? 'bg-pink-50 text-pink-700 border border-pink-200' : 'bg-amber-50 text-amber-700 border border-amber-200' }}">
+                                                    {{ $quiz->questions_count }} câu
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="py-4 px-4 text-center text-xs text-slate-600 whitespace-nowrap">
                                             <div class="whitespace-nowrap">{{ $quiz->duration_minutes }} phút | Điểm đạt &ge; {{ $quiz->passing_score }}/10</div>

@@ -92,10 +92,17 @@ class QuizController extends Controller
         // Tải câu hỏi: Tùy chỉnh đảo ngẫu nhiên thứ tự câu hỏi nếu giảng viên bật randomize_questions
         $query = $quiz->questions()->with('options');
         if ($quiz->randomize_questions) {
-            $questions = $query->inRandomOrder()->get();
+            $query->inRandomOrder();
         } else {
-            $questions = $query->orderBy('order_number')->get();
+            $query->orderBy('order_number');
         }
+
+        // Áp dụng giới hạn số lượng câu hỏi hiển thị cho mỗi lượt thi nếu có cấu hình
+        if ($quiz->question_limit && $quiz->question_limit > 0) {
+            $query->limit($quiz->question_limit);
+        }
+
+        $questions = $query->get();
 
         return view('student.quizzes.take', compact('quiz', 'questions'));
     }
@@ -125,11 +132,19 @@ class QuizController extends Controller
             }
         }
 
-        // Lấy tất cả câu hỏi và đáp án đúng
-        $questions = $quiz->questions()->with('options')->get();
-        $totalQuestions = $questions->count();
+        // Lấy danh sách câu hỏi đã được giao cho học viên trong lượt làm bài này
+        $assignedQuestionIds = $request->input('question_ids', []);
         $submittedAnswers = $request->input('answers', []); // [question_id => selected_option_id]
 
+        if (! empty($assignedQuestionIds)) {
+            $questions = $quiz->questions()->whereIn('id', $assignedQuestionIds)->with('options')->get();
+        } elseif (! empty($submittedAnswers)) {
+            $questions = $quiz->questions()->whereIn('id', array_keys($submittedAnswers))->with('options')->get();
+        } else {
+            $questions = $quiz->questions()->with('options')->get();
+        }
+
+        $totalQuestions = $questions->count();
         $correctAnswers = 0;
 
         foreach ($questions as $question) {

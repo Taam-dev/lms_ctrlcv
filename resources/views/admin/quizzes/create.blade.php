@@ -376,7 +376,7 @@
                         </div>
 
                         <!-- 3 Cột: Thời gian làm bài, Điểm đạt & Trạng thái duyệt -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                             <div>
                                 <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5">
                                     Thời gian (Phút) <span class="text-rose-500">*</span>
@@ -397,6 +397,26 @@
                                        class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
                                 <p class="text-slate-400 text-xs mt-1">Điểm tối thiểu để Đạt.</p>
                                 @error('passing_score')
+                                    <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="question_limit" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center justify-between">
+                                    <span>Số câu mỗi lượt</span>
+                                    <span class="text-[11px] font-semibold text-pink-600" x-show="totalQuestions > 0" x-text="'Kho: ' + totalQuestions"></span>
+                                </label>
+                                <input type="number" name="question_limit" id="question_limit" x-model="questionLimit" min="1" :max="totalQuestions > 0 ? totalQuestions : ''"
+                                       placeholder="Tất cả (mặc định)"
+                                       :class="isQuestionLimitInvalid ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500 bg-rose-50/30' : 'border-slate-200 focus:border-pink-600 focus:ring-pink-500'"
+                                       class="w-full rounded-xl text-sm py-2">
+                                <p class="text-slate-400 text-xs mt-1" x-show="!isQuestionLimitInvalid">
+                                    Để trống để thi tất cả câu.
+                                </p>
+                                <p class="text-rose-500 text-xs mt-1 font-semibold" x-show="isQuestionLimitInvalid" x-cloak>
+                                    ⚠️ Vượt quá <span x-text="totalQuestions"></span> câu!
+                                </p>
+                                @error('question_limit')
                                     <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -496,6 +516,7 @@
                 quizDescription: @json(old('description', '')),
                 durationMinutes: @json(old('duration_minutes', 15)),
                 passingScore: @json(old('passing_score', 5.0)),
+                questionLimit: @json(old('question_limit', '')),
                 startsAt: @json(old('starts_at', '')),
                 endsAt: @json(old('ends_at', '')),
                 randomizeQuestions: true,
@@ -503,6 +524,21 @@
                 parseError: '',
                 timer: null,
                 isSubmitting: false,
+
+                get totalQuestions() {
+                    if (this.mode === 'manual') {
+                        return this.manualQuestions.filter(q => q.question_text && q.question_text.trim() !== '').length;
+                    }
+                    return this.parsedQuestions.length;
+                },
+
+                get isQuestionLimitInvalid() {
+                    if (!this.questionLimit) return false;
+                    const limit = parseInt(this.questionLimit, 10);
+                    const total = this.totalQuestions;
+                    return total > 0 && limit > total;
+                },
+
                 manualQuestions: [
                     {
                         question_text: '',
@@ -553,6 +589,12 @@
 
                 handleFormSubmit(e) {
                     if (this.isSubmitting) {
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    if (this.isQuestionLimitInvalid) {
+                        alert(`Số câu mỗi lượt thi (${this.questionLimit}) không thể lớn hơn tổng số câu hỏi đang có (${this.totalQuestions} câu)!`);
                         e.preventDefault();
                         return false;
                     }
@@ -729,6 +771,9 @@
                         }
                         if (quizObj.passing_score !== undefined) {
                             this.passingScore = quizObj.passing_score;
+                        }
+                        if (quizObj.question_limit !== undefined && !this.questionLimit) {
+                            this.questionLimit = quizObj.question_limit;
                         }
                         if (quizObj.randomize_questions !== undefined) {
                             this.randomizeQuestions = Boolean(quizObj.randomize_questions);

@@ -345,7 +345,13 @@
                                     </p>
 
                                     <div class="flex items-center gap-3 text-xs text-slate-500 pb-3 mb-3 border-b border-slate-100">
-                                        <span>{{ $quiz->questions->count() }} câu hỏi</span>
+                                        <span>
+                                            @if($quiz->question_limit && $quiz->question_limit < $quiz->questions->count())
+                                                {{ $quiz->question_limit }}/{{ $quiz->questions->count() }} câu hỏi
+                                            @else
+                                                {{ $quiz->questions->count() }} câu hỏi
+                                            @endif
+                                        </span>
                                         <span>&bull;</span>
                                         <span>{{ $quiz->duration_minutes }} phút</span>
                                         <span>&bull;</span>

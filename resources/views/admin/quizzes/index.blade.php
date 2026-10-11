@@ -180,9 +180,18 @@
                                         <div class="text-xs text-slate-400">{{ $quiz->teacher->email ?? '' }}</div>
                                     </td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
-                                            {{ $quiz->questions_count }} câu
-                                        </span>
+                                        @if($quiz->question_limit)
+                                            <div class="flex flex-col items-center">
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 whitespace-nowrap shrink-0" title="Đề thi lấy ngẫu nhiên {{ $quiz->question_limit }} trong {{ $quiz->questions_count }} câu">
+                                                    {{ $quiz->question_limit }} / {{ $quiz->questions_count }} câu
+                                                </span>
+                                                <span class="text-[10px] text-pink-600 font-medium mt-0.5">Thi {{ $quiz->question_limit }} câu</span>
+                                            </div>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
+                                                {{ $quiz->questions_count }} câu
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         @if($quiz->status === 'pending')
