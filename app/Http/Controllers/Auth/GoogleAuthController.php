@@ -57,6 +57,9 @@ class GoogleAuthController extends Controller
         $email = (string) $googleUser->getEmail();
         $name = (string) ($googleUser->getName() ?: $googleUser->getNickname() ?: 'Google User');
         $avatar = $googleUser->getAvatar();
+        if ($avatar && mb_strlen($avatar) > 2048) {
+            $avatar = mb_substr($avatar, 0, 2048);
+        }
 
         if (empty($email)) {
             return redirect()->route('login')->with('error', 'Tài khoản Google của bạn không cung cấp địa chỉ email.');
