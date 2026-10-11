@@ -53,6 +53,21 @@ class QuizController extends Controller
                 ->with('error', 'Bài kiểm tra này chưa được phê duyệt hoặc đang tạm khóa.');
         }
 
+        // Kiểm tra thời gian làm bài (nếu có cấu hình hạn)
+        if ($quiz->isNotStarted()) {
+            $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
+
+            return redirect($redirectRoute)
+                ->with('error', 'Bài kiểm tra này chưa đến thời gian mở (Bắt đầu từ: '.$quiz->starts_at->format('d/m/Y H:i').').');
+        }
+
+        if ($quiz->isExpired()) {
+            $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
+
+            return redirect($redirectRoute)
+                ->with('error', 'Bài kiểm tra này đã quá hạn làm bài (Hạn chót: '.$quiz->ends_at->format('d/m/Y H:i').'). Bạn không thể vào làm được nữa.');
+        }
+
         // Kiểm tra bảo mật: Nếu gắn với khóa học thì học viên phải đăng ký khóa học mới được làm quiz
         if ($quiz->course_id) {
             $isEnrolled = Enrollment::where('student_id', auth()->id())
@@ -92,6 +107,11 @@ class QuizController extends Controller
     {
         if ($quiz->status !== 'approved') {
             abort(403, 'Bài kiểm tra này chưa được phê duyệt hoặc đang tạm khóa.');
+        }
+
+        // Kiểm tra quá hạn làm bài
+        if ($quiz->isExpired()) {
+            abort(403, 'Bài kiểm tra này đã quá hạn nộp bài.');
         }
 
         // Kiểm tra điều kiện đăng ký nếu quiz thuộc về khóa học

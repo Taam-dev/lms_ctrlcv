@@ -83,6 +83,8 @@ class QuizController extends Controller
         }
 
         $courseId = $request->filled('course_id') ? $request->input('course_id') : null;
+        $startsAt = $request->filled('starts_at') ? $request->input('starts_at') : ($extracted['quiz']['starts_at'] ?? null);
+        $endsAt = $request->filled('ends_at') ? $request->input('ends_at') : ($extracted['quiz']['ends_at'] ?? null);
 
         $validator = validator([
             'course_id' => $courseId,
@@ -91,6 +93,8 @@ class QuizController extends Controller
             'duration_minutes' => $duration,
             'passing_score' => $passingScore,
             'status' => $status,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
         ], [
             'course_id' => 'nullable|exists:courses,id',
             'type' => 'required|in:quiz,midterm,final',
@@ -98,6 +102,8 @@ class QuizController extends Controller
             'duration_minutes' => 'required|integer|min:1|max:300',
             'passing_score' => 'required|numeric|min:0|max:10',
             'status' => 'required|in:approved,pending,rejected',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
 
         if ($validator->fails()) {
@@ -122,6 +128,8 @@ class QuizController extends Controller
             'passing_score' => $passingScore,
             'randomize_questions' => $randomize,
             'status' => $status,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
         ], $extracted['questions']);
 
         $qCount = count($extracted['questions']);
@@ -171,6 +179,8 @@ class QuizController extends Controller
             'duration_minutes' => $request->duration_minutes,
             'passing_score' => $request->passing_score,
             'status' => $request->status,
+            'starts_at' => $request->starts_at,
+            'ends_at' => $request->ends_at,
         ], [
             'course_id' => 'nullable|exists:courses,id',
             'type' => 'required|in:quiz,midterm,final',
@@ -179,6 +189,8 @@ class QuizController extends Controller
             'duration_minutes' => 'required|integer|min:1|max:300',
             'passing_score' => 'required|numeric|min:0|max:10',
             'status' => 'required|in:approved,pending,rejected',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
 
         if ($validator->fails()) {
@@ -194,6 +206,8 @@ class QuizController extends Controller
             'passing_score' => $request->passing_score,
             'randomize_questions' => $request->boolean('randomize_questions'),
             'status' => $request->status,
+            'starts_at' => $request->filled('starts_at') ? $request->starts_at : null,
+            'ends_at' => $request->filled('ends_at') ? $request->ends_at : null,
         ]);
 
         return redirect()->route('admin.quizzes.index')

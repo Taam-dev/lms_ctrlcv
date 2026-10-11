@@ -96,11 +96,47 @@
                                         <dd class="font-black text-pink-600 mt-0.5">&ge; {{ $quiz->passing_score }}</dd>
                                     </div>
                                 </dl>
+
+                                @if($quiz->starts_at || $quiz->ends_at)
+                                    <div class="mt-3.5 text-[11px] text-neutral-600 flex items-center gap-1.5 bg-neutral-50 px-3 py-2 border border-neutral-200">
+                                        <svg class="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span class="truncate">
+                                            @if($quiz->starts_at && $quiz->ends_at)
+                                                Mở: {{ $quiz->starts_at->format('d/m/Y H:i') }} &rarr; {{ $quiz->ends_at->format('d/m/Y H:i') }}
+                                            @elseif($quiz->starts_at)
+                                                Bắt đầu: {{ $quiz->starts_at->format('d/m/Y H:i') }}
+                                            @else
+                                                Hạn chót: {{ $quiz->ends_at->format('d/m/Y H:i') }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Card Action Footer -->
                             <div class="px-6 py-4 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between gap-3">
-                                @if($lastAttempt)
+                                @if($quiz->isExpired())
+                                    @if($lastAttempt)
+                                        <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 
+                                           class="text-xs font-bold text-neutral-600 hover:text-pink-600 underline">
+                                            Xem kết quả cũ
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-rose-600 font-semibold">Đã quá hạn</span>
+                                    @endif
+                                    <span class="px-4 py-2 bg-neutral-200 text-neutral-500 text-xs font-black uppercase tracking-wider cursor-not-allowed">
+                                        Đã hết hạn
+                                    </span>
+                                @elseif($quiz->isNotStarted())
+                                    <span class="text-xs text-amber-600 font-semibold">
+                                        Mở: {{ $quiz->starts_at->format('d/m H:i') }}
+                                    </span>
+                                    <span class="px-4 py-2 bg-neutral-200 text-neutral-500 text-xs font-black uppercase tracking-wider cursor-not-allowed">
+                                        Chưa mở
+                                    </span>
+                                @elseif($lastAttempt)
                                     <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 
                                        class="text-xs font-bold text-neutral-600 hover:text-pink-600 underline">
                                         Xem kết quả cũ

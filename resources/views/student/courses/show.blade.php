@@ -352,6 +352,23 @@
                                         <span>Điểm đạt &ge; {{ $quiz->passing_score }}/10</span>
                                     </div>
 
+                                    @if($quiz->starts_at || $quiz->ends_at)
+                                        <div class="text-[11px] text-slate-500 mb-3 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                            <span class="truncate">
+                                                @if($quiz->starts_at && $quiz->ends_at)
+                                                    Thời gian mở: {{ $quiz->starts_at->format('d/m/Y H:i') }} &rarr; {{ $quiz->ends_at->format('d/m/Y H:i') }}
+                                                @elseif($quiz->starts_at)
+                                                    Bắt đầu từ: {{ $quiz->starts_at->format('d/m/Y H:i') }}
+                                                @else
+                                                    Hạn chót: {{ $quiz->ends_at->format('d/m/Y H:i') }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+
                                     <div class="flex items-center justify-between">
                                         @if($lastAttempt)
                                             <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" class="text-xs font-semibold text-pink-600 hover:underline">
@@ -362,10 +379,19 @@
                                         @endif
 
                                         @if($isEnrolled)
-                                            <a href="{{ route('student.quizzes.take', $quiz->id) }}" class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition">
-                                                <span>{{ $attempts->isNotEmpty() ? 'Làm lại' : 'Làm bài thi' }}</span>
-                                                
-                                            </a>
+                                            @if($quiz->isExpired())
+                                                <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed">
+                                                    Đã hết hạn
+                                                </span>
+                                            @elseif($quiz->isNotStarted())
+                                                <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 font-bold text-xs border border-amber-200 cursor-not-allowed">
+                                                    Chưa mở
+                                                </span>
+                                            @else
+                                                <a href="{{ route('student.quizzes.take', $quiz->id) }}" class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition">
+                                                    <span>{{ $attempts->isNotEmpty() ? 'Làm lại' : 'Làm bài thi' }}</span>
+                                                </a>
+                                            @endif
                                         @else
                                             <span class="text-xs text-slate-400 italic">Đăng ký khóa học để làm</span>
                                         @endif

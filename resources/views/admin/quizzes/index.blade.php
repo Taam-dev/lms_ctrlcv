@@ -157,6 +157,23 @@
                                             <span>&bull;</span>
                                             <span class="whitespace-nowrap">Điểm đạt &ge; {{ $quiz->passing_score }}/10</span>
                                         </div>
+                                        @if($quiz->starts_at || $quiz->ends_at)
+                                            <div class="mt-1 text-[11px] text-slate-500 flex items-center gap-1.5">
+                                                @if($quiz->isExpired())
+                                                    <span class="inline-flex items-center text-rose-700 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                        Hết hạn: {{ $quiz->ends_at?->format('d/m/Y H:i') }}
+                                                    </span>
+                                                @elseif($quiz->isNotStarted())
+                                                    <span class="inline-flex items-center text-amber-700 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                        Mở từ: {{ $quiz->starts_at?->format('d/m/Y H:i') }}
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                        Mở đến: {{ $quiz->ends_at ? $quiz->ends_at->format('d/m/Y H:i') : 'Vô thời hạn' }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="py-4 px-4 whitespace-nowrap">
                                         <div class="font-semibold text-slate-800">{{ $quiz->teacher->name ?? 'Không rõ' }}</div>

@@ -47,7 +47,7 @@
                             </label>
                             <select name="type" id="type" required class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">
                                 <option value="quiz" {{ old('type', $quiz->type) === 'quiz' ? 'selected' : '' }}>Kiểm tra (Thường kỳ / Luyện tập)</option>
-                                <option value="midterm" {{ old('type', $quiz->type) === 'midterm' ? 'selected' : '' }}>⏱️ Kiểm tra giữa kỳ</option>
+                                <option value="midterm" {{ old('type', $quiz->type) === 'midterm' ? 'selected' : '' }}>Kiểm tra giữa kỳ</option>
                                 <option value="final" {{ old('type', $quiz->type) === 'final' ? 'selected' : '' }}>Kiểm tra cuối kỳ</option>
                             </select>
                             @error('type')
@@ -100,6 +100,41 @@
                             <input type="number" step="0.5" name="passing_score" id="passing_score" value="{{ old('passing_score', $quiz->passing_score) }}" min="0" max="10" required 
                                    class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">
                             @error('passing_score')
+                                <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Thời gian mở và hạn chót làm bài kiểm tra -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 p-4.5 rounded-2xl bg-slate-50/70 border border-slate-200">
+                        <div>
+                            <label for="starts_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Bắt đầu mở từ ngày <span class="text-xs font-normal text-slate-400">(Tùy chọn)</span>
+                            </label>
+                            <input type="datetime-local" name="starts_at" id="starts_at" 
+                                   value="{{ old('starts_at', $quiz->starts_at ? $quiz->starts_at->format('Y-m-d\TH:i') : '') }}"
+                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2 bg-white">
+                            <p class="text-slate-400 text-xs mt-1">Học viên chỉ có thể vào làm từ thời điểm này (để trống nếu mở ngay).</p>
+                            @error('starts_at')
+                                <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="ends_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Hạn chót kết thúc <span class="text-xs font-normal text-slate-400">(Tùy chọn)</span>
+                            </label>
+                            <input type="datetime-local" name="ends_at" id="ends_at" 
+                                   value="{{ old('ends_at', $quiz->ends_at ? $quiz->ends_at->format('Y-m-d\TH:i') : '') }}"
+                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2 bg-white">
+                            <p class="text-slate-400 text-xs mt-1">Sau thời gian này đề sẽ quá hạn, học viên không thể vào làm được nữa.</p>
+                            @error('ends_at')
                                 <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>

@@ -63,6 +63,9 @@
                     <li>&bull; Số lượng: <strong>{{ $questions->count() }} câu hỏi trắc nghiệm</strong></li>
                     <li>&bull; Điểm chuẩn qua môn: <strong class="text-pink-600">&ge; {{ $quiz->passing_score }}/10 điểm</strong></li>
                     <li>&bull; Chấm điểm: <strong>Tự động &amp; hiển thị đáp án ngay khi nộp</strong></li>
+                    @if($quiz->ends_at)
+                        <li>&bull; Hạn chót nộp bài: <strong class="text-rose-600">{{ $quiz->ends_at->format('d/m/Y H:i') }}</strong></li>
+                    @endif
                     @if($quiz->randomize_questions)
                         <li>&bull; Thứ tự: <strong>Câu hỏi được đảo ngẫu nhiên</strong></li>
                     @endif

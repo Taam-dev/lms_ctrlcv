@@ -195,7 +195,7 @@
                     </a>
 
                     <!-- Tab 2: Bài giảng -->
-                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'lessons', 'course_id' => $selectedCourseId, 'search' => $search])) }}"
+                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'lessons', 'search' => $search])) }}"
                        class="pb-4 text-sm font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap shrink-0 {{ $currentTab === 'lessons' ? 'border-pink-600 text-pink-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         
                         Danh sách Bài giảng
@@ -229,45 +229,18 @@
                 <div>
                     <!-- TAB 1: KHÓA HỌC CỦA TÔI -->
                     @if($currentTab === 'courses')
-                        <!-- Search Toolbar -->
-                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            <form method="GET" action="{{ route('instructor.dashboard') }}" class="flex items-center gap-2 w-full sm:w-auto">
-                                <input type="hidden" name="tab" value="courses">
-                                @if(!empty($statusFilter))
-                                    <input type="hidden" name="status" value="{{ $statusFilter }}">
-                                @endif
-                                <div class="relative flex-1 sm:w-[440px]">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                        </svg>
-                                    </span>
-                                    <input type="text"
-                                           name="search"
-                                           value="{{ $search ?? '' }}"
-                                           placeholder="Tìm kiếm khóa học của bạn..."
-                                           class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
-                                    @if(!empty($search))
-                                        <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter])) }}"
-                                           class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-sm font-bold"
-                                           title="Xóa tìm kiếm">
-                                            &times;
-                                        </a>
-                                    @endif
+                        @if(!empty($search))
+                            <div class="p-3.5 mx-6 mt-4 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="w-2 h-2 rounded-full bg-pink-600"></span>
+                                    <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $courses->count() }} khóa học khớp)</span>
                                 </div>
-                                <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs shrink-0">
-                                    Tìm
-                                </button>
-                            </form>
-
-                            @if(!empty($search))
-                                <div class="text-xs text-slate-500 flex items-center gap-2">
-                                    <span>Kết quả cho <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $courses->count() }} khóa học)</span>
-                                    <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter])) }}"
-                                       class="font-bold text-pink-600 hover:underline">Xóa</a>
-                                </div>
-                            @endif
-                        </div>
+                                <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter])) }}"
+                                   class="font-bold text-slate-500 hover:text-pink-600 transition">
+                                    &times; Xóa tìm kiếm
+                                </a>
+                            </div>
+                        @endif
 
                         @if($courses->isEmpty())
                             <div class="p-16 text-center">
@@ -335,7 +308,9 @@
                                                             :class="expandedCourse === {{ $course->id }} ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
                                                             title="Bấm để xem danh sách bài giảng">
                                                         <span>{{ $course->lessons_count }} bài</span>
-                                                        
+                                                        <svg class="w-3.5 h-3.5 transform transition-transform duration-200" :class="expandedCourse === {{ $course->id }} ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                                                        </svg>
                                                     </button>
                                                 </td>
                                                 <td class="py-4 px-4 text-center whitespace-nowrap">
@@ -502,7 +477,7 @@
                     <!-- TAB 2: QUẢN LÝ BÀI GIẢNG THEO TỪNG KHÓA HỌC (ACCORDION) -->
                     @elseif($currentTab === 'lessons')
                         <div x-data="{
-                            openCourses: [{{ !empty($search) ? $courses->pluck('id')->join(',') : (request('course_id') ?: ($courses->first()->id ?? 0)) }}],
+                            openCourses: [{{ !empty($search) ? $courses->pluck('id')->join(',') : (request()->filled('course_id') ? (int)request('course_id') : '') }}],
                             toggle(id) {
                                 if (this.openCourses.includes(id)) {
                                     this.openCourses = this.openCourses.filter(i => i !== id);
@@ -551,7 +526,7 @@
                                         </button>
                                         <button type="button" @click="closeAll()" 
                                                 class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition whitespace-nowrap shrink-0">
-                                            Thu gọn
+                                            Thu gọn tất cả
                                         </button>
                                     </div>
                                 @endif
@@ -591,13 +566,22 @@
                                              :class="openCourses.includes({{ $course->id }}) ? 'border-pink-300 shadow-sm ring-1 ring-pink-200/50' : 'border-slate-200/80 hover:border-pink-200'">
                                             
                                             <!-- Accordion Header: Tên khóa học & thông tin -->
-                                            <div class="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer select-none bg-slate-50/50 hover:bg-pink-50/30 transition"
+                                            <div class="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer select-none bg-slate-50/50 hover:bg-pink-50/30 transition group"
                                                  @click="toggle({{ $course->id }})">
                                                 <div class="flex items-center gap-3.5">
-                                                    
+                                                    <!-- Chevron icon badge bên trái -->
+                                                    <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 shrink-0 border shadow-2xs"
+                                                         :class="openCourses.includes({{ $course->id }}) ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-slate-400 border-slate-200 group-hover:border-pink-300 group-hover:text-pink-600'">
+                                                        <svg class="w-4 h-4 transform transition-transform duration-200" 
+                                                             :class="openCourses.includes({{ $course->id }}) ? 'rotate-180' : ''" 
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                                                        </svg>
+                                                    </div>
+
                                                     <div>
                                                         <div class="flex items-center gap-2.5 flex-wrap">
-                                                            <h4 class="font-black text-slate-900 text-base hover:text-pink-700 transition">
+                                                            <h4 class="font-black text-slate-900 text-base group-hover:text-pink-700 transition">
                                                                 {{ $course->title }}
                                                             </h4>
                                                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0"
@@ -627,14 +611,19 @@
                                                 <div class="flex items-center gap-2 shrink-0 self-end sm:self-center flex-nowrap" @click.stop>
                                                     <a href="{{ route('instructor.lessons.create', $course->id) }}" 
                                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0">
-                                                        
                                                         + Thêm bài giảng
                                                     </a>
 
                                                     <button type="button" @click="toggle({{ $course->id }})" 
-                                                            class="p-2 rounded-xl text-slate-400 hover:text-pink-600 hover:bg-slate-100 transition shrink-0"
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition whitespace-nowrap shrink-0"
+                                                            :class="openCourses.includes({{ $course->id }}) ? 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100' : 'bg-white text-slate-700 border-slate-200 hover:text-pink-600 hover:border-pink-300 hover:bg-slate-50'"
                                                             :title="openCourses.includes({{ $course->id }}) ? 'Thu gọn bài giảng' : 'Xem danh sách bài giảng'">
-                                                        
+                                                        <span x-text="openCourses.includes({{ $course->id }}) ? 'Thu gọn' : 'Xem bài học'"></span>
+                                                        <svg class="w-3.5 h-3.5 transform transition-transform duration-200" 
+                                                             :class="openCourses.includes({{ $course->id }}) ? 'rotate-180' : ''" 
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                                                        </svg>
                                                     </button>
                                                 </div>
                                             </div>

@@ -50,14 +50,9 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- 1. Chọn Khóa học -->
                             <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <label for="course_id" class="block text-sm font-bold text-slate-900">
-                                        1. Áp dụng cho Khóa học nào?
-                                    </label>
-                                    <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                        Hỗ trợ Tự do
-                                    </span>
-                                </div>
+                                <label for="course_id" class="block text-sm font-bold text-slate-900 mb-2">
+                                    1. Áp dụng cho Khóa học nào?
+                                </label>
                                 <select name="course_id" id="course_id" class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2.5">
                                     <option value="" {{ old('course_id') === '' || !old('course_id') ? 'selected' : '' }}>
                                         Tự do (Không theo khóa học nào)
@@ -68,9 +63,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <p class="text-xs text-slate-400 mt-1.5">
-                                    Chọn <strong>Tự do</strong> để mở cho tất cả học viên làm bài mà không bắt buộc phải đăng ký khóa học.
-                                </p>
                             </div>
 
                             <!-- 2. Loại bài kiểm tra -->
@@ -83,7 +75,6 @@
                                     <label class="relative flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition text-center select-none"
                                            :class="quizType === 'quiz' ? 'border-pink-600 bg-pink-50/80 ring-2 ring-pink-500/20 text-pink-900 font-bold' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 font-medium'">
                                         <input type="radio" name="type" value="quiz" x-model="quizType" class="sr-only">
-                                        <span class="text-lg mb-0.5"></span>
                                         <span class="text-xs leading-tight">Kiểm tra</span>
                                     </label>
 
@@ -91,7 +82,6 @@
                                     <label class="relative flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition text-center select-none"
                                            :class="quizType === 'midterm' ? 'border-amber-600 bg-amber-50/80 ring-2 ring-amber-500/20 text-amber-900 font-bold' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 font-medium'">
                                         <input type="radio" name="type" value="midterm" x-model="quizType" class="sr-only">
-                                        <span class="text-lg mb-0.5">⏱️</span>
                                         <span class="text-xs leading-tight">Giữa kỳ</span>
                                     </label>
 
@@ -99,7 +89,6 @@
                                     <label class="relative flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer transition text-center select-none"
                                            :class="quizType === 'final' ? 'border-rose-600 bg-rose-50/80 ring-2 ring-rose-500/20 text-rose-900 font-bold' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 font-medium'">
                                         <input type="radio" name="type" value="final" x-model="quizType" class="sr-only">
-                                        <span class="text-lg mb-0.5"></span>
                                         <span class="text-xs leading-tight">Cuối kỳ</span>
                                     </label>
                                 </div>
@@ -428,6 +417,39 @@
                             </div>
                         </div>
 
+                        <!-- Thời gian mở và hạn chót làm bài kiểm tra -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 p-4.5 rounded-2xl bg-slate-50/70 border border-slate-200">
+                            <div>
+                                <label for="starts_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Bắt đầu mở từ ngày <span class="text-xs font-normal text-slate-400">(Tùy chọn)</span>
+                                </label>
+                                <input type="datetime-local" name="starts_at" id="starts_at" x-model="startsAt"
+                                       class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2 bg-white">
+                                <p class="text-slate-400 text-xs mt-1">Học viên chỉ có thể vào làm từ thời điểm này (để trống nếu mở ngay).</p>
+                                @error('starts_at')
+                                    <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="ends_at" class="block text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Hạn chót kết thúc <span class="text-xs font-normal text-slate-400">(Tùy chọn)</span>
+                                </label>
+                                <input type="datetime-local" name="ends_at" id="ends_at" x-model="endsAt"
+                                       class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2 bg-white">
+                                <p class="text-slate-400 text-xs mt-1">Sau thời gian này đề sẽ quá hạn, học viên không thể vào làm được nữa.</p>
+                                @error('ends_at')
+                                    <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
                         <!-- Đảo câu hỏi -->
                         <div class="p-4 rounded-2xl bg-pink-50/70 border border-pink-200/80">
                             <label class="flex items-start gap-3 cursor-pointer">
@@ -474,6 +496,8 @@
                 quizDescription: @json(old('description', '')),
                 durationMinutes: @json(old('duration_minutes', 15)),
                 passingScore: @json(old('passing_score', 5.0)),
+                startsAt: @json(old('starts_at', '')),
+                endsAt: @json(old('ends_at', '')),
                 randomizeQuestions: true,
                 parsedQuestions: [],
                 parseError: '',
@@ -708,6 +732,12 @@
                         }
                         if (quizObj.randomize_questions !== undefined) {
                             this.randomizeQuestions = Boolean(quizObj.randomize_questions);
+                        }
+                        if (quizObj.starts_at && !this.startsAt) {
+                            this.startsAt = quizObj.starts_at;
+                        }
+                        if (quizObj.ends_at && !this.endsAt) {
+                            this.endsAt = quizObj.ends_at;
                         }
 
                         const parsed = [];

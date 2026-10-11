@@ -16,6 +16,8 @@ class Quiz extends Model
         'passing_score',
         'randomize_questions',
         'status',
+        'starts_at',
+        'ends_at',
     ];
 
     public function getTypeNameAttribute(): string
@@ -36,12 +38,29 @@ class Quiz extends Model
         };
     }
 
+    public function isExpired(): bool
+    {
+        return $this->ends_at !== null && now()->gt($this->ends_at);
+    }
+
+    public function isNotStarted(): bool
+    {
+        return $this->starts_at !== null && now()->lt($this->starts_at);
+    }
+
+    public function isAvailable(): bool
+    {
+        return ! $this->isExpired() && ! $this->isNotStarted();
+    }
+
     protected function casts(): array
     {
         return [
             'randomize_questions' => 'boolean',
             'passing_score' => 'float',
             'duration_minutes' => 'integer',
+            'starts_at' => 'datetime',
+            'ends_at' => 'datetime',
         ];
     }
 

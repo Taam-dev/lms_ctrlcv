@@ -23,10 +23,16 @@
                    class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider border border-white/20 hover:border-white text-neutral-300 hover:text-white transition">
                     &larr; Quizzes
                 </a>
-                <a href="{{ route('student.quizzes.take', $quiz->id) }}" 
-                   class="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-pink-600 hover:bg-pink-500 text-white transition">
-                    Làm lại bài thi
-                </a>
+                @if(!$quiz->isExpired() && !$quiz->isNotStarted())
+                    <a href="{{ route('student.quizzes.take', $quiz->id) }}" 
+                       class="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-pink-600 hover:bg-pink-500 text-white transition">
+                        Làm lại bài thi
+                    </a>
+                @elseif($quiz->isExpired())
+                    <span class="px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed">
+                        Đã hết hạn thi
+                    </span>
+                @endif
             </div>
         </div>
     </section>

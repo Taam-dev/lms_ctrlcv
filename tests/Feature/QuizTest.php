@@ -384,4 +384,97 @@ class QuizTest extends TestCase
         $resultResponse->assertSee('10');
         $resultResponse->assertSee('ĐẠT');
     }
+
+    /**
+     * Giảng viên có thể cấu hình ngày bắt đầu và kết thúc (starts_at, ends_at)
+     */
+    public function test_teacher_can_create_quiz_with_date_range(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $startsAt = now()->addDay()->format('Y-m-d\TH:i');
+        $endsAt = now()->addDays(5)->format('Y-m-d\TH:i');
+
+        $response = $this->actingAs($teacher)->post(route('teacher.quizzes.store'), [
+            'title' => 'Kiểm tra có giới hạn thời gian',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'title' => 'Kiểm tra có giới hạn thời gian',
+            'teacher_id' => $teacher->id,
+        ]);
+
+        $quiz = Quiz::where('title', 'Kiểm tra có giới hạn thời gian')->first();
+        $this->assertNotNull($quiz->starts_at);
+        $this->assertNotNull($quiz->ends_at);
+        $this->assertTrue($quiz->isNotStarted());
+        $this->assertFalse($quiz->isExpired());
+    }
+
+    /**
+     * Học viên không thể làm bài hoặc nộp bài nếu bài kiểm tra đã quá hạn
+     */
+    public function test_student_cannot_take_or_submit_expired_quiz(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài thi đã quá hạn',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'starts_at' => now()->subDays(5),
+            'ends_at' => now()->subDay(), // đã hết hạn ngày hôm qua
+        ]);
+
+        $q = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => '1 + 1 = ?',
+            'order_number' => 1,
+        ]);
+
+        $takeResponse = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertRedirect(route('student.quizzes.index'));
+        $takeResponse->assertSessionHas('error');
+
+        $submitResponse = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [$q->id => 1],
+        ]);
+        $submitResponse->assertStatus(403);
+    }
+
+    /**
+     * Học viên không thể làm bài nếu bài kiểm tra chưa đến thời gian mở
+     */
+    public function test_student_cannot_take_not_started_quiz(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài thi chưa mở',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'starts_at' => now()->addDay(), // ngày mai mới mở
+            'ends_at' => now()->addDays(3),
+        ]);
+
+        QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Câu hỏi 1',
+            'order_number' => 1,
+        ]);
+
+        $takeResponse = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertRedirect(route('student.quizzes.index'));
+        $takeResponse->assertSessionHas('error');
+    }
 }

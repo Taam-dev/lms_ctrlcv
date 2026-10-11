@@ -114,6 +114,23 @@
                                                     <span class="text-[11px] text-slate-400 whitespace-nowrap">Thứ tự cố định</span>
                                                 @endif
                                             </div>
+                                            @if($quiz->starts_at || $quiz->ends_at)
+                                                <div class="mt-1">
+                                                    @if($quiz->isExpired())
+                                                        <span class="inline-flex items-center gap-1 text-[11px] text-rose-700 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                            Hết hạn ({{ $quiz->ends_at?->format('d/m H:i') }})
+                                                        </span>
+                                                    @elseif($quiz->isNotStarted())
+                                                        <span class="inline-flex items-center gap-1 text-[11px] text-amber-700 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                            Mở: {{ $quiz->starts_at?->format('d/m H:i') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                            Hạn: {{ $quiz->ends_at ? $quiz->ends_at->format('d/m H:i') : 'Không giới hạn' }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="py-4 px-4 text-center whitespace-nowrap">
                                             @if($quiz->status === 'approved')
