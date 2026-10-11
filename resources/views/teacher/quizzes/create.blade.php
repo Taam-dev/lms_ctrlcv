@@ -365,16 +365,22 @@
 
                                 <div>
                                     <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                                        <span>2. Mô hình AI (Model) <span class="text-rose-500">*</span></span>
-                                        <button type="button" @click="fetchModelsFromKey()"
+                                        <span class="flex items-center gap-1.5">
+                                            <span>2. Mô hình AI (Model) <span class="text-rose-500">*</span></span>
+                                            <span x-show="isFetchingModels" class="text-[10px] text-pink-600 bg-pink-50 font-medium px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse" title="Đang tự động quét model">
+                                                <svg class="w-3 h-3 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                                Tự động quét...
+                                            </span>
+                                        </span>
+                                        <button type="button" @click="fetchModelsFromKey(false)"
                                                 :disabled="isFetchingModels || !aiApiKey"
                                                 :class="!aiApiKey ? 'text-slate-400 cursor-not-allowed' : 'text-pink-600 hover:text-pink-700 cursor-pointer'"
                                                 class="text-[11px] normal-case font-semibold flex items-center gap-1 transition"
-                                                title="Tự động kết nối API Key và lấy danh sách model thực tế từ nhà cung cấp">
+                                                title="Quét lại danh sách mô hình từ API Key">
                                             <svg class="w-3.5 h-3.5" :class="isFetchingModels ? 'animate-spin text-pink-600' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
-                                            <span x-text="isFetchingModels ? 'Đang quét...' : 'Quét model từ Key'"></span>
+                                            <span x-text="isFetchingModels ? 'Đang quét...' : 'Quét lại'"></span>
                                         </button>
                                     </label>
                                     <select x-model="aiModel"
@@ -432,12 +438,25 @@
                                     <input :type="aiShowApiKey ? 'text' : 'password'"
                                            id="ai_api_key_input"
                                            x-model="aiApiKey"
+                                           @input="onApiKeyInput()"
+                                           @change="onApiKeyChange()"
+                                           @paste="onApiKeyPaste()"
                                            :placeholder="providerPlaceholders[aiProvider] || 'Dán mã API Key của bạn vào đây...'"
                                            class="w-full font-mono text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 pl-3.5 pr-20 bg-white shadow-2xs">
                                     <button type="button" @click="aiShowApiKey = !aiShowApiKey"
                                             class="absolute inset-y-0 right-2 px-2.5 my-1.5 flex items-center text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 rounded-lg">
                                         <span x-text="aiShowApiKey ? 'Ẩn' : 'Hiện'"></span>
                                     </button>
+                                </div>
+
+                                <!-- Trạng thái quét tự động -->
+                                <div x-show="isFetchingModels" x-transition class="text-[11px] text-pink-600 font-medium flex items-center gap-1.5 pt-0.5">
+                                    <svg class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    <span>Đang tự động kết nối và quét danh sách mô hình từ API Key của bạn...</span>
+                                </div>
+                                <div x-show="!isFetchingModels && lastFetchedSuccess" x-transition class="text-[11px] text-emerald-600 font-medium flex items-center gap-1.5 pt-0.5">
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <span>Đã tự động nạp <strong x-text="fetchedModelsCount"></strong> mô hình khả dụng từ tài khoản của bạn.</span>
                                 </div>
 
                                 <div class="flex items-center justify-between text-[11px] text-slate-500">
@@ -546,6 +565,50 @@
                                         <span>Tạo câu hỏi với AI</span>
                                     </template>
                                 </button>
+                            </div>
+
+                            <!-- LIVE PREVIEW PARSED QUESTIONS KHI TẠO XONG TỪ AI -->
+                            <div x-show="parsedQuestions.length > 0" x-transition class="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-4 pt-4 mt-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                                        <h4 class="font-bold text-emerald-900 text-sm">
+                                            Đã nạp thành công <span class="text-emerald-700 font-black" x-text="parsedQuestions.length"></span> câu hỏi trắc nghiệm vào đề thi!
+                                        </h4>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="setMode('manual')" class="text-xs text-pink-600 hover:text-pink-800 underline font-semibold">
+                                            Xem & chỉnh sửa chi tiết &rarr;
+                                        </button>
+                                        <span class="text-xs text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md font-semibold">
+                                            Sẵn sàng lưu bài thi
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Danh sách xem trước câu hỏi -->
+                                <div class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                                    <template x-for="(q, idx) in parsedQuestions" :key="idx">
+                                        <div class="p-3.5 bg-white rounded-xl border border-emerald-100 text-xs space-y-2 shadow-xs">
+                                            <div class="font-bold text-slate-800 flex items-start gap-2">
+                                                <span class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px] shrink-0" x-text="idx + 1"></span>
+                                                <span x-text="q.question_text"></span>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-7">
+                                                <template x-for="(opt, oIdx) in q.options" :key="oIdx">
+                                                    <div :class="opt.is_correct ? 'bg-emerald-50 text-emerald-800 font-bold border-emerald-300' : 'bg-slate-50 text-slate-600 border-slate-200'"
+                                                         class="px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center justify-between">
+                                                        <span x-text="String.fromCharCode(65 + oIdx) + '. ' + opt.option_text"></span>
+                                                        <span x-show="opt.is_correct" class="text-emerald-600 text-[10px]">✓ Đúng</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div x-show="q.explanation" class="pl-7 text-[11px] text-slate-500 italic">
+                                                Giải thích: <span x-text="q.explanation"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -732,6 +795,10 @@
                 aiSaveKeyToBrowser: true,
                 isGeneratingAi: false,
                 isFetchingModels: false,
+                lastFetchedKey: '',
+                lastFetchedSuccess: false,
+                fetchedModelsCount: 0,
+                apiKeyDebounceTimer: null,
                 aiError: '',
                 aiSuccess: '',
 
@@ -819,8 +886,15 @@
                         const savedKey = localStorage.getItem('lms_ai_key_' + this.aiProvider);
                         if (savedKey) {
                             this.aiApiKey = savedKey;
+                            this.$nextTick(() => {
+                                if (this.aiApiKey && this.aiApiKey.trim().length >= 10) {
+                                    this.fetchModelsFromKey(true);
+                                }
+                            });
                         } else {
                             this.aiApiKey = '';
+                            this.lastFetchedKey = '';
+                            this.lastFetchedSuccess = false;
                         }
                     } catch (e) {
                         // ignore local storage restrictions
@@ -832,9 +906,41 @@
                     if (models && models.length > 0) {
                         this.aiModel = models[0].id;
                     }
+                    this.lastFetchedKey = '';
+                    this.lastFetchedSuccess = false;
                     this.loadSavedApiKey();
                     this.aiError = '';
                     this.aiSuccess = '';
+                },
+
+                onApiKeyInput() {
+                    this.lastFetchedSuccess = false;
+                    clearTimeout(this.apiKeyDebounceTimer);
+                    const key = (this.aiApiKey || '').trim();
+                    if (!key || key.length < 15) {
+                        return;
+                    }
+                    this.apiKeyDebounceTimer = setTimeout(() => {
+                        this.fetchModelsFromKey(true);
+                    }, 600);
+                },
+
+                onApiKeyChange() {
+                    clearTimeout(this.apiKeyDebounceTimer);
+                    const key = (this.aiApiKey || '').trim();
+                    if (key && key.length >= 10) {
+                        this.fetchModelsFromKey(false);
+                    }
+                },
+
+                onApiKeyPaste() {
+                    this.$nextTick(() => {
+                        clearTimeout(this.apiKeyDebounceTimer);
+                        const key = (this.aiApiKey || '').trim();
+                        if (key && key.length >= 10) {
+                            this.fetchModelsFromKey(false);
+                        }
+                    });
                 },
 
                 syncParsedToJson() {
@@ -951,15 +1057,29 @@
                     }
                 },
 
-                async fetchModelsFromKey() {
-                    if (!this.aiApiKey || !this.aiApiKey.trim()) {
-                        this.aiError = 'Vui lòng nhập API Key trước khi quét danh sách model.';
+                async fetchModelsFromKey(isAuto = false) {
+                    const key = (this.aiApiKey || '').trim();
+                    if (!key) {
+                        if (!isAuto) {
+                            this.aiError = 'Vui lòng nhập API Key trước khi quét danh sách model.';
+                        }
+                        return;
+                    }
+
+                    const cacheKey = this.aiProvider + ':::' + key;
+                    if (this.lastFetchedKey === cacheKey && isAuto) {
+                        return; // Đã quét thành công cho key này rồi thì không quét lại khi auto
+                    }
+
+                    if (this.isFetchingModels) {
                         return;
                     }
 
                     this.isFetchingModels = true;
-                    this.aiError = '';
-                    this.aiSuccess = '';
+                    if (!isAuto) {
+                        this.aiError = '';
+                        this.aiSuccess = '';
+                    }
 
                     try {
                         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
@@ -972,7 +1092,7 @@
                             },
                             body: JSON.stringify({
                                 provider: this.aiProvider,
-                                api_key: this.aiApiKey.trim()
+                                api_key: key
                             })
                         });
 
@@ -982,17 +1102,46 @@
                         }
 
                         if (data.models && data.models.length > 0) {
+                            this.lastFetchedKey = cacheKey;
+                            this.lastFetchedSuccess = true;
+                            this.fetchedModelsCount = data.models.length;
+
                             this.providerModels[this.aiProvider] = [
                                 ...data.models,
                                 { id: 'custom', name: 'Nhập model khác...' }
                             ];
-                            this.aiModel = data.models[0].id;
-                            this.aiSuccess = `Đã tìm thấy ${data.models.length} model khả dụng trong tài khoản ${this.aiProvider.toUpperCase()} của bạn!`;
+                            const currentExists = data.models.some(m => m.id === this.aiModel);
+                            if (!currentExists || this.aiModel === 'custom') {
+                                const preferred = data.models.find(m => m.id === 'llama-3.1-8b-instant')
+                                    || data.models.find(m => m.id.includes('llama-3.1-8b'))
+                                    || data.models.find(m => m.id.includes('gpt-oss-120b'))
+                                    || data.models[0];
+                                this.aiModel = preferred ? preferred.id : data.models[0].id;
+                            }
+                            this.aiError = '';
+
+                            if (this.aiSaveKeyToBrowser) {
+                                try {
+                                    localStorage.setItem('lms_ai_key_' + this.aiProvider, key);
+                                } catch (e) {
+                                    // ignore storage restriction
+                                }
+                            }
+
+                            if (!isAuto) {
+                                this.aiSuccess = `Đã tìm thấy ${data.models.length} model khả dụng trong tài khoản ${this.aiProvider.toUpperCase()} của bạn!`;
+                            }
                         } else {
                             throw new Error('Không tìm thấy model nào khả dụng cho API Key này.');
                         }
                     } catch (err) {
-                        this.aiError = err.message || 'Lỗi khi quét danh sách model từ API Key.';
+                        this.lastFetchedSuccess = false;
+                        if (!isAuto) {
+                            this.aiError = err.message || 'Lỗi khi quét danh sách model từ API Key.';
+                        } else if (key.length >= 25) {
+                            // Chỉ hiển thị thông báo lỗi khi auto-fetch nếu người dùng đã nhập key hoàn chỉnh (độ dài >= 25)
+                            this.aiError = err.message || 'Không thể quét model từ API Key này.';
+                        }
                     } finally {
                         this.isFetchingModels = false;
                     }

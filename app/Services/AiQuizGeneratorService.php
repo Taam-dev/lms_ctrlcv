@@ -199,6 +199,9 @@ class AiQuizGeneratorService
 
         if (! $response->successful()) {
             $errorMsg = $response->json('error.message') ?? $response->body();
+            if ($response->status() === 400 && str_contains(strtolower($errorMsg), 'terms acceptance')) {
+                throw new Exception("Mô hình '{$model}' yêu cầu chấp nhận điều khoản bên thứ ba trên Groq. Vui lòng chọn mô hình tiêu chuẩn như 'llama-3.1-8b-instant' hoặc 'openai/gpt-oss-120b'.");
+            }
             if ($response->status() === 401) {
                 throw new Exception('API Key không hợp lệ hoặc không có quyền truy cập. Vui lòng kiểm tra lại API Key.');
             }
@@ -375,23 +378,78 @@ class AiQuizGeneratorService
 
         $data = $response->json('data') ?? [];
         $models = [];
+        $excludedKeywords = [
+            'whisper', 'orpheus', 'canopylabs', 'guard', 'playht', 'audio', 'tts', 'stt', 'embed', 'embedding',
+        ];
+
         foreach ($data as $item) {
             $id = $item['id'] ?? null;
-            if ($id && ($item['active'] ?? true)) {
-                // Lọc bỏ mô hình whisper xử lý âm thanh không dùng để sinh câu hỏi trắc nghiệm
-                if (str_contains(strtolower($id), 'whisper')) {
-                    continue;
-                }
-                $models[] = [
-                    'id' => $id,
-                    'name' => "{$id} (Khả dụng)",
-                ];
+            if (! $id || ! ($item['active'] ?? true)) {
+                continue;
             }
+
+            $idLower = strtolower($id);
+            $isExcluded = false;
+            foreach ($excludedKeywords as $kw) {
+                if (str_contains($idLower, $kw)) {
+                    $isExcluded = true;
+                    break;
+                }
+            }
+            if ($isExcluded) {
+                continue;
+            }
+
+            $models[] = [
+                'id' => $id,
+                'name' => "{$id} (Khả dụng)",
+            ];
         }
 
         if (empty($models)) {
-            throw new Exception('Không tìm thấy mô hình nào trong tài khoản Groq của bạn.');
+            throw new Exception('Không tìm thấy mô hình tạo văn bản nào trong tài khoản Groq của bạn.');
         }
+
+        // Sắp xếp ưu tiên các mô hình LLM tiêu chuẩn, hoạt động ổn định nhất lên đầu danh sách
+        usort($models, function ($a, $b) {
+            $score = function ($id) {
+                $id = strtolower($id);
+                if ($id === 'llama-3.1-8b-instant') {
+                    return 100;
+                }
+                if (str_starts_with($id, 'openai/gpt-oss-120b')) {
+                    return 95;
+                }
+                if (str_starts_with($id, 'openai/gpt-oss-20b')) {
+                    return 90;
+                }
+                if (str_contains($id, 'deepseek-r1')) {
+                    return 85;
+                }
+                if (str_contains($id, 'gemma2-9b')) {
+                    return 80;
+                }
+                if (str_contains($id, 'llama-3.1-70b')) {
+                    return 75;
+                }
+                if (str_contains($id, 'llama-3.3')) {
+                    return 70;
+                }
+                if (str_contains($id, 'llama3')) {
+                    return 65;
+                }
+                if (str_contains($id, 'qwen')) {
+                    return 60;
+                }
+                if (str_contains($id, 'mistral') || str_contains($id, 'mixtral')) {
+                    return 55;
+                }
+
+                return 10;
+            };
+
+            return $score($b['id']) <=> $score($a['id']);
+        });
 
         return $models;
     }

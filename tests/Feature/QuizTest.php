@@ -686,9 +686,10 @@ class QuizTest extends TestCase
         Http::fake([
             'https://api.groq.com/openai/v1/models' => Http::response([
                 'data' => [
-                    ['id' => 'llama-3.1-8b-instant', 'active' => true],
+                    ['id' => 'canopylabs/orpheus-v1-english', 'active' => true], // should be filtered out
                     ['id' => 'openai/gpt-oss-120b', 'active' => true],
-                    ['id' => 'whisper-large-v3', 'active' => true], // should be filtered
+                    ['id' => 'llama-3.1-8b-instant', 'active' => true],
+                    ['id' => 'whisper-large-v3', 'active' => true], // should be filtered out
                 ],
             ], 200),
         ]);
@@ -705,6 +706,11 @@ class QuizTest extends TestCase
         ]);
         $response->assertJsonFragment(['id' => 'llama-3.1-8b-instant']);
         $response->assertJsonFragment(['id' => 'openai/gpt-oss-120b']);
+        $response->assertJsonMissing(['id' => 'canopylabs/orpheus-v1-english']);
         $response->assertJsonMissing(['id' => 'whisper-large-v3']);
+
+        // Assert priority order: llama-3.1-8b-instant must be first
+        $models = $response->json('models');
+        $this->assertEquals('llama-3.1-8b-instant', $models[0]['id']);
     }
 }
