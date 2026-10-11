@@ -18,57 +18,7 @@
         </div>
     </section>
 
-    <div class="py-12 min-h-[500px]" x-data="{
-        search: @json($search ?? ''),
-        type: @json($type ?? 'all'),
-        scope: @json($scope ?? 'all'),
-        quizzes: [
-            @foreach($enrolledQuizzes as $q)
-            {
-                id: {{ $q->id }},
-                title: @json(mb_strtolower($q->title, 'UTF-8')),
-                desc: @json(mb_strtolower($q->description ?? '', 'UTF-8')),
-                course: @json(mb_strtolower($q->course ? $q->course->title : 'tự do', 'UTF-8')),
-                type: @json($q->type),
-                scope: @json($q->course_id ? 'course' : 'free')
-            },
-            @endforeach
-        ],
-        matches(id) {
-            const item = this.quizzes.find(x => x.id === id);
-            if (!item) return true;
-            if (this.type !== 'all' && item.type !== this.type) return false;
-            if (this.scope !== 'all' && item.scope !== this.scope) return false;
-            if (!this.search || !this.search.trim()) return true;
-            const q = this.search.toLowerCase().trim();
-            return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q);
-        },
-        countVisible() {
-            return this.quizzes.filter(item => {
-                if (this.type !== 'all' && item.type !== this.type) return false;
-                if (this.scope !== 'all' && item.scope !== this.scope) return false;
-                if (!this.search || !this.search.trim()) return true;
-                const q = this.search.toLowerCase().trim();
-                return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q);
-            }).length;
-        },
-        resetFilters() {
-            this.search = '';
-            this.type = 'all';
-            this.scope = 'all';
-        },
-        confirmModalOpen: false,
-        pendingQuiz: {
-            title: '',
-            duration: 0,
-            course: '',
-            url: ''
-        },
-        askStartQuiz(url, title, duration, course) {
-            this.pendingQuiz = { url, title, duration, course };
-            this.confirmModalOpen = true;
-        }
-    }">
+    <div class="py-12 min-h-[500px]" x-data="studentQuizzesIndexHandler()">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             @if($enrolledQuizzes->isEmpty() && empty($search) && empty($type) && empty($scope))
@@ -271,14 +221,14 @@
                                         Xem kết quả cũ
                                     </a>
                                     <button type="button" 
-                                        @click="askStartQuiz('{{ route('student.quizzes.take', $quiz->id) }}', '{{ addslashes($quiz->title) }}', {{ (int)$quiz->duration_minutes }}, '{{ addslashes($quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do') }}')"
+                                        @click="askStartQuiz({{ $quiz->id }})"
                                         class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-xs font-extrabold uppercase tracking-wider transition cursor-pointer">
                                         Làm lại đề &rarr;
                                     </button>
                                 @else
                                     <span class="text-xs text-neutral-400">Sẵn sàng</span>
                                     <button type="button" 
-                                        @click="askStartQuiz('{{ route('student.quizzes.take', $quiz->id) }}', '{{ addslashes($quiz->title) }}', {{ (int)$quiz->duration_minutes }}, '{{ addslashes($quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do') }}')"
+                                        @click="askStartQuiz({{ $quiz->id }})"
                                         class="px-5 py-2.5 bg-neutral-950 hover:bg-pink-600 text-white text-xs font-extrabold uppercase tracking-wider transition cursor-pointer">
                                         Bắt đầu làm bài &rarr;
                                     </button>
@@ -347,4 +297,72 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function studentQuizzesIndexHandler() {
+            return {
+                search: @json($search ?? ''),
+                type: @json($type ?? 'all'),
+                scope: @json($scope ?? 'all'),
+                quizzes: [
+                    @foreach($enrolledQuizzes as $q)
+                    {
+                        id: {{ $q->id }},
+                        title: @json(mb_strtolower($q->title, 'UTF-8')),
+                        rawTitle: @json($q->title),
+                        desc: @json(mb_strtolower($q->description ?? '', 'UTF-8')),
+                        course: @json(mb_strtolower($q->course ? $q->course->title : 'tự do', 'UTF-8')),
+                        rawCourse: @json($q->course ? $q->course->title : 'Bài kiểm tra Tự do'),
+                        duration: {{ (int)$q->duration_minutes }},
+                        url: @json(route('student.quizzes.take', $q->id)),
+                        type: @json($q->type),
+                        scope: @json($q->course_id ? 'course' : 'free')
+                    },
+                    @endforeach
+                ],
+                matches(id) {
+                    const item = this.quizzes.find(x => x.id === id);
+                    if (!item) return true;
+                    if (this.type !== 'all' && item.type !== this.type) return false;
+                    if (this.scope !== 'all' && item.scope !== this.scope) return false;
+                    if (!this.search || !this.search.trim()) return true;
+                    const q = this.search.toLowerCase().trim();
+                    return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q);
+                },
+                countVisible() {
+                    return this.quizzes.filter(item => {
+                        if (this.type !== 'all' && item.type !== this.type) return false;
+                        if (this.scope !== 'all' && item.scope !== this.scope) return false;
+                        if (!this.search || !this.search.trim()) return true;
+                        const q = this.search.toLowerCase().trim();
+                        return item.title.includes(q) || item.desc.includes(q) || item.course.includes(q);
+                    }).length;
+                },
+                resetFilters() {
+                    this.search = '';
+                    this.type = 'all';
+                    this.scope = 'all';
+                },
+                confirmModalOpen: false,
+                pendingQuiz: {
+                    title: '',
+                    duration: 0,
+                    course: '',
+                    url: ''
+                },
+                askStartQuiz(id) {
+                    const item = this.quizzes.find(x => x.id === id);
+                    if (item) {
+                        this.pendingQuiz = {
+                            url: item.url,
+                            title: item.rawTitle,
+                            duration: item.duration,
+                            course: item.rawCourse
+                        };
+                        this.confirmModalOpen = true;
+                    }
+                }
+            };
+        }
+    </script>
 </x-app-layout>

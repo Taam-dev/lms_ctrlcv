@@ -402,7 +402,7 @@
                                                 </span>
                                             @else
                                                 <button type="button" 
-                                                        @click="askStartQuiz('{{ route('student.quizzes.take', $quiz->id) }}', '{{ addslashes($quiz->title) }}', {{ (int)$quiz->duration_minutes }})"
+                                                        @click="askStartQuiz({{ Js::from(route('student.quizzes.take', $quiz->id)) }}, {{ Js::from($quiz->title) }}, {{ (int)$quiz->duration_minutes }})"
                                                         class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
                                                     <span>{{ $attempts->isNotEmpty() ? 'Làm lại' : 'Làm bài thi' }}</span>
                                                 </button>
