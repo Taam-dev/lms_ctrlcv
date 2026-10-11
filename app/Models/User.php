@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'role', // thêm role vô đây để tí nữa phân quyền admin/teacher/student
         'avatar',
+        'google_id',
     ];
 
     protected $hidden = [

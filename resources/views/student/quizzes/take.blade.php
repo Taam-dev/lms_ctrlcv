@@ -194,8 +194,10 @@
     <div id="leave-guard-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-neutral-950/85 backdrop-blur-md">
         <div class="w-full max-w-lg bg-neutral-900 border-2 border-rose-500 text-white shadow-2xl p-6 sm:p-8 space-y-6">
             <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-rose-600/20 border border-rose-500 text-rose-500 flex items-center justify-center shrink-0 text-2xl font-black">
-                    ⚠️
+                <div class="w-12 h-12 bg-rose-600/20 border border-rose-500 text-rose-500 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
                 </div>
                 <div class="flex-1 min-w-0">
                     <span class="text-[10px] uppercase font-black tracking-widest text-rose-400 block mb-1">Cảnh báo quy chế thi</span>
@@ -239,8 +241,10 @@
     <div id="tab-switch-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-neutral-950/85 backdrop-blur-md">
         <div class="w-full max-w-lg bg-neutral-900 border-2 border-amber-500 text-white shadow-2xl p-6 sm:p-8 space-y-6">
             <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-amber-500/20 border border-amber-500 text-amber-400 flex items-center justify-center shrink-0 text-2xl font-black">
-                    👁️
+                <div class="w-12 h-12 bg-amber-500/20 border border-amber-500 text-amber-400 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
                 </div>
                 <div class="flex-1 min-w-0">
                     <span class="text-[10px] uppercase font-black tracking-widest text-amber-400 block mb-1">Cảnh báo vi phạm quy chế</span>
