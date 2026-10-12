@@ -21,30 +21,23 @@
         <!-- Badges on banner -->
         <div class="absolute top-3 left-3 right-3 flex items-center justify-between">
             @if($isEnrolled)
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg shadow-emerald-950/40 ring-2 ring-white/80 whitespace-nowrap shrink-0">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                     <span>Đã đăng ký</span>
                 </span>
             @else
                 @if(($course->price ?? 0) > 0)
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 rounded-xl shadow-lg shadow-amber-950/40 ring-2 ring-white/80 whitespace-nowrap shrink-0 transform transition-transform duration-300 group-hover:scale-105">
-                        <svg class="w-3.5 h-3.5 text-amber-950 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 6a1.5 1.5 0 013 0v1h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1V9h-1a1 1 0 110-2h1V6z"/>
-                        </svg>
-                        <span class="text-sm font-black tracking-tight">{{ number_format($course->price, 0, ',', '.') }}</span>
-                        <span class="text-[11px] font-black uppercase text-amber-950">đ</span>
+                    <span class="inline-flex items-center px-2.5 py-1 text-xs font-black bg-white text-slate-900 shadow-md border border-slate-200/80 whitespace-nowrap shrink-0 tracking-tight">
+                        {{ number_format($course->price, 0, ',', '.') }} <span class="text-pink-600 font-black ml-1">đ</span>
                     </span>
                 @else
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl shadow-lg shadow-emerald-950/30 ring-2 ring-white/80 whitespace-nowrap shrink-0 transform transition-transform duration-300 group-hover:scale-105">
-                        <svg class="w-3.5 h-3.5 text-emerald-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Miễn phí</span>
+                    <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white shadow-xs whitespace-nowrap shrink-0">
+                        Miễn phí
                     </span>
                 @endif
             @endif
             @if($index !== null)
-                <span class="text-xs font-black px-2.5 py-1 bg-pink-600 text-white rounded-xl shadow-md ring-2 ring-white/60 shrink-0">
+                <span class="text-xs font-black px-2 py-0.5 bg-pink-600 text-white shrink-0">
                     #{{ str_pad($index, 2, '0', STR_PAD_LEFT) }}
                 </span>
             @endif
