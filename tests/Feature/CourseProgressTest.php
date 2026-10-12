@@ -270,6 +270,19 @@ class CourseProgressTest extends TestCase
         $this->assertNotNull($mp4Info);
         $this->assertEquals('direct', $mp4Info['type']);
         $this->assertEquals('https://example.com/videos/sample.mp4', $mp4Info['url']);
+
+        // 5. TikTok
+        $tiktokLesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài TikTok',
+            'content_type' => 'video',
+            'content' => 'https://www.tiktok.com/@scout2015/video/6718335390845095173',
+            'order_number' => 5,
+        ]);
+        $tiktokInfo = $tiktokLesson->video_embed_info;
+        $this->assertNotNull($tiktokInfo);
+        $this->assertEquals('tiktok', $tiktokInfo['type']);
+        $this->assertEquals('https://www.tiktok.com/player/v1/6718335390845095173', $tiktokInfo['url']);
     }
 
     public function test_lesson_show_page_renders_facebook_video_and_no_stacked_header(): void
@@ -304,5 +317,36 @@ class CourseProgressTest extends TestCase
         $response->assertSee('Làm bài Quizzes');
         // Kiểm tra có tiến độ bên sidebar
         $response->assertSee('Tiến độ khóa học');
+    }
+
+    public function test_lesson_show_page_renders_tiktok_video_embed(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'TikTok Marketing Course',
+            'status' => 'approved',
+        ]);
+
+        $lesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Bài TikTok Viral',
+            'content_type' => 'video',
+            'content' => 'https://www.tiktok.com/@creator/video/7123456789012345678',
+            'order_number' => 1,
+        ]);
+
+        $student = User::factory()->create();
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('student.lessons.show', [$course->id, $lesson->id]));
+
+        $response->assertOk();
+        $response->assertSee('tiktok.com/player/v1/7123456789012345678', false);
+        $response->assertSee('Video TikTok:');
+        $response->assertSee('Mở trên TikTok');
     }
 }

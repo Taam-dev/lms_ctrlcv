@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class Lesson extends Model
@@ -109,7 +110,57 @@ class Lesson extends Model
             ];
         }
 
-        // 2. Facebook Video (watch, share, reel, fb.watch, fb.com)
+        // 2. TikTok (tiktok.com/@user/video/ID, /v/ID, /player/v1/ID, vt.tiktok.com, vm.tiktok.com)
+        if (preg_match('/(?:tiktok\.com\/(?:@[^\/]+\/video\/|v\/|embed\/v2\/|embed\/|player\/v1\/))(\d+)/i', $url, $ttMatches)) {
+            return [
+                'type' => 'tiktok',
+                'url' => 'https://www.tiktok.com/player/v1/'.$ttMatches[1],
+                'original_url' => $url,
+            ];
+        }
+
+        if (str_contains($url, 'tiktok.com') && preg_match('/\/video\/(\d+)/i', $url, $ttMatches)) {
+            return [
+                'type' => 'tiktok',
+                'url' => 'https://www.tiktok.com/player/v1/'.$ttMatches[1],
+                'original_url' => $url,
+            ];
+        }
+
+        if (preg_match('/(?:(?:vt|vm)\.tiktok\.com\/|tiktok\.com\/t\/)([a-zA-Z0-9_\-]+)/i', $url)) {
+            $cacheKey = 'tt_resolve_'.md5($url);
+            $resolvedId = Cache::remember($cacheKey, now()->addDays(7), function () use ($url) {
+                try {
+                    $ch = curl_init($url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                    curl_setopt($ch, CURLOPT_NOBODY, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+                    curl_exec($ch);
+                    $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+                    curl_close($ch);
+
+                    if ($effectiveUrl && preg_match('/\/video\/(\d+)/i', $effectiveUrl, $m)) {
+                        return $m[1];
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore error
+                }
+
+                return null;
+            });
+
+            if ($resolvedId) {
+                return [
+                    'type' => 'tiktok',
+                    'url' => 'https://www.tiktok.com/player/v1/'.$resolvedId,
+                    'original_url' => $url,
+                ];
+            }
+        }
+
+        // 3. Facebook Video (watch, share, reel, fb.watch, fb.com)
         if (preg_match('/(?:facebook\.com|fb\.watch|fb\.com)/i', $url)) {
             return [
                 'type' => 'facebook',

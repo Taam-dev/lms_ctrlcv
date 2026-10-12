@@ -98,13 +98,27 @@
                         @endphp
 
                         <div class="space-y-4">
-                            @if($embedInfo && in_array($embedInfo['type'], ['youtube', 'facebook', 'drive', 'vimeo', 'loom', 'direct', 'iframe']))
+                            @if($embedInfo && in_array($embedInfo['type'], ['youtube', 'facebook', 'drive', 'vimeo', 'loom', 'direct', 'iframe', 'tiktok']))
                                 @if($embedInfo['type'] === 'direct')
                                     <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md border border-slate-800">
                                         <video controls class="w-full h-full object-contain" preload="metadata">
                                             <source src="{{ $embedInfo['url'] }}">
                                             Trình duyệt của bạn không hỗ trợ phát thẻ video trực tiếp.
                                         </video>
+                                    </div>
+                                @elseif($embedInfo['type'] === 'tiktok')
+                                    <div class="w-full flex justify-center bg-slate-950/90 rounded-2xl p-4 sm:p-6 border border-slate-800 shadow-md">
+                                        <div class="w-full max-w-[360px] sm:max-w-[400px] aspect-[9/16] min-h-[560px] max-h-[720px] relative rounded-2xl overflow-hidden bg-black shadow-2xl ring-1 ring-slate-800">
+                                            <iframe class="absolute inset-0 w-full h-full"
+                                                    src="{{ $embedInfo['url'] }}"
+                                                    title="{{ $lesson->title }}"
+                                                    frameborder="0"
+                                                    style="border:none;overflow:hidden"
+                                                    scrolling="no"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                                                    allowfullscreen>
+                                            </iframe>
+                                        </div>
                                     </div>
                                 @else
                                     <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 shadow-md border border-slate-800">
@@ -114,7 +128,7 @@
                                                 frameborder="0"
                                                 style="border:none;overflow:hidden"
                                                 scrolling="no"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                                                 allowfullscreen>
                                         </iframe>
                                     </div>
@@ -123,16 +137,20 @@
                                 <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
                                     <div class="flex items-center gap-2 min-w-0">
                                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-neutral-900 text-white shrink-0 shadow-2xs">
-                                            <svg class="w-3 h-3 fill-white ml-0.5" viewBox="0 0 24 24">
-                                                <path d="M8 5v14l11-7z"/>
-                                            </svg>
+                                            @if($embedInfo['type'] === 'tiktok')
+                                                <svg class="w-3.5 h-3.5 fill-white" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                                            @else
+                                                <svg class="w-3 h-3 fill-white ml-0.5" viewBox="0 0 24 24">
+                                                    <path d="M8 5v14l11-7z"/>
+                                                </svg>
+                                            @endif
                                         </span>
                                         <span class="truncate font-medium text-slate-700">
-                                            Nguồn video: <a href="{{ $embedInfo['original_url'] }}" target="_blank" rel="noopener noreferrer" class="text-slate-900 hover:text-pink-600 hover:underline font-semibold">{{ $embedInfo['original_url'] }}</a>
+                                            {{ $embedInfo['type'] === 'tiktok' ? 'Video TikTok:' : 'Nguồn video:' }} <a href="{{ $embedInfo['original_url'] }}" target="_blank" rel="noopener noreferrer" class="text-slate-900 hover:text-pink-600 hover:underline font-semibold">{{ $embedInfo['original_url'] }}</a>
                                         </span>
                                     </div>
                                     <a href="{{ $embedInfo['original_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-neutral-900 hover:text-white font-bold transition shrink-0 shadow-2xs">
-                                        <span>Mở video gốc</span>
+                                        <span>{{ $embedInfo['type'] === 'tiktok' ? 'Mở trên TikTok' : 'Mở video gốc' }}</span>
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                     </a>
                                 </div>

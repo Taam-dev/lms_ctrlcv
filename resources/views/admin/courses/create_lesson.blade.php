@@ -43,7 +43,7 @@
                                 Định dạng bài giảng <span class="text-rose-500">*</span>
                             </label>
                             <select name="content_type" id="content_type" class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">
-                                <option value="video" {{ old('content_type', 'video') == 'video' ? 'selected' : '' }}>Video bài giảng (Youtube/Drive link)</option>
+                                <option value="video" {{ old('content_type', 'video') == 'video' ? 'selected' : '' }}>Video bài giảng (link)</option>
                                 <option value="text" {{ old('content_type') == 'text' ? 'selected' : '' }}>Bài viết văn bản (Text / Markdown)</option>
                             </select>
                             @error('content_type')
@@ -69,7 +69,7 @@
                             Nội dung bài học hoặc Đường dẫn Video <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="content" id="content" rows="6" required 
-                                  placeholder="Nếu là video: dán link Youtube (ví dụ: https://www.youtube.com/watch?v=...)&#10;Nếu là text: soạn thảo nội dung bài viết hướng dẫn chi tiết..."
+                                  placeholder="Nếu là video: dán link video (Youtube, TikTok, Vimeo, Drive, link trực tiếp...)&#10;Nếu là text: soạn thảo nội dung bài viết hướng dẫn chi tiết..."
                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm">{{ old('content') }}</textarea>
                         @error('content')
                             <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
