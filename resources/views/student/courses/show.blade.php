@@ -156,27 +156,40 @@
                         $completedLessonsCount = count($completedLessonIds ?? []);
                         $totalLessons = $course->lessons->count();
                     @endphp
-                    <div class="flex items-center gap-3.5 bg-white border border-pink-100 p-2.5 px-4 rounded-2xl shadow-xs">
-                        <!-- Hình tròn tiến độ với số % ở giữa -->
-                        <div class="relative shrink-0" style="width: 44px; height: 44px; min-width: 44px;">
-                            <svg class="-rotate-90 transform" style="width: 44px; height: 44px;" viewBox="0 0 38 38">
-                                <circle cx="19" cy="19" r="16" stroke="#fce7f3" stroke-width="3.5" fill="transparent" />
-                                <circle cx="19" cy="19" r="16" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="transparent"
-                                        class="{{ $progress >= 100 ? 'text-emerald-500' : 'text-pink-600' }} transition-all duration-500"
-                                        style="stroke-dasharray: {{ $circumference }}; stroke-dashoffset: {{ $dashoffset }};" />
-                            </svg>
-                            <span class="absolute inset-0 flex items-center justify-center font-black text-xs {{ $progress >= 100 ? 'text-emerald-700' : 'text-slate-900' }}">
-                                {{ $progress }}%
-                            </span>
-                        </div>
-                        <div class="text-left leading-tight whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 whitespace-nowrap shrink-0">
-                                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                <span>Đã đăng ký</span>
-                            </span>
-                            <span class="block text-xs font-bold text-slate-800 mt-1 whitespace-nowrap">
-                                Hoàn thành {{ $completedLessonsCount }}/{{ $totalLessons }} bài
-                            </span>
+                    <div class="flex flex-wrap items-center gap-3">
+                        @if(($purchasedPrice ?? 0) > 0)
+                            <div class="px-3.5 py-2 rounded-2xl bg-white border border-emerald-200/90 shadow-xs flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <div class="text-left leading-tight">
+                                    <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Đã mua với giá:</span>
+                                    <span class="text-sm font-black text-emerald-700">{{ number_format($purchasedPrice, 0, ',', '.') }} đ</span>
+                                </div>
+                            </div>
+                        @endif
+                        <div class="flex items-center gap-3.5 bg-white border border-pink-100 p-2.5 px-4 rounded-2xl shadow-xs">
+                            <!-- Hình tròn tiến độ với số % ở giữa -->
+                            <div class="relative shrink-0" style="width: 44px; height: 44px; min-width: 44px;">
+                                <svg class="-rotate-90 transform" style="width: 44px; height: 44px;" viewBox="0 0 38 38">
+                                    <circle cx="19" cy="19" r="16" stroke="#fce7f3" stroke-width="3.5" fill="transparent" />
+                                    <circle cx="19" cy="19" r="16" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="transparent"
+                                            class="{{ $progress >= 100 ? 'text-emerald-500' : 'text-pink-600' }} transition-all duration-500"
+                                            style="stroke-dasharray: {{ $circumference }}; stroke-dashoffset: {{ $dashoffset }};" />
+                                </svg>
+                                <span class="absolute inset-0 flex items-center justify-center font-black text-xs {{ $progress >= 100 ? 'text-emerald-700' : 'text-slate-900' }}">
+                                    {{ $progress }}%
+                                </span>
+                            </div>
+                            <div class="text-left leading-tight whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 whitespace-nowrap shrink-0">
+                                    <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>{{ ($purchasedPrice ?? 0) > 0 ? 'Đã sở hữu khóa học' : 'Đã đăng ký' }}</span>
+                                </span>
+                                <span class="block text-xs font-bold text-slate-800 mt-1 whitespace-nowrap">
+                                    Hoàn thành {{ $completedLessonsCount }}/{{ $totalLessons }} bài
+                                </span>
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -201,10 +214,17 @@
                             <!-- Badges trên banner y chang bên ngoài -->
                             <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                                 @if($isEnrolled)
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
-                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                        <span>Đã đăng ký</span>
-                                    </span>
+                                    @if(($purchasedPrice ?? 0) > 0)
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
+                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                            <span>Đã mua ({{ number_format($purchasedPrice, 0, ',', '.') }} đ)</span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
+                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                            <span>Đã đăng ký</span>
+                                        </span>
+                                    @endif
                                 @else
                                     @if(($course->price ?? 0) > 0)
                                         <span class="inline-flex items-center px-2.5 py-1 text-xs font-black bg-white text-slate-900 shadow-md border border-slate-200/80 whitespace-nowrap shrink-0 tracking-tight">
@@ -247,6 +267,13 @@
                                 <span>Giảng viên: <strong class="text-slate-800">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
                                 <span>&bull;</span>
                                 <span>Ngày tạo: {{ $course->created_at->format('d/m/Y') }}</span>
+                                @if($isEnrolled && ($purchasedPrice ?? 0) > 0)
+                                    <span>&bull;</span>
+                                    <span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-0.5 border border-emerald-200/80 font-bold text-[11px]">
+                                        <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        Đã mua với giá: <strong class="font-black text-emerald-800">{{ number_format($purchasedPrice, 0, ',', '.') }} đ</strong>
+                                    </span>
+                                @endif
                             </div>
 
                             <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-snug">

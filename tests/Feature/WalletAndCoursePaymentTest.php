@@ -170,8 +170,10 @@ class WalletAndCoursePaymentTest extends TestCase
         // Đã trừ đúng 200k, còn lại 100k
         $this->assertEquals(100000, $student->fresh()->balance);
 
-        // Đã ghi nhận enrollment
-        $this->assertTrue(Enrollment::where('student_id', $student->id)->where('course_id', $course->id)->exists());
+        // Đã ghi nhận enrollment với đúng giá mua
+        $enrollment = Enrollment::where('student_id', $student->id)->where('course_id', $course->id)->first();
+        $this->assertNotNull($enrollment);
+        $this->assertEquals(200000, $enrollment->price_paid);
 
         // Đã ghi nhận lịch sử giao dịch mua khóa học
         $this->assertDatabaseHas('wallet_transactions', [
@@ -181,6 +183,16 @@ class WalletAndCoursePaymentTest extends TestCase
             'status' => 'completed',
             'reference_id' => $course->id,
         ]);
+
+        // Kiểm tra giao diện chi tiết khóa học và danh sách hiển thị giá đã mua
+        $showResponse = $this->actingAs($student)->get(route('courses.show', $course->slug ?: $course->id));
+        $showResponse->assertOk();
+        $showResponse->assertSee('Đã mua (200.000 đ)');
+        $showResponse->assertSee('Đã mua với giá:');
+
+        $listResponse = $this->actingAs($student)->get(route('courses.index'));
+        $listResponse->assertOk();
+        $listResponse->assertSee('Đã mua (200.000 đ)');
     }
 
     public function test_student_can_enroll_in_free_course_without_balance_deduction(): void
@@ -203,7 +215,9 @@ class WalletAndCoursePaymentTest extends TestCase
 
         $response->assertSessionHas('success');
         $this->assertEquals(50000, $student->fresh()->balance);
-        $this->assertTrue(Enrollment::where('student_id', $student->id)->where('course_id', $course->id)->exists());
+        $enrollment = Enrollment::where('student_id', $student->id)->where('course_id', $course->id)->first();
+        $this->assertNotNull($enrollment);
+        $this->assertEquals(0, $enrollment->price_paid);
     }
 
     public function test_student_can_cancel_deposit_and_shows_cancelled_with_zero_amount(): void

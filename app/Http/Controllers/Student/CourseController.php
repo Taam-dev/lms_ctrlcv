@@ -26,9 +26,13 @@ class CourseController extends Controller
         }
 
         $userId = auth()->id();
-        $enrolledCourseIds = Enrollment::where('student_id', $userId)
-            ->pluck('course_id')
-            ->flip();
+        $enrollments = Enrollment::where('student_id', $userId)
+            ->get(['course_id', 'price_paid', 'created_at'])
+            ->keyBy('course_id');
+
+        $purchasedTransactions = WalletTransaction::where('user_id', $userId)
+            ->where('type', 'course_purchase')
+            ->pluck('amount', 'reference_id');
 
         $completedCounts = LessonCompletion::where('student_id', $userId)
             ->groupBy('course_id')
@@ -36,8 +40,22 @@ class CourseController extends Controller
             ->pluck('total_completed', 'course_id');
 
         foreach ($courses as $course) {
-            $isEnrolled = isset($enrolledCourseIds[$course->id]);
+            $enrollment = $enrollments->get($course->id);
+            $isEnrolled = (bool) $enrollment;
             $course->is_enrolled = $isEnrolled;
+
+            $paidPrice = null;
+            if ($isEnrolled) {
+                if ($enrollment && $enrollment->price_paid !== null) {
+                    $paidPrice = (int) $enrollment->price_paid;
+                } elseif (isset($purchasedTransactions[$course->id])) {
+                    $paidPrice = (int) $purchasedTransactions[$course->id];
+                } elseif (($course->price ?? 0) > 0) {
+                    $paidPrice = (int) $course->price;
+                }
+            }
+            $course->purchased_price = $paidPrice;
+            $course->enrolled_at = $enrollment?->created_at;
 
             $totalLessons = $course->lessons_count ?? $course->lessons->count();
             $completed = (int) ($completedCounts[$course->id] ?? 0);
@@ -149,6 +167,8 @@ class CourseController extends Controller
 
         // kiểm tra học viên đã đăng ký khóa này chưa
         $isEnrolled = false;
+        $purchasedPrice = null;
+        $purchasedAt = null;
         $studentAttempts = collect();
         $completedLessonIds = [];
         $unlockedLessonIds = [];
@@ -156,9 +176,11 @@ class CourseController extends Controller
 
         if (auth()->check()) {
             $userId = auth()->id();
-            $isEnrolled = Enrollment::where('student_id', $userId)
+            $enrollment = Enrollment::where('student_id', $userId)
                 ->where('course_id', $course->id)
-                ->exists();
+                ->first();
+
+            $isEnrolled = (bool) $enrollment;
 
             $studentAttempts = QuizAttempt::where('student_id', $userId)
                 ->whereIn('quiz_id', $course->approvedQuizzes->pluck('id'))
@@ -167,6 +189,24 @@ class CourseController extends Controller
                 ->groupBy('quiz_id');
 
             if ($isEnrolled) {
+                if ($enrollment->price_paid !== null) {
+                    $purchasedPrice = (int) $enrollment->price_paid;
+                } else {
+                    $purchaseTx = WalletTransaction::where('user_id', $userId)
+                        ->where('type', 'course_purchase')
+                        ->where('reference_id', $course->id)
+                        ->latest()
+                        ->first();
+                    if ($purchaseTx) {
+                        $purchasedPrice = (int) $purchaseTx->amount;
+                    } elseif (($course->price ?? 0) > 0) {
+                        $purchasedPrice = (int) $course->price;
+                    } else {
+                        $purchasedPrice = 0;
+                    }
+                }
+                $purchasedAt = $enrollment->created_at;
+
                 $completedLessonIds = LessonCompletion::where('student_id', $userId)
                     ->where('course_id', $course->id)
                     ->pluck('lesson_id')
@@ -203,6 +243,8 @@ class CourseController extends Controller
         return view('student.courses.show', compact(
             'course',
             'isEnrolled',
+            'purchasedPrice',
+            'purchasedAt',
             'studentAttempts',
             'completedLessonIds',
             'unlockedLessonIds',
@@ -268,20 +310,30 @@ class CourseController extends Controller
                     'payment_method' => 'wallet',
                 ]);
 
-                Enrollment::firstOrCreate([
-                    'student_id' => $user->id,
-                    'course_id' => $course->id,
-                ]);
+                Enrollment::updateOrCreate(
+                    [
+                        'student_id' => $user->id,
+                        'course_id' => $course->id,
+                    ],
+                    [
+                        'price_paid' => $course->price,
+                    ]
+                );
             });
 
             return back()->with('success', 'Mua và đăng ký khóa học thành công! Đã trừ '.number_format($course->price, 0, ',', '.').' đ từ ví của bạn.');
         }
 
         // Khóa học miễn phí
-        Enrollment::firstOrCreate([
-            'student_id' => $user->id,
-            'course_id' => $course->id,
-        ]);
+        Enrollment::updateOrCreate(
+            [
+                'student_id' => $user->id,
+                'course_id' => $course->id,
+            ],
+            [
+                'price_paid' => 0,
+            ]
+        );
 
         return back()->with('success', 'Đã đăng ký khóa học miễn phí thành công!');
     }

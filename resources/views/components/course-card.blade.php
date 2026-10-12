@@ -21,10 +21,17 @@
         <!-- Badges on banner -->
         <div class="absolute top-3 left-3 right-3 flex items-center justify-between">
             @if($isEnrolled)
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
-                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                    <span>Đã đăng ký</span>
-                </span>
+                @if(($course->purchased_price ?? 0) > 0)
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Đã mua ({{ number_format($course->purchased_price, 0, ',', '.') }} đ)</span>
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Đã đăng ký</span>
+                    </span>
+                @endif
             @else
                 @if(($course->price ?? 0) > 0)
                     <span class="inline-flex items-center px-2.5 py-1 text-xs font-black bg-white text-slate-900 shadow-md border border-slate-200/80 whitespace-nowrap shrink-0 tracking-tight">
@@ -143,6 +150,18 @@
                     </div>
                 @endif
             </div>
+
+            @if($isEnrolled && ($course->purchased_price ?? 0) > 0)
+                <div class="mb-3 px-3 py-1.5 bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                    <span class="text-slate-500 font-bold text-[11px] flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Đã mua với giá:</span>
+                    </span>
+                    <span class="font-black text-emerald-700 text-xs">
+                        {{ number_format($course->purchased_price, 0, ',', '.') }} <span class="text-[10px] font-bold text-slate-500">đ</span>
+                    </span>
+                </div>
+            @endif
 
             @if($isEnrolled)
                 <a href="{{ route('courses.show', $course->slug ?: $course->id) }}"

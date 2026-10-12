@@ -127,7 +127,7 @@
                                                         @if($course->is_enrolled)
                                                             <div class="absolute top-2.5 right-2.5">
                                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-600/90 text-white backdrop-blur-xs">
-                                                                    Đang học
+                                                                    {{ ($course->purchased_price ?? 0) > 0 ? 'Đã mua (' . number_format($course->purchased_price, 0, ',', '.') . ' đ)' : 'Đang học' }}
                                                                 </span>
                                                             </div>
                                                         @endif
