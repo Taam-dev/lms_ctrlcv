@@ -17,6 +17,9 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $currentTab = $request->query('tab', 'overview');
+        if ($currentTab === 'lessons') {
+            return redirect()->route('admin.courses.index');
+        }
         $statusFilter = $request->query('status');
         $search = trim((string) $request->query('search', ''));
 
@@ -47,7 +50,9 @@ class DashboardController extends Controller
         $recentUsers = User::latest()->take(6)->get();
 
         // Lấy danh sách Khóa học
-        $coursesQuery = Course::with(['teacher', 'lessons'])->withCount('lessons')->latest();
+        $coursesQuery = Course::with(['teacher', 'lessons' => function ($q) {
+            $q->orderBy('order_number');
+        }])->withCount('lessons')->latest();
         if ($statusFilter && in_array($statusFilter, ['pending', 'approved', 'rejected'])) {
             $coursesQuery->where('status', $statusFilter);
         }

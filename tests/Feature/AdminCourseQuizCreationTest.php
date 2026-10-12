@@ -117,7 +117,7 @@ class AdminCourseQuizCreationTest extends TestCase
             'content' => 'Nội dung bài học của Admin',
         ]);
 
-        $response->assertRedirect(route('admin.courses.index'));
+        $response->assertRedirect(route('admin.courses.index', ['expand' => $course->id]));
         $this->assertDatabaseHas('lessons', [
             'course_id' => $course->id,
             'title' => 'Bài học số 1',
@@ -178,7 +178,7 @@ class AdminCourseQuizCreationTest extends TestCase
             'order_number' => 2,
         ]);
 
-        $response->assertRedirect(route('admin.dashboard', ['tab' => 'lessons']));
+        $response->assertRedirect(route('admin.courses.index', ['expand' => $course->id]));
         $this->assertDatabaseHas('lessons', [
             'id' => $lesson->id,
             'title' => 'Bài học đã cập nhật bởi Admin',
@@ -188,7 +188,7 @@ class AdminCourseQuizCreationTest extends TestCase
     }
 
     /**
-     * Tab bài giảng trong dashboard hiển thị cấu trúc nhóm theo khóa học
+     * Tab bài giảng cũ tự động chuyển hướng về trang Quản lý Khóa học / Bài học và hiển thị danh sách bài giảng
      */
     public function test_admin_dashboard_lessons_tab_displays_course_accordion(): void
     {
@@ -207,10 +207,13 @@ class AdminCourseQuizCreationTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'lessons']));
-        $response->assertStatus(200);
-        $response->assertSee('Khóa học Hiển Thị Accordion');
-        $response->assertSee('Bài giảng mẫu Accordion');
-        $response->assertSee(route('admin.lessons.edit', $lesson->id));
+        $response->assertRedirect(route('admin.courses.index'));
+
+        $courseResponse = $this->actingAs($admin)->get(route('admin.courses.index'));
+        $courseResponse->assertStatus(200);
+        $courseResponse->assertSee('Khóa học Hiển Thị Accordion');
+        $courseResponse->assertSee('Bài giảng mẫu Accordion');
+        $courseResponse->assertSee(route('admin.lessons.edit', $lesson->id));
     }
 
     /**

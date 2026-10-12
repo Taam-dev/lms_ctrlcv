@@ -107,12 +107,42 @@
             <div>
                 @if(!$isEnrolled)
                     @auth
-                        <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-pink-500/25 transition">
-                                Đăng ký học ngay
-                            </button>
-                        </form>
+                        @php
+                            $userBalance = (int) (Auth::user()->balance ?? 0);
+                            $coursePrice = (int) ($course->price ?? 0);
+                            $hasEnoughMoney = $userBalance >= $coursePrice;
+                        @endphp
+                        @if($coursePrice > 0)
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                <div class="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 text-xs font-bold shrink-0 shadow-lg shadow-amber-500/20 ring-2 ring-white/80">
+                                    <span class="text-amber-950 block text-[10px] uppercase font-black tracking-wider">Học phí:</span>
+                                    <span class="text-slate-950 text-base font-black">{{ number_format($coursePrice, 0, ',', '.') }} đ</span>
+                                </div>
+                                @if($hasEnoughMoney)
+                                    <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-pink-500/25 transition">
+                                            <span>Mua khóa học</span>
+                                            <span class="text-xs opacity-90">({{ number_format($coursePrice, 0, ',', '.') }} đ)</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('wallet.deposit', ['amount' => $coursePrice - $userBalance]) }}" class="inline-flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-neutral-900/25 transition">
+                                        <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                        <span>Nạp ví để mua</span>
+                                        <span class="text-xs text-pink-400 font-extrabold">(Thiếu {{ number_format($coursePrice - $userBalance, 0, ',', '.') }} đ)</span>
+                                    </a>
+                                @endif
+                            </div>
+                        @else
+                            <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-emerald-500/25 transition">
+                                    <span>Đăng ký học ngay</span>
+                                    <span class="text-xs bg-emerald-700/60 px-2 py-0.5 rounded uppercase font-extrabold">Miễn phí</span>
+                                </button>
+                            </form>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-pink-500/25 transition">
                             Đăng nhập để học ngay
@@ -171,16 +201,29 @@
                             <!-- Badges trên banner y chang bên ngoài -->
                             <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                                 @if($isEnrolled)
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md shadow-emerald-950/40 whitespace-nowrap shrink-0">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg shadow-emerald-950/40 ring-2 ring-white/80 whitespace-nowrap shrink-0">
                                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         <span>Đã đăng ký</span>
                                     </span>
                                 @else
-                                    <span class="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider bg-neutral-950/90 text-pink-400 border border-pink-500/30 backdrop-blur-xs whitespace-nowrap shrink-0">
-                                        Khóa học
-                                    </span>
+                                    @if(($course->price ?? 0) > 0)
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black tracking-wide bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 rounded-xl shadow-lg shadow-amber-950/40 ring-2 ring-white/80 whitespace-nowrap shrink-0">
+                                            <svg class="w-3.5 h-3.5 text-amber-950 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 6a1.5 1.5 0 013 0v1h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1V9h-1a1 1 0 110-2h1V6z"/>
+                                            </svg>
+                                            <span class="text-sm font-black tracking-tight">{{ number_format($course->price, 0, ',', '.') }}</span>
+                                            <span class="text-[11px] font-black uppercase text-amber-950">đ</span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl shadow-lg shadow-emerald-950/30 ring-2 ring-white/80 whitespace-nowrap shrink-0">
+                                            <svg class="w-3.5 h-3.5 text-emerald-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            <span>Miễn phí</span>
+                                        </span>
+                                    @endif
                                 @endif
-                                <span class="text-xs font-black px-2 py-0.5 bg-pink-600 text-white shrink-0">
+                                <span class="text-xs font-black px-2.5 py-1 bg-pink-600 text-white rounded-xl shadow-md ring-2 ring-white/60 shrink-0">
                                     {{ $course->approvedQuizzes->count() }} Quizzes
                                 </span>
                             </div>
@@ -254,9 +297,9 @@
                                 @endphp
                                 <div class="p-5 flex items-center justify-between gap-4 hover:bg-pink-50/30 transition">
                                     <div class="flex items-center gap-3.5 min-w-0">
-                                        <span class="w-8 h-8 rounded-xl {{ $isLessonDone ? 'bg-emerald-600 text-white shadow-xs' : ($isLessonUnlocked ? 'bg-pink-50 text-pink-700 border border-pink-100' : 'bg-slate-100 text-slate-400') }} flex items-center justify-center font-bold text-xs shrink-0 transition">
+                                        <span class="w-8 h-8 min-w-8 min-h-8 rounded-xl {{ $isLessonDone ? 'bg-emerald-600 text-white shadow-xs' : ($isLessonUnlocked ? 'bg-pink-50 text-pink-700 border border-pink-100' : 'bg-slate-100 text-slate-400') }} flex items-center justify-center font-bold text-xs shrink-0 aspect-square transition">
                                             @if($isLessonDone)
-                                                &check;
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                                             @elseif(! $isLessonUnlocked && $isEnrolled)
                                                 <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                             @else
@@ -717,13 +760,25 @@
                                     </p>
                                 </div>
                             </div>
-                            <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST" class="shrink-0">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-pink-600/25 transition cursor-pointer">
-                                    <span>Đăng ký khóa học ngay</span>
-                                    &rarr;
-                                </button>
-                            </form>
+                            @php
+                                $bottomUserBal = (int) (Auth::user()->balance ?? 0);
+                                $bottomPrice = (int) ($course->price ?? 0);
+                            @endphp
+                            @if($bottomPrice > 0 && $bottomUserBal < $bottomPrice)
+                                <a href="{{ route('wallet.deposit', ['amount' => $bottomPrice - $bottomUserBal]) }}" class="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-neutral-900/25 transition">
+                                    <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                    <span>Nạp ví để mua</span>
+                                    <span class="text-xs text-pink-400 font-extrabold">({{ number_format($bottomPrice, 0, ',', '.') }} đ)</span>
+                                </a>
+                            @else
+                                <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST" class="shrink-0">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-pink-600/25 transition cursor-pointer">
+                                        <span>{{ $bottomPrice > 0 ? 'Mua khóa học (' . number_format($bottomPrice, 0, ',', '.') . ' đ)' : 'Đăng ký khóa học ngay' }}</span>
+                                        &rarr;
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     @else
                         <!-- Khách CHƯA ĐĂNG NHẬP -->

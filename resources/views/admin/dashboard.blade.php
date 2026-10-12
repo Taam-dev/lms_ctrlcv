@@ -1,4 +1,4 @@
-<x-admin-layout :breadcrumb="$currentTab === 'overview' ? 'Tổng quan Dashboard' : ($currentTab === 'courses' ? 'Quản lý Khóa học' : ($currentTab === 'quizzes' ? 'Quản lý Bài kiểm tra' : ($currentTab === 'lessons' ? 'Quản lý Bài giảng' : 'Quản lý Người dùng')))">
+<x-admin-layout :breadcrumb="$currentTab === 'overview' ? 'Tổng quan Dashboard' : ($currentTab === 'courses' ? 'Quản lý Khóa học / Bài học' : ($currentTab === 'quizzes' ? 'Quản lý Bài kiểm tra' : 'Quản lý Người dùng'))">
     <x-slot name="header">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
@@ -10,11 +10,9 @@
                     @if($currentTab === 'overview')
                         <span>Bảng Điều Khiển Quản Trị (Admin Portal)</span>
                     @elseif($currentTab === 'courses')
-                        <span>Quản Lý & Duyệt Khóa Học</span>
+                        <span>Quản Lý & Duyệt Khóa Học / Bài Học</span>
                     @elseif($currentTab === 'quizzes')
                         <span>Quản Lý & Duyệt Bài Kiểm Tra (Quizzes)</span>
-                    @elseif($currentTab === 'lessons')
-                        <span>Danh Sách Tất Cả Bài Giảng</span>
                     @elseif($currentTab === 'users')
                         <span>Quản Lý Tài Khoản Người Dùng</span>
                     @endif
@@ -23,11 +21,9 @@
                     @if($currentTab === 'overview')
                         Tổng hợp chỉ số KPI, danh sách cần phê duyệt cấp thiết và các hoạt động đào tạo mới nhất.
                     @elseif($currentTab === 'courses')
-                        Kiểm duyệt và quản trị tất cả các khóa học do giảng viên đăng tải lên nền tảng.
+                        Kiểm duyệt và quản trị tất cả các khóa học và bài học do giảng viên đăng tải lên nền tảng.
                     @elseif($currentTab === 'quizzes')
                         Xem trước, thẩm định chất lượng và phê duyệt các đề thi trắc nghiệm trực tuyến.
-                    @elseif($currentTab === 'lessons')
-                        Theo dõi toàn bộ bài giảng video và văn bản trong các khóa học.
                     @elseif($currentTab === 'users')
                         Danh sách tài khoản học viên, giảng viên và Admin trong hệ thống.
                     @endif
@@ -60,14 +56,6 @@
                                 Đã loại bỏ
                             </a>
                         </div>
-                    @elseif($currentTab === 'lessons')
-                        <!-- Huy hiệu số lượng bài giảng -->
-                        <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold shrink-0">
-                            <span class="px-3 py-1.5 rounded-xl bg-pink-50 text-pink-700 flex items-center gap-1.5 whitespace-nowrap">
-                                <span class="w-1.5 h-1.5 rounded-full bg-pink-600"></span>
-                                {{ $stats['total_lessons'] }} bài giảng trong {{ $stats['total_courses'] }} khóa học
-                            </span>
-                        </div>
                     @elseif($currentTab === 'users')
                         <!-- Huy hiệu thống kê người dùng -->
                         <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold shrink-0">
@@ -90,8 +78,8 @@
                     @endif
                 </div>
 
-                @if(in_array($currentTab, ['courses', 'quizzes', 'lessons', 'users']))
-                    <!-- Thanh tìm kiếm ở DƯỚI (Vị trí tương tự bài kiểm tra, khóa học, bài giảng) -->
+                @if(in_array($currentTab, ['courses', 'quizzes', 'users']))
+                    <!-- Thanh tìm kiếm ở DƯỚI (Vị trí tương tự bài kiểm tra, khóa học) -->
                     <form method="GET" action="{{ route('admin.dashboard') }}" class="flex items-center gap-2 w-full lg:w-auto justify-end">
                         <input type="hidden" name="tab" value="{{ $currentTab }}">
                         @if(!empty($statusFilter))
@@ -106,7 +94,7 @@
                             <input type="text"
                                    name="search"
                                    value="{{ $search ?? '' }}"
-                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : ($currentTab === 'users' ? 'Tìm theo tên, email, vai trò...' : 'Tìm bài giảng, khóa học, GV...')) }}"
+                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, bài học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : 'Tìm theo tên, email, vai trò...') }}"
                                    class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                             @if(!empty($search))
                                 <a href="{{ route('admin.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
@@ -164,7 +152,7 @@
             </a>
 
             <!-- 3. Lessons Stats -->
-            <a href="{{ route('admin.dashboard', ['tab' => 'lessons']) }}" 
+            <a href="{{ route('admin.courses.index') }}" 
                class="block bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Tổng số Bài giảng</span>
@@ -262,6 +250,12 @@
                                             <span>GV: {{ $course->teacher->name ?? 'Không rõ' }}</span>
                                             <span>&bull;</span>
                                             <span>{{ $course->lessons->count() }} bài học</span>
+                                            <span>&bull;</span>
+                                            @if(($course->price ?? 0) > 0)
+                                                <span class="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">{{ number_format($course->price, 0, ',', '.') }} đ</span>
+                                            @else
+                                                <span class="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] uppercase border border-emerald-200">free</span>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">
@@ -404,7 +398,14 @@
                             <div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 transition">
                                 <div class="min-w-0">
                                     <div class="font-bold text-xs text-slate-900 truncate">{{ $course->title }}</div>
-                                    <div class="text-[10px] text-slate-400">GV: {{ $course->teacher->name ?? 'N/A' }} &bull; {{ $course->lessons_count }} bài giảng</div>
+                                    <div class="text-[10px] text-slate-400">
+                                        GV: {{ $course->teacher->name ?? 'N/A' }} &bull; {{ $course->lessons_count }} bài giảng &bull; 
+                                        @if(($course->price ?? 0) > 0)
+                                            <strong class="text-slate-700 font-bold">{{ number_format($course->price, 0, ',', '.') }} đ</strong>
+                                        @else
+                                            <strong class="text-emerald-600 font-bold uppercase">free</strong>
+                                        @endif
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     @if($course->status === 'approved')
@@ -493,70 +494,137 @@
                         @endif
                     </div>
                 @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[1060px]">
-                            <thead>
-                                <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                                    <th class="py-4 px-6 whitespace-nowrap">Khóa học</th>
-                                    <th class="py-4 px-4 whitespace-nowrap">Giảng viên</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Số bài học</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Trạng thái</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Ngày gửi</th>
-                                    <th class="py-4 px-6 text-right whitespace-nowrap">Hành động của Admin</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 text-sm">
-                                @foreach($courses as $course)
-                                    <tr class="hover:bg-pink-50/20 transition">
-                                        <td class="py-4 px-6 min-w-[280px]">
-                                            <div class="font-bold text-slate-900 text-base mb-1">{{ $course->title }}</div>
-                                            <div class="text-xs text-slate-500 line-clamp-1 max-w-md">
-                                                {{ $course->description ?? 'Chưa có mô tả' }}
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 whitespace-nowrap">
-                                            <div class="flex items-center gap-2.5">
-                                                @if($course->teacher && $course->teacher->avatar_url)
-                                                    <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0">
-                                                @else
-                                                    <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0">
-                                                        {{ strtoupper(substr($course->teacher->name ?? 'U', 0, 1)) }}
+                    <div x-data="{
+                        expandedCourse: {{ request()->filled('course_id') ? (int)request('course_id') : (request()->filled('expand') ? (int)request('expand') : 'null') }},
+                        isOverflowing: false,
+                        checkOverflow() {
+                            const el = this.$refs.tableWrapper;
+                            if (el) {
+                                this.isOverflowing = el.scrollWidth > el.clientWidth + 5;
+                            }
+                        },
+                        scrollTable(delta) {
+                            if (this.$refs.tableWrapper) {
+                                this.$refs.tableWrapper.scrollBy({ left: delta, behavior: 'smooth' });
+                            }
+                        }
+                    }" 
+                    x-init="checkOverflow(); window.addEventListener('resize', () => checkOverflow())"
+                    class="relative">
+                        
+                        <!-- Thanh thông báo & cuộn ngang tiện lợi ở đỉnh bảng khi màn hình hẹp -->
+                        <div x-show="isOverflowing" x-cloak class="px-4 py-2 bg-gradient-to-r from-pink-50/80 via-white to-pink-50/80 border-b border-pink-100 flex items-center justify-between text-xs text-slate-600 transition">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-bold">&harr;</span>
+                                <span class="text-slate-700 font-medium">Bảng thông tin có thể cuộn ngang:</span>
+                                <span class="text-slate-400 text-[11px]">(Cột <strong class="text-pink-600">Hành động</strong> luôn được ghim cố định bên phải)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button type="button" @click="scrollTable(-300)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-700 font-bold text-xs shadow-2xs transition flex items-center gap-1">
+                                    &larr; Cuộn trái
+                                </button>
+                                <button type="button" @click="scrollTable(300)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-700 font-bold text-xs shadow-2xs transition flex items-center gap-1">
+                                    Cuộn phải &rarr;
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Thanh scrollbar đồng bộ ở đỉnh (Top Scrollbar) -->
+                        <div x-show="isOverflowing" x-cloak
+                             x-ref="topScroll"
+                             @scroll="if ($refs.tableWrapper) $refs.tableWrapper.scrollLeft = $event.target.scrollLeft"
+                             class="overflow-x-auto overflow-y-hidden border-b border-slate-100 bg-slate-50/80 [scrollbar-width:thin] h-2.5">
+                            <div :style="`width: ${$refs.tableEl ? $refs.tableEl.offsetWidth : 960}px; height: 1px;`"></div>
+                        </div>
+
+                        <div x-ref="tableWrapper" 
+                             @scroll="if ($refs.topScroll) $refs.topScroll.scrollLeft = $event.target.scrollLeft; checkOverflow()"
+                             class="overflow-x-auto">
+                            <table x-ref="tableEl" class="w-full text-left border-collapse min-w-[960px]">
+                                <thead>
+                                    <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        <th class="py-3.5 px-4 min-w-[200px]">Khóa học</th>
+                                        <th class="py-3.5 px-3 whitespace-nowrap">Giảng viên</th>
+                                        <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Số bài học</th>
+                                        <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Giá khóa học</th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">Trạng thái</th>
+                                        <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Ngày gửi</th>
+                                        <th class="py-3.5 px-4 text-right whitespace-nowrap sticky right-0 bg-slate-50/95 backdrop-blur-xs z-20 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.08)]">
+                                            Hành động của Admin
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    @foreach($courses as $course)
+                                        <tr class="hover:bg-pink-50/20 group transition">
+                                            <td class="py-3.5 px-4">
+                                                <button type="button" @click="expandedCourse = (expandedCourse === {{ $course->id }} ? null : {{ $course->id }})" class="text-left w-full group">
+                                                    <div class="font-bold text-slate-900 text-sm mb-0.5 group-hover:text-pink-600 transition">{{ $course->title }}</div>
+                                                    <div class="text-xs text-slate-500 line-clamp-1 max-w-xs">
+                                                        {{ $course->description ?? 'Chưa có mô tả' }}
                                                     </div>
-                                                @endif
-                                                <div>
-                                                    <div class="font-semibold text-slate-800">{{ $course->teacher->name ?? 'Không rõ' }}</div>
-                                                    <div class="text-xs text-slate-400">{{ $course->teacher->email ?? '' }}</div>
+                                                </button>
+                                            </td>
+                                            <td class="py-3.5 px-3 whitespace-nowrap">
+                                                <div class="flex items-center gap-2">
+                                                    @if($course->teacher && $course->teacher->avatar_url)
+                                                        <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0">
+                                                    @else
+                                                        <div class="w-7 h-7 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                                            {{ strtoupper(substr($course->teacher->name ?? 'U', 0, 1)) }}
+                                                        </div>
+                                                    @endif
+                                                    <div class="min-w-0">
+                                                        <div class="font-semibold text-slate-800 text-xs">{{ $course->teacher->name ?? 'Không rõ' }}</div>
+                                                        <div class="text-[11px] text-slate-400 max-w-[130px] truncate">{{ $course->teacher->email ?? '' }}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 whitespace-nowrap shrink-0">
-                                                {{ $course->lessons_count }} bài
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            @if($course->status === 'pending')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                    Chờ duyệt
-                                                </span>
-                                            @elseif($course->status === 'approved')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                    Đã duyệt
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                    Đã loại bỏ / Từ chối
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4 text-center text-xs text-slate-500 whitespace-nowrap">
-                                            {{ $course->created_at->format('d/m/Y') }}
-                                        </td>
-                                        <td class="py-4 px-6 text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                                            </td>
+                                            <td class="py-3.5 px-2.5 text-center whitespace-nowrap">
+                                                <button type="button" @click="expandedCourse = (expandedCourse === {{ $course->id }} ? null : {{ $course->id }})" 
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition shadow-2xs whitespace-nowrap shrink-0"
+                                                        :class="expandedCourse === {{ $course->id }} ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'"
+                                                        title="Bấm để xem danh sách bài giảng">
+                                                    <span>{{ $course->lessons_count }} bài</span>
+                                                    <svg class="w-3.5 h-3.5 transform transition-transform duration-200" :class="expandedCourse === {{ $course->id }} ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                            <td class="py-3.5 px-2.5 text-center whitespace-nowrap">
+                                                @if(($course->price ?? 0) > 0)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-neutral-900 text-white shadow-2xs whitespace-nowrap shrink-0">
+                                                        {{ number_format($course->price, 0, ',', '.') }} đ
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase whitespace-nowrap shrink-0">
+                                                        free
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                                                @if($course->status === 'pending')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                        Chờ duyệt
+                                                    </span>
+                                                @elseif($course->status === 'approved')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        Đã duyệt
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                        Đã loại bỏ / Từ chối
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-2.5 text-center text-xs text-slate-500 whitespace-nowrap">
+                                                {{ $course->created_at->format('d/m/Y') }}
+                                            </td>
+                                            <td class="py-3.5 px-4 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#fff7fa] transition z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.08)]">
+                                                <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
                                                 <!-- Xem trước khóa học -->
                                                 <a href="{{ route('student.courses.show', $course->id) }}" target="_blank" 
                                                    class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-pink-600 hover:border-pink-200 text-xs font-semibold transition whitespace-nowrap shrink-0" title="Xem trước khóa học">
@@ -615,10 +683,95 @@
                                             </div>
                                         </td>
                                     </tr>
+
+                                    <!-- Expandable Row: Danh sách bài giảng của khóa học -->
+                                    <tr x-show="expandedCourse === {{ $course->id }}" x-cloak class="bg-pink-50/25 border-b-2 border-pink-200">
+                                        <td colspan="7" class="p-5">
+                                            <div class="bg-white rounded-2xl p-5 border border-pink-100 shadow-xs">
+                                                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100 gap-3">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <div>
+                                                            <h4 class="font-bold text-slate-900 text-sm">
+                                                                Giáo trình bài giảng: <span class="text-pink-600">{{ $course->title }}</span>
+                                                            </h4>
+                                                            <p class="text-xs text-slate-500">
+                                                                Tổng cộng {{ $course->lessons->count() }} bài học được sắp xếp theo thứ tự
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <a href="{{ route('admin.courses.lessons.create', $course->id) }}" 
+                                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0">
+                                                        + Thêm bài giảng vào khóa này
+                                                    </a>
+                                                </div>
+
+                                                @if($course->lessons->isEmpty())
+                                                    <div class="py-6 text-center text-slate-500 text-xs bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+                                                        <p class="font-bold text-slate-700 mb-1">Khóa học này chưa có bài giảng nào</p>
+                                                        <p class="text-slate-400 mb-2">Hãy tạo bài giảng đầu tiên để học viên có thể học tập.</p>
+                                                        <a href="{{ route('admin.courses.lessons.create', $course->id) }}" class="inline-flex items-center gap-1 text-pink-600 hover:text-pink-800 font-bold whitespace-nowrap">
+                                                            + Bấm vào đây để tạo bài giảng đầu tiên &rarr;
+                                                        </a>
+                                                    </div>
+                                                @else
+                                                    <div class="space-y-1.5">
+                                                        @foreach($course->lessons as $lesson)
+                                                            <div class="flex items-center justify-between p-2.5 bg-slate-50/70 hover:bg-pink-50/40 rounded-xl transition gap-3">
+                                                                <div class="flex items-center gap-3 min-w-0">
+                                                                    <span class="w-7 h-7 rounded-lg bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                                                        #{{ $lesson->order_number }}
+                                                                    </span>
+                                                                    <div class="min-w-0">
+                                                                        <div class="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                                                                            {{ $lesson->title }}
+                                                                        </div>
+                                                                        <div class="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400">
+                                                                            @if($lesson->content_type === 'video')
+                                                                                <span class="inline-flex items-center gap-1 text-rose-600 font-semibold bg-rose-50 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">
+                                                                                    Video
+                                                                                </span>
+                                                                            @else
+                                                                                <span class="inline-flex items-center gap-1 text-pink-600 font-semibold bg-pink-50 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">
+                                                                                    Văn bản
+                                                                                </span>
+                                                                            @endif
+                                                                            <span class="whitespace-nowrap">Tạo: {{ $lesson->created_at->format('d/m/Y') }}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="flex items-center gap-1.5 shrink-0 flex-nowrap">
+                                                                    <a href="{{ route('student.lessons.show', ['courseId' => $course->id, 'lessonId' => $lesson->id]) }}" target="_blank" 
+                                                                       class="inline-flex items-center justify-center px-2 py-1 rounded-lg border border-slate-200 text-slate-600 hover:text-pink-600 hover:bg-white text-xs font-semibold transition whitespace-nowrap shrink-0" title="Xem trước bài giảng">
+                                                                        Xem
+                                                                    </a>
+                                                                    <a href="{{ route('admin.lessons.edit', $lesson->id) }}" 
+                                                                       class="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-slate-100 hover:bg-pink-50 text-slate-700 hover:text-pink-700 text-xs font-semibold transition whitespace-nowrap shrink-0">
+                                                                        Sửa
+                                                                    </a>
+                                                                    <form action="{{ route('admin.lessons.destroy', $lesson->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài giảng \'{{ addslashes($lesson->title) }}\' không?')">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button type="submit" class="inline-flex items-center justify-center p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition shrink-0" title="Xóa bài">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                            </svg>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
+                </div>
                 @endif
             </div>
 
@@ -740,217 +893,6 @@
                 @endif
             </div>
 
-        <!-- TAB 4: LESSONS (NHÓM THEO KHÓA HỌC DẠNG ACCORDION CÓ MŨI TÊN MỞ) -->
-        @elseif($currentTab === 'lessons')
-            <div x-data="{ openCourses: [{{ !empty($search) ? $coursesWithLessons->pluck('id')->join(',') : ($coursesWithLessons->first()?->id ?? 'null') }}] }">
-                
-                @if(!empty($search))
-                    <div class="p-3.5 mb-5 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
-                        <div class="flex items-center gap-2 text-slate-700">
-                            <span class="w-2 h-2 rounded-full bg-pink-600"></span>
-                            <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $coursesWithLessons->count() }} khóa học có bài giảng khớp)</span>
-                        </div>
-                        <a href="{{ route('admin.dashboard', ['tab' => 'lessons']) }}"
-                           class="font-bold text-slate-500 hover:text-pink-600 transition">
-                            &times; Xóa tìm kiếm
-                        </a>
-                    </div>
-                @endif
-
-                <!-- Thanh công cụ điều khiển Accordion -->
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-pink-600"></span>
-                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Danh Sách Bài Giảng Theo Khóa Học</h3>
-                        <span class="px-2.5 py-0.5 rounded-full bg-pink-50 text-pink-700 text-xs font-extrabold border border-pink-200/60">
-                            {{ $coursesWithLessons->count() }} khóa học &bull; {{ $stats['total_lessons'] }} bài giảng
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-2 text-xs font-bold">
-                        <button type="button" @click="openCourses = [{{ $coursesWithLessons->pluck('id')->join(',') }}]" class="text-pink-600 hover:text-pink-800 hover:underline cursor-pointer">
-                            Mở tất cả
-                        </button>
-                        <span class="text-slate-300">&bull;</span>
-                        <button type="button" @click="openCourses = []" class="text-slate-500 hover:text-slate-800 hover:underline cursor-pointer">
-                            Thu gọn tất cả
-                        </button>
-                    </div>
-                </div>
-
-                @if($coursesWithLessons->isEmpty())
-                    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-16 text-center">
-                        <h3 class="font-extrabold text-slate-800 text-base mb-1">
-                            @if(!empty($search))
-                                Không tìm thấy bài giảng hoặc khóa học khớp với "{{ $search }}"
-                            @else
-                                Chưa có khóa học hoặc bài giảng nào trong hệ thống
-                            @endif
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-5">
-                            @if(!empty($search))
-                                Vui lòng thử tìm kiếm bằng từ khóa khác hoặc xóa bộ lọc tìm kiếm.
-                            @else
-                                Hiện tại hệ thống chưa có dữ liệu bài giảng nào được đăng tải.
-                            @endif
-                        </p>
-                        @if(!empty($search))
-                            <a href="{{ route('admin.dashboard', ['tab' => 'lessons']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
-                                Xóa tìm kiếm
-                            </a>
-                        @endif
-                    </div>
-                @else
-                    <div class="space-y-4">
-                        @foreach($coursesWithLessons as $course)
-                            <div class="bg-white rounded-2xl border transition duration-200 overflow-hidden shadow-2xs" 
-                                 :class="openCourses.includes({{ $course->id }}) ? 'border-pink-300 shadow-sm ring-1 ring-pink-200/50' : 'border-slate-200/80 hover:border-pink-200'">
-                                
-                                <!-- Accordion Header: Tên khóa học & Mũi tên ấn mở -->
-                                <div class="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer select-none bg-slate-50/60 hover:bg-pink-50/30 transition"
-                                     @click="openCourses.includes({{ $course->id }}) ? openCourses = openCourses.filter(id => id !== {{ $course->id }}) : openCourses.push({{ $course->id }})">
-                                    
-                                    <div class="flex items-start sm:items-center gap-3.5 min-w-0">
-                                        <!-- Mũi tên ấn mở -->
-                                        <div class="w-8 h-8 rounded-xl flex items-center justify-center transition-transform duration-200 shrink-0 shadow-2xs"
-                                             :class="openCourses.includes({{ $course->id }}) ? 'bg-pink-600 text-white rotate-90' : 'bg-white text-slate-500 border border-slate-200'">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </div>
-
-                                        <div class="min-w-0">
-                                            <div class="flex items-center gap-2.5 flex-wrap">
-                                                <h4 class="font-black text-slate-900 text-base hover:text-pink-600 transition">
-                                                    {{ $course->title }}
-                                                </h4>
-                                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0"
-                                                      :class="openCourses.includes({{ $course->id }}) ? 'bg-pink-100 text-pink-700' : 'bg-slate-200 text-slate-700'">
-                                                    {{ $course->lessons->count() }} bài học
-                                                </span>
-                                                @if($course->status === 'approved')
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đã duyệt
-                                                    </span>
-                                                @elseif($course->status === 'pending')
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Chờ duyệt
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Đã loại bỏ
-                                                    </span>
-                                                @endif
-                                            </div>
-
-                                            <div class="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
-                                                <span>GV: <strong class="text-slate-700 font-semibold">{{ $course->teacher->name ?? 'Không rõ' }}</strong> ({{ $course->teacher->email ?? '' }})</span>
-                                                @if($course->description)
-                                                    <span class="text-slate-300">&bull;</span>
-                                                    <span class="line-clamp-1 max-w-md text-slate-400">{{ $course->description }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-center gap-2 self-end sm:self-center shrink-0 flex-nowrap" @click.stop>
-                                        <!-- Nút thêm bài giảng nhanh -->
-                                        <a href="{{ route('admin.courses.lessons.create', $course->id) }}" 
-                                           class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-pink-200 bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold shadow-2xs transition whitespace-nowrap shrink-0" 
-                                           title="Thêm bài giảng vào khóa học này">
-                                            + Thêm bài giảng
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <!-- Accordion Content: Danh sách bài học của khóa học này -->
-                                <div x-show="openCourses.includes({{ $course->id }})" x-cloak class="border-t border-slate-100 p-5 bg-white space-y-2.5">
-                                    @if($course->lessons->isEmpty())
-                                        <div class="py-8 text-center text-slate-500 text-xs bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
-                                            <p class="font-bold text-slate-800 text-sm mb-1">Khóa học này chưa có bài giảng nào</p>
-                                            <p class="text-slate-400 mb-3">Bạn có thể tạo bài giảng đầu tiên cho khóa học này ngay bây giờ.</p>
-                                            <a href="{{ route('admin.courses.lessons.create', $course->id) }}" 
-                                               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs hover:bg-pink-700 shadow-xs transition whitespace-nowrap shrink-0">
-                                                + Thêm bài giảng đầu tiên
-                                            </a>
-                                        </div>
-                                    @else
-                                        <div class="space-y-2">
-                                            @foreach($course->lessons as $lesson)
-                                                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-slate-50/60 hover:bg-pink-50/30 border border-slate-100 rounded-xl gap-3 transition">
-                                                    <div class="flex items-center gap-3 min-w-0">
-                                                        <span class="w-9 h-9 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center font-black text-xs shrink-0 shadow-2xs border border-pink-200/60" title="Bài số {{ $loop->iteration }} trong khóa học">
-                                                            {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
-                                                        </span>
-                                                        <div class="min-w-0">
-                                                            <div class="font-bold text-slate-900 text-sm truncate flex items-center gap-2">
-                                                                <span>{{ $lesson->title }}</span>
-                                                                @if($lesson->content_type === 'video')
-                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0 whitespace-nowrap">
-                                                                        Video
-                                                                    </span>
-                                                                @else
-                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200 shrink-0 whitespace-nowrap">
-                                                                        Văn bản
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                            <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                                                                <span>Bài {{ $loop->iteration }}/{{ $course->lessons->count() }}</span>
-                                                                <span class="text-slate-300">&bull;</span>
-                                                                <span class="text-slate-500 font-medium">Thứ tự: #{{ $lesson->order_number }}</span>
-                                                                <span class="text-slate-300">&bull;</span>
-                                                                <span class="text-slate-400">ID: #{{ $lesson->id }}</span>
-                                                                <span class="text-slate-300">&bull;</span>
-                                                                <span>Cập nhật: {{ $lesson->updated_at->format('d/m/Y') }}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0 flex-nowrap">
-                                                        <!-- Xem trước bài giảng -->
-                                                        @if($course->id)
-                                                            <a href="{{ route('student.lessons.show', ['courseId' => $course->id, 'lessonId' => $lesson->id]) }}" target="_blank" 
-                                                               class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-pink-600 hover:bg-white text-xs font-semibold transition whitespace-nowrap shrink-0" 
-                                                               title="Xem trước bài giảng">
-                                                                Xem
-                                                            </a>
-                                                        @endif
-
-                                                        <!-- Chỉnh sửa bài giảng (Admin có thể chỉnh sửa bài học) -->
-                                                        <a href="{{ route('admin.lessons.edit', $lesson->id) }}" 
-                                                           class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold border border-pink-200 transition whitespace-nowrap shrink-0" 
-                                                           title="Chỉnh sửa nội dung bài giảng">
-                                                            Sửa
-                                                        </a>
-
-                                                        <!-- Xóa bài giảng -->
-                                                        <form action="{{ route('admin.lessons.destroy', $lesson->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài giảng \'{{ addslashes($lesson->title) }}\' không?')">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xóa bài giảng">
-                                                                Xóa
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-
-                                            <!-- Nút thêm bài giảng nhanh ở cuối danh sách -->
-                                            <div class="pt-2 text-center sm:text-left">
-                                                <a href="{{ route('admin.courses.lessons.create', $course->id) }}" 
-                                                   class="inline-flex items-center gap-1.5 text-xs font-bold text-pink-600 hover:text-pink-800 p-2 rounded-lg hover:bg-pink-50 transition whitespace-nowrap">
-                                                    + Thêm bài giảng tiếp theo cho khóa học này
-                                                </a>
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-
         <!-- TAB 5: USERS -->
         @elseif($currentTab === 'users')
             @if(!empty($search))
@@ -1053,11 +995,11 @@
                                         </td>
                                         <td class="py-4 px-6 text-center whitespace-nowrap">
                                             @if($user->role === 'admin')
-                                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200" title="{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Không thể hạ phân quyền Quản trị viên khác trừ khi thay đổi trực tiếp trong database' }}">
+                                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200" title="{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Vai trò Quản trị viên cố định' }}">
                                                     <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                                     </svg>
-                                                    <span>{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Cố định (Chỉ đổi trong DB)' }}</span>
+                                                    <span>{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Cố định' }}</span>
                                                 </div>
                                             @else
                                                 <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-2 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">

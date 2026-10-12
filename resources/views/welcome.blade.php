@@ -134,9 +134,9 @@
                                                     </div>
 
                                                     <!-- Thông tin khóa học sạch sẽ, thoáng đãng -->
-                                                    <div class="mt-3.5 space-y-1.5 px-0.5">
+                                                    <div class="mt-3.5 space-y-2 px-0.5 pb-1">
                                                         <div class="flex items-center justify-between gap-3">
-                                                            <h3 class="font-bold text-base sm:text-lg text-white group-hover/slide:text-pink-400 transition-colors line-clamp-1">
+                                                            <h3 class="font-bold text-base sm:text-lg text-white group-hover/slide:text-pink-400 transition-colors truncate min-w-0 leading-normal" title="{{ $course->title }}">
                                                                 {{ $course->title }}
                                                             </h3>
                                                             <span class="text-xs text-neutral-400 shrink-0 font-medium">
@@ -144,18 +144,31 @@
                                                             </span>
                                                         </div>
 
-                                                        <div class="flex items-center gap-2 text-xs text-neutral-400">
-                                                            @if($course->teacher && $course->teacher->avatar_url)
-                                                                <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-4 h-4 rounded-full object-cover">
+                                                        <div class="flex items-center justify-between gap-2 text-xs text-neutral-400">
+                                                            <div class="flex items-center gap-2 min-w-0">
+                                                                @if($course->teacher && $course->teacher->avatar_url)
+                                                                    <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-4 h-4 rounded-full object-cover shrink-0">
+                                                                @endif
+                                                                <span class="truncate">GV: {{ $course->teacher->name ?? 'Ban Đào Tạo' }}</span>
+                                                            </div>
+                                                            @php
+                                                                $heroRevCount = (int) ($course->reviews_count ?? $course->reviews()->count());
+                                                                $heroAvgRating = $course->average_rating;
+                                                            @endphp
+                                                            @if($heroRevCount > 0)
+                                                                <span class="inline-flex items-center gap-1 text-[11px] text-amber-400 font-bold shrink-0">
+                                                                    <svg class="w-3 h-3 fill-amber-400 text-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                                                    <span>{{ number_format($heroAvgRating, 1) }}</span>
+                                                                    <span class="text-neutral-500 font-normal">({{ $heroRevCount }})</span>
+                                                                </span>
                                                             @endif
-                                                            <span class="truncate">GV: {{ $course->teacher->name ?? 'Ban Đào Tạo' }}</span>
                                                         </div>
 
-                                                        <div class="pt-1 flex items-center justify-between gap-3 text-xs">
-                                                            <p class="text-neutral-400 line-clamp-1 flex-1">
+                                                        <div class="pt-1.5 pb-0.5 flex items-center justify-between gap-3 text-xs leading-normal">
+                                                            <p class="text-neutral-400 truncate flex-1 min-w-0 leading-normal pb-0.5" title="{{ $course->description }}">
                                                                 {{ $course->description ?: 'Bấm để xem chi tiết giáo trình bài giảng.' }}
                                                             </p>
-                                                            <span class="text-pink-400 group-hover/slide:text-pink-300 font-semibold inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
+                                                            <span class="text-pink-400 group-hover/slide:text-pink-300 font-semibold inline-flex items-center gap-1 shrink-0 whitespace-nowrap pb-0.5">
                                                                 <span>Vào học ngay</span>
                                                                 <span>&rarr;</span>
                                                             </span>
@@ -216,7 +229,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
                 <div>
-                    <span class="text-xs font-extrabold text-pink-600 uppercase tracking-[0.25em] block mb-2">Mới nhất</span>
+                    <span class="text-xs font-extrabold text-pink-600 uppercase tracking-[0.25em] block mb-2">Được đánh giá nhiều nhất</span>
                     <h2 class="text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight">Khóa học nổi bật</h2>
                 </div>
                 <a href="{{ route('courses.index') }}"

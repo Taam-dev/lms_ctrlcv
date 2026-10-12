@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Student\CourseController as StudentCourseController;
 use App\Http\Controllers\Student\QuizController as StudentQuizController;
+use App\Http\Controllers\Student\WalletController;
 use App\Http\Controllers\Teacher\CourseController as TeacherCourseController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\Teacher\LessonController as TeacherLessonController;
@@ -59,6 +60,12 @@ Route::middleware(['auth'])->group(function () {
     // Route học viên đánh giá & bình luận khóa học
     Route::post('/courses/{course}/reviews', [StudentCourseController::class, 'review'])->name('student.courses.reviews.store');
     Route::delete('/courses/{course}/reviews/{review}', [StudentCourseController::class, 'destroyReview'])->name('student.courses.reviews.destroy');
+
+    // Route Ví tiền & Nạp tiền VietQR
+    Route::get('/wallet', [WalletController::class, 'deposit'])->name('wallet.deposit');
+    Route::post('/wallet/deposit', [WalletController::class, 'createDeposit'])->name('wallet.deposit.store');
+    Route::post('/wallet/transactions/{transaction}/confirm', [WalletController::class, 'confirmDeposit'])->name('wallet.transactions.confirm');
+    Route::post('/wallet/transactions/{transaction}/cancel', [WalletController::class, 'cancelDeposit'])->name('wallet.transactions.cancel');
 });
 
 // Route cho Giảng viên (GV Portal)

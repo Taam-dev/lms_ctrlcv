@@ -51,6 +51,28 @@
                         @enderror
                     </div>
 
+                    <!-- Học phí khóa học -->
+                    <div>
+                        <label for="price" class="block text-sm font-bold text-slate-900 mb-1.5">
+                            Học phí khóa học (VNĐ)
+                        </label>
+                        <div class="relative">
+                            <input type="number" name="price" id="price" min="0" step="1000"
+                                   value="{{ old('price', 0) }}"
+                                   placeholder="Nhập 0 nếu là khóa học miễn phí"
+                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm pl-4 pr-16 font-bold">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">
+                                VNĐ
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Nhập <strong>0</strong> hoặc để trống nếu bạn muốn cung cấp khóa học này hoàn toàn <strong>Miễn phí</strong>.
+                        </p>
+                        @error('price')
+                            <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Banner khóa học -->
                     <div class="pt-2">
                         <x-course-banner-picker />

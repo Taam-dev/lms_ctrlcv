@@ -9,7 +9,10 @@ use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonCompletion;
 use App\Models\QuizAttempt;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
@@ -46,7 +49,7 @@ class CourseController extends Controller
         }
     }
 
-    // trang chủ chỉ hiển thị hero banner và 3 khóa học nổi bật mới nhất
+    // trang chủ chỉ hiển thị hero banner và 3 khóa học nổi bật được nhiều lượt đánh giá nhất
     public function index()
     {
         $approvedCourses = Course::where('status', 'approved');
@@ -55,7 +58,8 @@ class CourseController extends Controller
         $courses = (clone $approvedCourses)->with('teacher')
             ->withCount(['lessons', 'reviews'])
             ->withAvg('reviews', 'rating')
-            ->latest()
+            ->orderByDesc('reviews_count')
+            ->orderByDesc('reviews_avg_rating')
             ->latest('id')
             ->take(3)
             ->get();
@@ -211,15 +215,75 @@ class CourseController extends Controller
         ));
     }
 
-    // đăng ký (enroll) khóa học
+    // đăng ký (enroll) hoặc mua khóa học bằng số dư ví
     public function enroll($id)
     {
+        $user = auth()->user();
+        $course = is_numeric($id)
+            ? Course::where('id', $id)->first()
+            : Course::where('slug', $id)->first();
+
+        if (! $course) {
+            $course = Course::where('id', $id)->orWhere('slug', $id)->firstOrFail();
+        }
+
+        $isEnrolled = Enrollment::where('student_id', $user->id)
+            ->where('course_id', $course->id)
+            ->exists();
+
+        if ($isEnrolled) {
+            return back()->with('info', 'Bạn đã đăng ký khóa học này rồi!');
+        }
+
+        // Nếu khóa học có phí
+        if ($course->price > 0) {
+            $currentBalance = $user->balance ?? 0;
+
+            if ($currentBalance < $course->price) {
+                $shortage = $course->price - $currentBalance;
+
+                return back()
+                    ->with('error', 'Số dư ví không đủ để mua khóa học này! Khóa học yêu cầu '.number_format($course->price, 0, ',', '.').' đ, số dư hiện tại của bạn là '.number_format($currentBalance, 0, ',', '.').' đ.')
+                    ->with('need_deposit', true)
+                    ->with('deposit_amount', $shortage);
+            }
+
+            DB::transaction(function () use ($user, $course) {
+                $balanceBefore = $user->balance;
+                $user->decrement('balance', $course->price);
+                $balanceAfter = $user->fresh()->balance;
+
+                $code = 'BUY'.$user->id.strtoupper(Str::random(4));
+
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'code' => $code,
+                    'type' => 'course_purchase',
+                    'amount' => $course->price,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $balanceAfter,
+                    'status' => 'completed',
+                    'description' => "Mua khóa học: {$course->title}",
+                    'reference_id' => $course->id,
+                    'payment_method' => 'wallet',
+                ]);
+
+                Enrollment::firstOrCreate([
+                    'student_id' => $user->id,
+                    'course_id' => $course->id,
+                ]);
+            });
+
+            return back()->with('success', 'Mua và đăng ký khóa học thành công! Đã trừ '.number_format($course->price, 0, ',', '.').' đ từ ví của bạn.');
+        }
+
+        // Khóa học miễn phí
         Enrollment::firstOrCreate([
-            'student_id' => auth()->id(),
-            'course_id' => $id,
+            'student_id' => $user->id,
+            'course_id' => $course->id,
         ]);
 
-        return back()->with('success', 'đã đăng ký khóa học thành công!');
+        return back()->with('success', 'Đã đăng ký khóa học miễn phí thành công!');
     }
 
     // xem bài giảng (chỉ cho ai đã đăng ký xem, theo thứ tự từ dưới lên, hỗ trợ cả slug chuẩn SEO và ID)
@@ -228,11 +292,11 @@ class CourseController extends Controller
         $userId = auth()->id();
 
         $course = is_numeric($courseId)
-            ? Course::where('id', $courseId)->first()
-            : Course::where('slug', $courseId)->first();
+            ? Course::with('teacher')->where('id', $courseId)->first()
+            : Course::with('teacher')->where('slug', $courseId)->first();
 
         if (! $course) {
-            $course = Course::where('id', $courseId)->orWhere('slug', $courseId)->firstOrFail();
+            $course = Course::with('teacher')->where('id', $courseId)->orWhere('slug', $courseId)->firstOrFail();
         }
 
         // check bảo mật: phải đăng ký rồi mới cho vào xem

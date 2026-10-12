@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -150,5 +151,64 @@ class CoursePagesTest extends TestCase
         $response->assertSee('Giảng viên');
         $response->assertSee('Vào học ngay');
         $response->assertSee('Tiến độ');
+    }
+
+    public function test_home_page_featured_courses_are_ordered_by_most_reviews(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+
+        // Khóa học 1 có 0 đánh giá
+        $course1 = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa Học Ít Đánh Giá',
+            'description' => 'Mô tả 1',
+            'status' => 'approved',
+        ]);
+
+        // Khóa học 2 có 3 đánh giá
+        $course2 = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa Học Nhiều Đánh Giá Nhất',
+            'description' => 'Mô tả 2',
+            'status' => 'approved',
+        ]);
+
+        // Khóa học 3 có 1 đánh giá
+        $course3 = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa Học Đánh Giá Vừa',
+            'description' => 'Mô tả 3',
+            'status' => 'approved',
+        ]);
+
+        $students = User::factory()->count(3)->create(['role' => 'student']);
+
+        // Tạo 3 reviews cho course2
+        foreach ($students as $student) {
+            CourseReview::create([
+                'course_id' => $course2->id,
+                'user_id' => $student->id,
+                'rating' => 5,
+                'comment' => 'Tuyệt vời',
+            ]);
+        }
+
+        // Tạo 1 review cho course3
+        CourseReview::create([
+            'course_id' => $course3->id,
+            'user_id' => $students[0]->id,
+            'rating' => 4,
+            'comment' => 'Khá tốt',
+        ]);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+
+        // Kiểm tra thứ tự xuất hiện trên trang chủ: course2 -> course3 -> course1
+        $coursesOnPage = $response->viewData('courses');
+        $this->assertEquals($course2->id, $coursesOnPage[0]->id);
+        $this->assertEquals($course3->id, $coursesOnPage[1]->id);
+        $this->assertEquals($course1->id, $coursesOnPage[2]->id);
     }
 }

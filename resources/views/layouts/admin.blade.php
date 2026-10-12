@@ -23,9 +23,9 @@
             'title' => 'Đào tạo & duyệt',
             'items' => [
                 [
-                    'label' => 'Quản lý Khóa học',
+                    'label' => 'Quản lý Khóa học / Bài học',
                     'href' => route('admin.courses.index'),
-                    'active' => request()->routeIs('admin.courses.*') || ($onDashboard && $tab === 'courses'),
+                    'active' => request()->routeIs('admin.courses.*') || ($onDashboard && in_array($tab, ['courses', 'lessons'])),
                     'badge' => ($pendingCoursesCount ?? 0) > 0 ? ($pendingCoursesCount . ' chờ') : ($totalCoursesCount ?? null),
                     'badgeWarn' => ($pendingCoursesCount ?? 0) > 0,
                 ],
@@ -35,12 +35,6 @@
                     'active' => request()->routeIs('admin.quizzes.*') || ($onDashboard && $tab === 'quizzes'),
                     'badge' => ($pendingQuizzesCount ?? 0) > 0 ? ($pendingQuizzesCount . ' chờ') : ($totalQuizzesCount ?? null),
                     'badgeWarn' => ($pendingQuizzesCount ?? 0) > 0,
-                ],
-                [
-                    'label' => 'Tất cả bài giảng',
-                    'href' => route('admin.dashboard', ['tab' => 'lessons']),
-                    'active' => $onDashboard && $tab === 'lessons',
-                    'badge' => $totalLessonsCount ?? null,
                 ],
             ],
         ],

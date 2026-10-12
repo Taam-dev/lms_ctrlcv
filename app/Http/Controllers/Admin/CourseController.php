@@ -20,7 +20,9 @@ class CourseController extends Controller
     {
         $status = $request->query('status');
         $search = trim((string) $request->query('search', ''));
-        $query = Course::with(['teacher', 'lessons'])->withCount('lessons')->latest();
+        $query = Course::with(['teacher', 'lessons' => function ($q) {
+            $q->orderBy('order_number');
+        }])->withCount('lessons')->latest();
 
         $totalCount = Course::count();
 
@@ -35,6 +37,9 @@ class CourseController extends Controller
                     ->orWhereHas('teacher', function ($t) use ($search) {
                         $t->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('lessons', function ($l) use ($search) {
+                        $l->where('title', 'like', "%{$search}%");
                     });
             });
         }
@@ -62,6 +67,7 @@ class CourseController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'nullable|integer|min:0',
             'teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:approved,pending,rejected',
             'thumbnail_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
@@ -116,6 +122,7 @@ class CourseController extends Controller
                 'teacher_id' => $teacherId,
                 'title' => $request->title,
                 'description' => $request->description,
+                'price' => (int) ($request->input('price', 0) ?? 0),
                 'thumbnail' => $thumbnail,
                 'status' => $request->status,
             ]);
@@ -145,6 +152,7 @@ class CourseController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'nullable|integer|min:0',
             'teacher_id' => 'nullable|exists:users,id',
             'status' => 'required|in:approved,pending,rejected',
             'thumbnail_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
@@ -182,6 +190,7 @@ class CourseController extends Controller
         $course->update([
             'title' => $request->title,
             'description' => $request->description,
+            'price' => (int) ($request->input('price', 0) ?? 0),
             'thumbnail' => $thumbnail,
             'teacher_id' => $request->teacher_id ?: $course->teacher_id,
             'status' => $request->status,
@@ -219,14 +228,17 @@ class CourseController extends Controller
             'title' => 'required|string|max:255',
             'content_type' => 'required|in:text,video',
             'content' => 'required|string',
+            'order_number' => 'nullable|integer|min:1',
         ]);
 
         // Tránh tạo bài giảng trùng lặp khi bấm nút Lưu nhiều lần liên tục
         $lockKey = 'create_admin_lesson_'.auth()->id().'_'.$course->id;
         $lock = Cache::lock($lockKey, 5);
 
+        $redirectTo = $request->input('redirect_to', route('admin.courses.index', ['expand' => $course->id]));
+
         if (! $lock->get()) {
-            return redirect()->route('admin.courses.index')
+            return redirect($redirectTo)
                 ->with('success', 'Đang xử lý thêm bài giảng, vui lòng không nhấn gửi nhiều lần!');
         }
 
@@ -237,11 +249,13 @@ class CourseController extends Controller
                 ->first();
 
             if ($recentlyCreated) {
-                return redirect()->route('admin.courses.index')
+                return redirect($redirectTo)
                     ->with('success', 'Đã thêm bài giảng vào khóa học thành công!');
             }
 
-            $orderNumber = $course->lessons()->count() + 1;
+            $orderNumber = $request->filled('order_number')
+                ? (int) $request->order_number
+                : ($course->lessons()->count() + 1);
 
             Lesson::create([
                 'course_id' => $course->id,
@@ -254,7 +268,7 @@ class CourseController extends Controller
             $lock->release();
         }
 
-        return redirect()->route('admin.courses.index')
+        return redirect($redirectTo)
             ->with('success', 'Đã thêm bài giảng vào khóa học thành công!');
     }
 
@@ -322,7 +336,9 @@ class CourseController extends Controller
             'order_number' => $request->order_number,
         ]);
 
-        return redirect()->route('admin.dashboard', ['tab' => 'lessons'])
+        $redirectTo = $request->input('redirect_to', route('admin.courses.index', ['expand' => $lesson->course_id]));
+
+        return redirect($redirectTo)
             ->with('success', 'Đã cập nhật bài giảng thành công!');
     }
 

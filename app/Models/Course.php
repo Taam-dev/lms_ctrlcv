@@ -12,7 +12,24 @@ class Course extends Model
     use HasFactory;
 
     // mấy trường này cho phép nhập từ form
-    protected $fillable = ['teacher_id', 'title', 'slug', 'description', 'status', 'thumbnail'];
+    protected $fillable = ['teacher_id', 'title', 'slug', 'description', 'price', 'status', 'thumbnail'];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'integer',
+        ];
+    }
+
+    public function getFormattedPriceAttribute(): string
+    {
+        return $this->price > 0 ? number_format($this->price, 0, ',', '.').' đ' : 'Miễn phí';
+    }
+
+    public function getIsFreeAttribute(): bool
+    {
+        return (int) $this->price <= 0;
+    }
 
     /**
      * Tự động tạo slug chuẩn SEO không dấu khi thêm hoặc cập nhật khóa học

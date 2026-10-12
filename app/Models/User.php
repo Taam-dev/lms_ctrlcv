@@ -21,6 +21,7 @@ class User extends Authenticatable
         'role', // thêm role vô đây để tí nữa phân quyền admin/teacher/student
         'avatar',
         'google_id',
+        'balance',
     ];
 
     protected $hidden = [
@@ -33,6 +34,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'balance' => 'integer',
         ];
     }
 
@@ -72,6 +74,22 @@ class User extends Authenticatable
     public function courseReviews(): HasMany
     {
         return $this->hasMany(CourseReview::class, 'user_id');
+    }
+
+    /**
+     * Lịch sử giao dịch ví tiền của người dùng
+     */
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class, 'user_id');
+    }
+
+    /**
+     * Định dạng số dư ví tiền theo đơn vị VNĐ
+     */
+    public function getFormattedBalanceAttribute(): string
+    {
+        return number_format($this->balance ?? 0, 0, ',', '.').' đ';
     }
 
     /**

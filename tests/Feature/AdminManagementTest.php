@@ -251,11 +251,12 @@ class AdminManagementTest extends TestCase
         ]);
         $this->assertTrue($otherAdmin->fresh()->isAdmin());
 
-        // Kiểm tra trên giao diện hiển thị trạng thái cố định (Chỉ đổi trong DB)
+        // Kiểm tra trên giao diện hiển thị trạng thái cố định cho admin khác
         $dashboardResponse = $this->actingAs($currentAdmin)->get(route('admin.dashboard', ['tab' => 'users']));
         $dashboardResponse->assertOk();
         $dashboardResponse->assertSee('Admin Boss');
-        $dashboardResponse->assertSee('Cố định (Chỉ đổi trong DB)');
+        $dashboardResponse->assertSee('Cố định');
+        $dashboardResponse->assertDontSee('Cố định (Chỉ đổi trong DB)');
     }
 
     /**
@@ -411,7 +412,7 @@ class AdminManagementTest extends TestCase
             'order_number' => 1,
         ]);
 
-        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'lessons', 'search' => 'Flutter']));
+        $response = $this->actingAs($admin)->get(route('admin.courses.index', ['search' => 'Flutter']));
         $response->assertOk();
         $response->assertSee('Lập trình Flutter Mobile');
         $response->assertSee('Bài 1: Cài đặt Flutter SDK');

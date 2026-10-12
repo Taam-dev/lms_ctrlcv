@@ -29,6 +29,7 @@ class CourseController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'nullable|integer|min:0',
             'thumbnail_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'thumbnail_cropped_data' => 'nullable|string',
             'thumbnail_preset' => 'nullable|string|max:255',
@@ -80,6 +81,7 @@ class CourseController extends Controller
                 'teacher_id' => auth()->id(),
                 'title' => $request->title,
                 'description' => $request->description,
+                'price' => (int) ($request->input('price', 0) ?? 0),
                 'thumbnail' => $thumbnail,
                 'status' => 'pending',
             ]);
@@ -107,6 +109,7 @@ class CourseController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'nullable|integer|min:0',
             'thumbnail_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'thumbnail_cropped_data' => 'nullable|string',
             'remove_thumbnail' => 'nullable|boolean',
@@ -142,6 +145,7 @@ class CourseController extends Controller
         $course->update([
             'title' => $request->title,
             'description' => $request->description,
+            'price' => (int) ($request->input('price', 0) ?? 0),
             'thumbnail' => $thumbnail,
         ]);
 

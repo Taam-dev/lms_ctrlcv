@@ -29,7 +29,7 @@
             <!-- Auth -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 @auth
-                    <x-dropdown align="right" width="56">
+                    <x-dropdown align="right" width="64">
                         <x-slot name="trigger">
                             <button class="inline-flex items-center gap-3 px-3 py-1.5 border border-white/15 hover:border-pink-500 text-left focus:outline-none transition duration-150">
                                 @if(Auth::user()->avatar_url)
@@ -56,22 +56,35 @@
                         </x-slot>
 
                         <x-slot name="content">
-                            <div class="px-4 py-2 text-xs text-slate-500 border-b border-slate-100">
+                            <div class="px-4 py-2 text-xs text-slate-500 border-b border-slate-100 text-center truncate">
                                 Đang đăng nhập: <strong class="text-slate-800">{{ Auth::user()->email }}</strong>
                             </div>
 
-                            <x-dropdown-link :href="route('profile.edit')">
+                            <!-- Option Ví tiền với icon trắng đen & số tiền căn giữa cân đối -->
+                            <x-dropdown-link :href="route('wallet.deposit')" class="!flex items-center justify-center gap-3 text-slate-800 hover:bg-slate-50 transition border-b border-slate-100 py-2.5 text-center">
+                                <div class="inline-flex items-center gap-2 shrink-0 whitespace-nowrap">
+                                    <svg class="w-4 h-4 text-slate-900 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                    <span class="font-bold text-slate-900 whitespace-nowrap">Ví&nbsp;tiền</span>
+                                </div>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-black bg-neutral-900 text-white whitespace-nowrap shrink-0">
+                                    {{ number_format(Auth::user()->balance ?? 0, 0, ',', '.') }} đ
+                                </span>
+                            </x-dropdown-link>
+
+                            <x-dropdown-link :href="route('profile.edit')" class="!text-center font-medium">
                                 {{ __('Hồ sơ cá nhân') }}
                             </x-dropdown-link>
 
                             @if(Auth::user()->isTeacher() || Auth::user()->isInstructor())
-                                <x-dropdown-link :href="route('instructor.dashboard')" class="text-pink-700 hover:text-pink-800 hover:bg-pink-50 font-bold border-l-2 border-pink-500">
+                                <x-dropdown-link :href="route('instructor.dashboard')" class="!text-center text-pink-700 hover:text-pink-800 hover:bg-pink-50 font-bold">
                                     {{ __('GV') }}
                                 </x-dropdown-link>
                             @endif
 
                             @if(Auth::user()->isAdmin())
-                                <x-dropdown-link :href="route('admin.dashboard')" class="text-pink-700 hover:text-pink-800 hover:bg-pink-50 font-bold border-l-2 border-pink-500">
+                                <x-dropdown-link :href="route('admin.dashboard')" class="!text-center text-pink-700 hover:text-pink-800 hover:bg-pink-50 font-bold">
                                     {{ __('ADMIN') }}
                                 </x-dropdown-link>
                             @endif
@@ -80,7 +93,7 @@
                                 @csrf
                                 <x-dropdown-link :href="route('logout')"
                                         onclick="event.preventDefault(); this.closest('form').submit();"
-                                        class="text-rose-600 hover:text-rose-700 hover:bg-rose-50">
+                                        class="!text-center text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-medium">
                                     {{ __('Đăng xuất') }}
                                 </x-dropdown-link>
                             </form>
@@ -138,6 +151,15 @@
                 </div>
 
                 <div class="mt-2 space-y-0.5">
+                    <a href="{{ route('wallet.deposit') }}" class="flex items-center justify-between px-3 py-2 text-sm text-neutral-200 hover:text-white hover:bg-white/5 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            <span class="font-bold">Ví tiền</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-xs font-black bg-neutral-900 text-white border border-neutral-700">
+                            {{ number_format(Auth::user()->balance ?? 0, 0, ',', '.') }} đ
+                        </span>
+                    </a>
                     <a href="{{ route('profile.edit') }}" class="block px-3 py-2 text-sm text-neutral-300 hover:text-white">
                         Hồ sơ cá nhân
                     </a>

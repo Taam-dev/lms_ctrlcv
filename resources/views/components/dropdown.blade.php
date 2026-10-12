@@ -9,7 +9,12 @@ $alignmentClasses = match ($align) {
 
 $width = match ($width) {
     '48' => 'w-48',
-    default => $width,
+    '56' => 'w-56',
+    '60' => 'w-60',
+    '64' => 'w-64',
+    '72' => 'w-72',
+    '80' => 'w-80',
+    default => (str_starts_with($width, 'w-') ? $width : 'w-'.$width),
 };
 @endphp
 
