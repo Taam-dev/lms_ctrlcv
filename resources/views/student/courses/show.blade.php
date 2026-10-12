@@ -91,6 +91,16 @@
                     <span>{{ $course->lessons->count() }} Bài giảng</span>
                     <span>&bull;</span>
                     <span>{{ $course->approvedQuizzes->count() }} Bài Quizzes</span>
+                    <span>&bull;</span>
+                    <a href="#danh-gia" class="inline-flex items-center gap-1.5 {{ $totalReviews > 0 ? 'text-amber-500 hover:text-amber-600' : 'text-slate-400 hover:text-slate-600' }} font-bold transition">
+                        <svg class="w-4 h-4 {{ $totalReviews > 0 ? 'fill-amber-400 text-amber-400' : 'fill-slate-300 text-slate-300' }}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        @if($totalReviews > 0)
+                            <span>{{ number_format($averageRating, 1) }}</span>
+                            <span class="text-slate-400 font-normal">({{ $totalReviews }} đánh giá)</span>
+                        @else
+                            <span class="text-slate-400 font-normal">Chưa có đánh giá</span>
+                        @endif
+                    </a>
                 </div>
             </div>
 
@@ -468,6 +478,370 @@
 
                         </div>
                     </div>
+                </div>
+
+            </div>
+
+            <!-- ========================================== -->
+            <!-- KHỐI ĐÁNH GIÁ & BÌNH LUẬN KHÓA HỌC (CUỐI TRANG) -->
+            <!-- ========================================== -->
+            <div id="danh-gia" class="pt-8 border-t border-slate-200/80 space-y-8">
+                
+                <!-- Tiêu đề mục Đánh giá -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                            <svg class="w-3.5 h-3.5 fill-slate-700 text-slate-700" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <span>Đánh giá & Phản hồi</span>
+                        </span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-2">
+                            Đánh giá từ học viên
+                        </h3>
+                        <p class="text-slate-500 text-sm mt-1">
+                            Nhận xét và trải nghiệm thực tế từ các học viên đã đăng ký tham gia khóa học này.
+                        </p>
+                    </div>
+
+                    @if($isEnrolled && ! $userReview)
+                        <div>
+                            <a href="#form-danh-gia" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-md shadow-pink-600/25 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                <span>Viết đánh giá của bạn</span>
+                            </a>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Thống kê tổng quan điểm đánh giá -->
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-pink-100 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    
+                    <!-- Cột trái: Điểm số trung bình -->
+                    <div class="md:col-span-5 text-center md:text-left flex flex-col items-center md:items-start justify-center pr-0 md:pr-6 md:border-r border-slate-100">
+                        @if($totalReviews > 0)
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-5xl sm:text-6xl font-black text-slate-900 tracking-tight">
+                                    {{ number_format($averageRating, 1) }}
+                                </span>
+                                <span class="text-lg font-bold text-slate-400">/ 5</span>
+                            </div>
+
+                            <!-- 5 sao to trực quan -->
+                            <div class="flex items-center gap-1 text-amber-400 my-2">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <svg class="w-6 h-6 {{ $i <= round($averageRating) ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200' }}" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                    </svg>
+                                @endfor
+                            </div>
+
+                            <p class="text-xs font-semibold text-slate-500">
+                                Dựa trên {{ $totalReviews }} lượt đánh giá từ học viên
+                            </p>
+                        @else
+                            <div class="space-y-1">
+                                <span class="text-2xl sm:text-3xl font-black text-slate-700 tracking-tight block">
+                                    Chưa có đánh giá
+                                </span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                                    0 / 5 sao
+                                </span>
+                            </div>
+
+                            <!-- 5 sao xám hoàn toàn khi chưa có đánh giá nào -->
+                            <div class="flex items-center gap-1 text-slate-200 my-2.5">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <svg class="w-6 h-6 fill-slate-200 text-slate-200" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                    </svg>
+                                @endfor
+                            </div>
+
+                            <p class="text-xs font-medium text-slate-400">
+                                Khóa học này hiện chưa có lượt đánh giá nào từ học viên.
+                            </p>
+                        @endif
+                    </div>
+
+                    <!-- Cột phải: Thanh tỉ lệ từng mức sao (5 sao -> 1 sao) -->
+                    <div class="md:col-span-7 space-y-3">
+                        @foreach([5, 4, 3, 2, 1] as $star)
+                            @php
+                                $count = $ratingCounts[$star] ?? 0;
+                                $percent = $totalReviews > 0 ? round(($count / $totalReviews) * 100) : 0;
+                            @endphp
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="w-12 font-bold text-slate-700 flex items-center gap-1 shrink-0">
+                                    <span>{{ $star }}</span>
+                                    <svg class="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                </span>
+                                <!-- Thanh Track hiển thị rõ rệt -->
+                                <div class="flex-1 h-3 rounded-full overflow-hidden" style="background-color: #f1f5f9; border: 1px solid #e2e8f0;">
+                                    <div class="h-full rounded-full transition-all duration-500" 
+                                         style="width: {{ $percent }}%; background-color: #db2777; background-image: linear-gradient(90deg, #ec4899, #db2777);"></div>
+                                </div>
+                                <span class="w-16 text-right font-medium text-slate-500 shrink-0">
+                                    {{ $count }} ({{ $percent }}%)
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+
+                </div>
+
+                <!-- Khu vực Form Đánh giá (chỉ cho học viên đã đăng ký khóa học) -->
+                <div id="form-danh-gia">
+                    @if($isEnrolled)
+                        <!-- Học viên ĐÃ ĐĂNG KÝ: Cho phép gửi hoặc cập nhật đánh giá -->
+                        <div x-data="{
+                            rating: {{ (int) old('rating', $userReview->rating ?? 5) }},
+                            hoverRating: 0,
+                            comment: {{ Js::from(old('comment', $userReview->comment ?? '')) }},
+                            get ratingLabel() {
+                                const current = this.hoverRating || this.rating;
+                                if (current === 5) return '5 sao - Rất hài lòng / Khóa học tuyệt vời!';
+                                if (current === 4) return '4 sao - Hài lòng / Khóa học rất tốt';
+                                if (current === 3) return '3 sao - Bình thường / Nội dung ổn';
+                                if (current === 2) return '2 sao - Chưa hài lòng / Cần cải thiện thêm';
+                                if (current === 1) return '1 sao - Rất tệ / Không hài lòng';
+                                return 'Chọn số sao đánh giá';
+                            }
+                        }" class="bg-white rounded-3xl p-6 sm:p-8 border-2 {{ $userReview ? 'border-pink-200' : 'border-pink-100' }} shadow-xs relative">
+                            
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+                                <div>
+                                    <h4 class="font-black text-slate-900 text-lg flex items-center gap-2">
+                                        <span>{{ $userReview ? 'Cập nhật đánh giá của bạn' : 'Viết đánh giá & Nhận xét khóa học' }}</span>
+                                        @if($userReview)
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                Đã đánh giá
+                                            </span>
+                                        @endif
+                                    </h4>
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        Ý kiến phản hồi chân thực từ bạn là động lực rất lớn giúp giảng viên và ban đào tạo nâng cao chất lượng khóa học.
+                                    </p>
+                                </div>
+
+                                @if($userReview)
+                                    <form action="{{ route('student.courses.reviews.destroy', [$course->slug ?: $course->id, $userReview->id]) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá của mình không?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center gap-1 text-xs font-bold text-rose-500 hover:text-rose-700 transition cursor-pointer">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            <span>Xóa đánh giá của tôi</span>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <form action="{{ route('student.courses.reviews.store', $course->slug ?: $course->id) }}" method="POST" class="mt-6 space-y-6">
+                                @csrf
+
+                                <!-- Chọn số sao trực quan (Star Picker) -->
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                                        Mức độ hài lòng của bạn <span class="text-rose-500">*</span>
+                                    </label>
+                                    
+                                    <div class="flex items-center gap-1.5 py-1">
+                                        <template x-for="star in [1, 2, 3, 4, 5]" :key="star">
+                                            <button type="button"
+                                                    @click="rating = star"
+                                                    @mouseenter="hoverRating = star"
+                                                    @mouseleave="hoverRating = 0"
+                                                    class="p-1 focus:outline-hidden transition-transform transform hover:scale-125 cursor-pointer"
+                                                    :aria-label="'Đánh giá ' + star + ' sao'">
+                                                <svg class="w-8 h-8 transition-colors"
+                                                     :class="(hoverRating ? star <= hoverRating : star <= rating) ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200'"
+                                                     viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                                </svg>
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <input type="hidden" name="rating" :value="rating">
+
+                                    <p class="text-xs font-bold text-amber-600 mt-1 min-h-[18px]" x-text="ratingLabel"></p>
+
+                                    @error('rating')
+                                        <p class="text-xs text-rose-500 font-bold mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Ô nhập nhận xét / bình luận -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label for="comment" class="block text-xs font-black uppercase tracking-wider text-slate-700">
+                                            Bình luận & Chia sẻ trải nghiệm (không bắt buộc)
+                                        </label>
+                                        <span class="text-[11px] font-semibold text-slate-400" x-text="(comment ? comment.length : 0) + ' / 2000 ký tự'"></span>
+                                    </div>
+
+                                    <textarea id="comment" 
+                                              name="comment" 
+                                              rows="4" 
+                                              maxlength="2000"
+                                              x-model="comment"
+                                              placeholder="Bạn cảm thấy thế nào về khóa học? Những bài giảng nào hữu ích nhất, và giảng viên có giải thích dễ hiểu không?..."
+                                              class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-sm focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition resize-y"></textarea>
+
+                                    @error('comment')
+                                        <p class="text-xs text-rose-500 font-bold mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Nút gửi đánh giá -->
+                                <div class="flex items-center justify-end gap-3 pt-2">
+                                    <button type="submit" class="inline-flex items-center gap-2 px-7 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-black text-sm shadow-md shadow-pink-600/30 transition cursor-pointer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        <span>{{ $userReview ? 'Lưu thay đổi đánh giá' : 'Gửi đánh giá khóa học' }}</span>
+                                    </button>
+                                </div>
+
+                            </form>
+                        </div>
+                    @elseif(auth()->check())
+                        <!-- Học viên ĐÃ ĐĂNG NHẬP nhưng CHƯA ĐĂNG KÝ KHÓA HỌC -->
+                        <div class="bg-gradient-to-r from-pink-50 via-rose-50 to-pink-50 border-2 border-pink-200/80 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xs">
+                            <div class="flex items-center gap-4 text-center sm:text-left">
+                                <div class="w-12 h-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-slate-900 text-base sm:text-lg">
+                                        Bạn muốn chia sẻ đánh giá về khóa học này?
+                                    </h4>
+                                    <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                                        Hãy đăng ký tham gia khóa học để mở khóa tính năng đánh giá và cùng chia sẻ cảm nhận với cộng đồng học viên!
+                                    </p>
+                                </div>
+                            </div>
+                            <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST" class="shrink-0">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-pink-600/25 transition cursor-pointer">
+                                    <span>Đăng ký khóa học ngay</span>
+                                    &rarr;
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <!-- Khách CHƯA ĐĂNG NHẬP -->
+                        <div class="bg-slate-100/90 border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-slate-900 text-base sm:text-lg">
+                                        Đăng nhập để đánh giá khóa học
+                                    </h4>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                                        Bạn cần đăng nhập và tham gia khóa học để có thể gửi đánh giá và nhận xét.
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('login') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-pink-600/25 transition shrink-0">
+                                <span>Đăng nhập ngay</span>
+                                &rarr;
+                            </a>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Danh sách các đánh giá & bình luận -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between pb-2">
+                        <h4 class="font-black text-slate-900 text-lg sm:text-xl flex items-center gap-2">
+                            <span>Tất cả đánh giá</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700">
+                                {{ $totalReviews }}
+                            </span>
+                        </h4>
+                    </div>
+
+                    @if($reviews->isEmpty())
+                        <div class="bg-white rounded-3xl border border-dashed border-slate-200 p-10 text-center space-y-3">
+                            <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                            </div>
+                            <h5 class="font-bold text-slate-800 text-base">Chưa có đánh giá nào cho khóa học này</h5>
+                            <p class="text-xs text-slate-500 max-w-md mx-auto">
+                                Hãy là học viên đầu tiên trải nghiệm bài giảng và để lại nhận xét hữu ích nhé!
+                            </p>
+                        </div>
+                    @else
+                        <div class="space-y-4">
+                            @foreach($reviews as $review)
+                                <div class="bg-white rounded-3xl p-6 border border-pink-100/80 shadow-2xs hover:shadow-xs transition space-y-3">
+                                    <div class="flex items-start justify-between gap-4">
+                                        
+                                        <!-- Người đánh giá -->
+                                        <div class="flex items-center gap-3">
+                                            @if($review->user && $review->user->avatar_url)
+                                                <img src="{{ $review->user->avatar_url }}" alt="{{ $review->user->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-pink-100 shrink-0">
+                                            @else
+                                                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                                                    {{ strtoupper(substr($review->user->name ?? 'H', 0, 1)) }}
+                                                </div>
+                                            @endif
+
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <h5 class="font-bold text-slate-900 text-sm">
+                                                        {{ $review->user->name ?? 'Học viên ẩn danh' }}
+                                                    </h5>
+                                                    @if(auth()->check() && $review->user_id === auth()->id())
+                                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-pink-50 text-pink-700 border border-pink-100">
+                                                            Bạn
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                                                    <span>{{ $review->created_at->diffForHumans() }}</span>
+                                                    @if($review->updated_at > $review->created_at)
+                                                        <span>&bull;</span>
+                                                        <span class="italic text-slate-400">(Đã chỉnh sửa)</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Số sao & Nút xóa nếu có quyền -->
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex items-center gap-0.5 text-amber-400">
+                                                @for($s = 1; $s <= 5; $s++)
+                                                    <svg class="w-4 h-4 {{ $s <= $review->rating ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200' }}" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                                    </svg>
+                                                @endfor
+                                            </div>
+
+                                            @if(auth()->check() && (auth()->id() === $review->user_id || auth()->user()->isAdmin()))
+                                                <form action="{{ route('student.courses.reviews.destroy', [$course->slug ?: $course->id, $review->id]) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer" title="Xóa đánh giá">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Nội dung bình luận -->
+                                    @if(! empty($review->comment))
+                                        <p class="text-sm text-slate-700 leading-relaxed sm:pl-13 pt-1">
+                                            {!! nl2br(e($review->comment)) !!}
+                                        </p>
+                                    @endif
+
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
                 </div>
 
             </div>

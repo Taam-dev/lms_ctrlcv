@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Course extends Model
@@ -75,6 +76,40 @@ class Course extends Model
     public function lessonCompletions()
     {
         return $this->hasMany(LessonCompletion::class);
+    }
+
+    /**
+     * Danh sách đánh giá & bình luận của khóa học
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CourseReview::class);
+    }
+
+    /**
+     * Điểm đánh giá trung bình (tính từ 1.0 đến 5.0)
+     */
+    public function getAverageRatingAttribute(): float
+    {
+        if (array_key_exists('reviews_avg_rating', $this->attributes)) {
+            return round((float) ($this->attributes['reviews_avg_rating'] ?? 0), 1);
+        }
+
+        $avg = $this->reviews()->avg('rating');
+
+        return $avg ? round((float) $avg, 1) : 0.0;
+    }
+
+    /**
+     * Tổng số lượt đánh giá
+     */
+    public function getReviewsCountAttribute(): int
+    {
+        if (array_key_exists('reviews_count', $this->attributes)) {
+            return (int) $this->attributes['reviews_count'];
+        }
+
+        return $this->reviews()->count();
     }
 
     /**

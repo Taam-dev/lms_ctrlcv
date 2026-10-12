@@ -55,6 +55,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/quizzes/{quiz}/take', [StudentQuizController::class, 'take'])->name('student.quizzes.take');
     Route::post('/quizzes/{quiz}/submit', [StudentQuizController::class, 'submit'])->name('student.quizzes.submit');
     Route::get('/quizzes/{quiz}/result/{attempt}', [StudentQuizController::class, 'result'])->name('student.quizzes.result');
+
+    // Route học viên đánh giá & bình luận khóa học
+    Route::post('/courses/{course}/reviews', [StudentCourseController::class, 'review'])->name('student.courses.reviews.store');
+    Route::delete('/courses/{course}/reviews/{review}', [StudentCourseController::class, 'destroyReview'])->name('student.courses.reviews.destroy');
 });
 
 // Route cho Giảng viên (GV Portal)

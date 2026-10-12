@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -63,6 +64,14 @@ class User extends Authenticatable
     public function lessonCompletions()
     {
         return $this->hasMany(LessonCompletion::class, 'student_id');
+    }
+
+    /**
+     * Các đánh giá khóa học do người dùng thực hiện
+     */
+    public function courseReviews(): HasMany
+    {
+        return $this->hasMany(CourseReview::class, 'user_id');
     }
 
     /**

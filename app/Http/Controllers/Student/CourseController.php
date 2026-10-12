@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonCompletion;
@@ -51,7 +52,13 @@ class CourseController extends Controller
         $approvedCourses = Course::where('status', 'approved');
 
         $totalCourses = (clone $approvedCourses)->count();
-        $courses = (clone $approvedCourses)->with('teacher')->withCount('lessons')->latest()->latest('id')->take(3)->get();
+        $courses = (clone $approvedCourses)->with('teacher')
+            ->withCount(['lessons', 'reviews'])
+            ->withAvg('reviews', 'rating')
+            ->latest()
+            ->latest('id')
+            ->take(3)
+            ->get();
 
         $this->attachStudentProgress($courses);
 
@@ -65,7 +72,8 @@ class CourseController extends Controller
 
         $query = Course::where('status', 'approved')
             ->with('teacher')
-            ->withCount('lessons');
+            ->withCount(['lessons', 'reviews'])
+            ->withAvg('reviews', 'rating');
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -169,13 +177,37 @@ class CourseController extends Controller
             }
         }
 
+        // Tải danh sách đánh giá & bình luận của khóa học
+        $reviews = $course->reviews()
+            ->with('user')
+            ->latest()
+            ->get();
+
+        $totalReviews = $reviews->count();
+        $averageRating = $totalReviews > 0 ? round((float) $reviews->avg('rating'), 1) : 0.0;
+
+        $ratingCounts = [
+            5 => $reviews->where('rating', 5)->count(),
+            4 => $reviews->where('rating', 4)->count(),
+            3 => $reviews->where('rating', 3)->count(),
+            2 => $reviews->where('rating', 2)->count(),
+            1 => $reviews->where('rating', 1)->count(),
+        ];
+
+        $userReview = auth()->check() ? $reviews->firstWhere('user_id', auth()->id()) : null;
+
         return view('student.courses.show', compact(
             'course',
             'isEnrolled',
             'studentAttempts',
             'completedLessonIds',
             'unlockedLessonIds',
-            'progressPercent'
+            'progressPercent',
+            'reviews',
+            'totalReviews',
+            'averageRating',
+            'ratingCounts',
+            'userReview'
         ));
     }
 
@@ -341,5 +373,69 @@ class CourseController extends Controller
         }
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * Gửi hoặc cập nhật đánh giá & bình luận khóa học của học viên
+     */
+    public function review(Request $request, $idOrSlug)
+    {
+        $userId = auth()->id();
+
+        $course = is_numeric($idOrSlug)
+            ? Course::where('id', $idOrSlug)->first()
+            : Course::where('slug', $idOrSlug)->first();
+
+        if (! $course) {
+            $course = Course::where('slug', $idOrSlug)->orWhere('id', $idOrSlug)->firstOrFail();
+        }
+
+        $isEnrolled = Enrollment::where('student_id', $userId)
+            ->where('course_id', $course->id)
+            ->exists();
+
+        if (! $isEnrolled) {
+            return back()->with('error', 'Bạn cần đăng ký khóa học trước khi gửi đánh giá và bình luận!');
+        }
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['nullable', 'string', 'max:2000'],
+        ], [
+            'rating.required' => 'Vui lòng chọn số sao đánh giá (từ 1 đến 5 sao).',
+            'rating.integer' => 'Số sao đánh giá không hợp lệ.',
+            'rating.min' => 'Đánh giá tối thiểu là 1 sao.',
+            'rating.max' => 'Đánh giá tối đa là 5 sao.',
+            'comment.max' => 'Nội dung bình luận không được vượt quá 2000 ký tự.',
+        ]);
+
+        CourseReview::updateOrCreate(
+            [
+                'course_id' => $course->id,
+                'user_id' => $userId,
+            ],
+            [
+                'rating' => $validated['rating'],
+                'comment' => ! empty($validated['comment']) ? trim($validated['comment']) : null,
+            ]
+        );
+
+        return back()->with('success', 'Cảm ơn bạn! Đánh giá khóa học đã được lưu thành công.');
+    }
+
+    /**
+     * Xóa đánh giá khóa học (học viên sở hữu hoặc quản trị viên)
+     */
+    public function destroyReview($courseId, $reviewId)
+    {
+        $review = CourseReview::findOrFail($reviewId);
+
+        if ($review->user_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            abort(403, 'Bạn không có quyền thực hiện thao tác xóa đánh giá này.');
+        }
+
+        $review->delete();
+
+        return back()->with('success', 'Đã xóa đánh giá thành công.');
     }
 }
