@@ -1017,25 +1017,25 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                                    <th class="py-3.5 px-4 whitespace-nowrap">Họ và tên</th>
-                                    <th class="py-3.5 px-3 whitespace-nowrap">Email</th>
-                                    <th class="py-3.5 px-3 text-center whitespace-nowrap">Vai trò hiện tại</th>
-                                    <th class="py-3.5 px-3 text-center whitespace-nowrap">Ví (Số dư)</th>
-                                    <th class="py-3.5 px-3 text-center whitespace-nowrap">Ngày đăng ký</th>
-                                    <th class="py-3.5 px-4 text-center whitespace-nowrap">Chỉnh sửa vai trò</th>
+                                <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    <th class="py-3 px-3.5 whitespace-nowrap">Họ và tên</th>
+                                    <th class="py-3 px-2.5 whitespace-nowrap">Email</th>
+                                    <th class="py-3 px-2 text-center whitespace-nowrap">Vai trò hiện tại</th>
+                                    <th class="py-3 px-2 text-center whitespace-nowrap">Ví (Số dư)</th>
+                                    <th class="py-3 px-2 text-center whitespace-nowrap">Ngày đăng ký</th>
+                                    <th class="py-3 px-3 text-center whitespace-nowrap">Chỉnh sửa vai trò</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-sm">
                                 @foreach($users as $user)
                                     <tr class="hover:bg-pink-50/20 transition">
-                                        <td class="py-3.5 px-4 whitespace-nowrap">
-                                             <div class="flex items-center gap-3">
+                                        <td class="py-3 px-3.5 whitespace-nowrap">
+                                             <div class="flex items-center gap-2.5">
                                                 <a href="{{ route('users.profile', $user) }}" target="_blank" class="shrink-0 transition-transform hover:scale-105" title="Xem trang cá nhân của {{ $user->name }}">
                                                     @if($user->avatar_url)
-                                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0">
+                                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0">
                                                     @else
-                                                        <div class="w-9 h-9 rounded-xl bg-pink-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                                                        <div class="w-8 h-8 rounded-lg bg-pink-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                                                             {{ strtoupper(substr($user->name, 0, 1)) }}
                                                         </div>
                                                     @endif
@@ -1054,28 +1054,28 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="py-3.5 px-3 text-slate-600 text-xs font-medium whitespace-nowrap">
+                                        <td class="py-3 px-2.5 text-slate-600 text-xs font-medium max-w-[170px] truncate" title="{{ $user->email }}">
                                             {{ $user->email }}
                                         </td>
-                                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                                        <td class="py-3 px-2 text-center whitespace-nowrap">
                                             @if($user->role === 'admin')
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-pink-100 text-pink-700 border border-pink-200 whitespace-nowrap shrink-0">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700 border border-pink-200 whitespace-nowrap shrink-0">
                                                     Admin
                                                 </span>
                                             @elseif($user->role === 'teacher')
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 whitespace-nowrap shrink-0">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 whitespace-nowrap shrink-0">
                                                     Giảng viên
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                                                     Học viên
                                                 </span>
                                             @endif
                                         </td>
                                         <!-- Cột Ví (Số dư) & Nút sửa -->
-                                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
-                                            <div class="inline-flex items-center justify-center gap-1.5">
-                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-black {{ ($user->balance ?? 0) > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-slate-100 text-slate-500 border border-slate-200/60' }}">
+                                        <td class="py-3 px-2 text-center whitespace-nowrap">
+                                            <div class="inline-flex items-center justify-center gap-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-black {{ ($user->balance ?? 0) > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-slate-100 text-slate-500 border border-slate-200/60' }}">
                                                     <svg class="w-3.5 h-3.5 {{ ($user->balance ?? 0) > 0 ? 'text-emerald-600' : 'text-slate-400' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                                                     </svg>
@@ -1083,7 +1083,7 @@
                                                 </span>
                                                 <button type="button"
                                                         @click="openWalletModal({{ $user->id }}, '{{ addslashes($user->name) }}', {{ (int) ($user->balance ?? 0) }})"
-                                                        class="p-1.5 rounded-lg text-slate-400 hover:text-pink-600 hover:bg-pink-50 transition cursor-pointer border border-transparent hover:border-pink-200 shrink-0"
+                                                        class="p-1 rounded text-slate-400 hover:text-pink-600 hover:bg-pink-50 transition cursor-pointer border border-transparent hover:border-pink-200 shrink-0"
                                                         title="Chỉnh sửa số dư ví của {{ $user->name }}">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
@@ -1091,12 +1091,13 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="py-3.5 px-3 text-center text-xs text-slate-500 whitespace-nowrap">
-                                            {{ $user->created_at->format('d/m/Y H:i') }}
+                                        <td class="py-3 px-2 text-center text-xs whitespace-nowrap">
+                                            <span class="font-medium text-slate-700">{{ $user->created_at->format('d/m/Y') }}</span>
+                                            <span class="text-[10px] text-slate-400 block">{{ $user->created_at->format('H:i') }}</span>
                                         </td>
-                                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        <td class="py-3 px-3 text-center whitespace-nowrap">
                                             @if($user->role === 'admin')
-                                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200" title="{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Vai trò Quản trị viên cố định' }}">
+                                                <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200" title="{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Vai trò Quản trị viên cố định' }}">
                                                     <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                                     </svg>
@@ -1106,12 +1107,12 @@
                                                 <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-1.5 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <select name="role" class="text-xs font-medium py-1.5 pl-2.5 pr-7 w-28 sm:w-32 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
+                                                    <select name="role" class="text-xs font-medium py-1 pl-2 pr-6 w-24 sm:w-28 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
                                                         <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Học viên</option>
                                                         <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }}>Giảng viên</option>
                                                         <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
                                                     </select>
-                                                    <button type="submit" class="px-2.5 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0" title="Cập nhật vai trò">
+                                                    <button type="submit" class="px-2.5 py-1 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0" title="Cập nhật vai trò">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                         </svg>
@@ -1252,7 +1253,6 @@
                         </form>
                     </div>
                 </div>
-            </div>
             </div>
 
         <!-- TAB 5: REPORTS (QUẢN LÝ BÁO CÁO VI PHẠM) -->
@@ -1395,8 +1395,9 @@
                                             <td class="py-4 px-5 align-top max-w-xs">
                                                 @if($report->reportable_type === 'App\Models\User' || $report->reportable_type === 'user')
                                                     <div class="space-y-1.5">
-                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                            👤 Tài khoản người dùng
+                                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                            <span>Tài khoản người dùng</span>
                                                         </span>
                                                         @if($report->reportable)
                                                             <div class="flex items-center gap-2 mt-1">
@@ -1422,8 +1423,9 @@
                                                     </div>
                                                 @elseif($report->reportable_type === 'App\Models\CourseReview' || $report->reportable_type === 'review')
                                                     <div class="space-y-1.5">
-                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
-                                                            💬 Bình luận / Đánh giá
+                                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                                            <span>Bình luận / Đánh giá</span>
                                                         </span>
                                                         @if($report->reportable)
                                                             <div class="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-[11px]">

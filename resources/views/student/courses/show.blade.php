@@ -1036,8 +1036,12 @@
                                 <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                        :class="selectedReason === 'negative_comment' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                     <input type="radio" name="reason" value="negative_comment" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500" required>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-base">🤬</span>
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                            </svg>
+                                        </div>
                                         <span class="text-xs">Bình luận tiêu cực / Thô tục / Công kích cá nhân</span>
                                     </div>
                                 </label>
@@ -1045,8 +1049,12 @@
                                 <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                        :class="selectedReason === 'spam' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                     <input type="radio" name="reason" value="spam" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-base">📢</span>
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                                            </svg>
+                                        </div>
                                         <span class="text-xs">Spam / Quảng cáo rác / Lặp lại nội dung</span>
                                     </div>
                                 </label>
@@ -1054,8 +1062,12 @@
                                 <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                        :class="selectedReason === 'misinformation' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                     <input type="radio" name="reason" value="misinformation" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-base">🚫</span>
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                        </div>
                                         <span class="text-xs">Thông tin sai lệch / Lừa đảo / Vi phạm pháp luật</span>
                                     </div>
                                 </label>
@@ -1063,8 +1075,12 @@
                                 <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                        :class="selectedReason === 'other' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                     <input type="radio" name="reason" value="other" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-base">💬</span>
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                        </div>
                                         <span class="text-xs">Lý do khác</span>
                                     </div>
                                 </label>

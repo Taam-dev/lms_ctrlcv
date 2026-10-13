@@ -340,8 +340,12 @@
                                     <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                            :class="selectedReason === 'avatar_inappropriate' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                         <input type="radio" name="reason" value="avatar_inappropriate" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500" required>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base">🖼️</span>
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
                                             <span class="text-xs">Avatar không phù hợp (Phản cảm, không đúng thuần phong mỹ tục)</span>
                                         </div>
                                     </label>
@@ -349,8 +353,12 @@
                                     <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                            :class="selectedReason === 'name_inappropriate' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                         <input type="radio" name="reason" value="name_inappropriate" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base">👤</span>
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                            </div>
                                             <span class="text-xs">Tên không phù hợp (Thô tục, xúc phạm, mạo danh)</span>
                                         </div>
                                     </label>
@@ -358,8 +366,12 @@
                                     <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                            :class="selectedReason === 'harassment' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                         <input type="radio" name="reason" value="harassment" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base">⚠️</span>
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
                                             <span class="text-xs">Hành vi xúc phạm / Quấy rối người khác</span>
                                         </div>
                                     </label>
@@ -367,8 +379,12 @@
                                     <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
                                            :class="selectedReason === 'other' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
                                         <input type="radio" name="reason" value="other" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base">💬</span>
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 border border-slate-200/80">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                            </div>
                                             <span class="text-xs">Lý do khác</span>
                                         </div>
                                     </label>

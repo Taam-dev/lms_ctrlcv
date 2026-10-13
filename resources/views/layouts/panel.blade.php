@@ -22,7 +22,7 @@
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-[#fdf2f8] text-slate-800 min-h-full" x-data="{ sidebarOpen: false }">
-    <div class="min-h-screen flex">
+    <div class="min-h-screen flex w-full">
 
         <!-- Mobile backdrop -->
         <div x-show="sidebarOpen"
@@ -102,10 +102,10 @@
         </aside>
 
         <!-- ================= MAIN ================= -->
-        <div class="flex-1 lg:pl-64 flex flex-col min-w-0">
+        <div class="flex-1 lg:pl-64 flex flex-col min-w-0 w-full">
 
             <!-- Top bar -->
-            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-pink-100 px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-pink-100 px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between w-full">
                 <div class="flex items-center gap-3">
                     <button @click="sidebarOpen = true" class="lg:hidden px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-neutral-900 border border-neutral-900 hover:bg-neutral-900 hover:text-white transition" aria-label="Mở menu">
                         Menu
@@ -131,14 +131,14 @@
 
             <!-- Page header slot -->
             @isset($header)
-                <div class="bg-white border-b border-pink-100 px-4 sm:px-6 lg:px-6 xl:px-8 py-5 sm:py-6 relative">
+                <div class="bg-white border-b border-pink-100 px-4 sm:px-6 lg:px-6 xl:px-8 py-5 sm:py-6 relative w-full">
                     <span class="absolute left-0 top-0 bottom-0 w-1 bg-pink-600"></span>
                     {{ $header }}
                 </div>
             @endisset
 
             <!-- Content -->
-            <main class="panel-main flex-1 p-4 sm:p-6 lg:p-6 xl:p-8 space-y-6">
+            <main class="panel-main flex-1 p-4 sm:p-6 lg:p-6 xl:p-8 space-y-6 w-full">
                 @if(session('success'))
                     <div x-data="{ show: true }" x-show="show"
                          class="flex items-center justify-between p-4 bg-white border-l-4 border-emerald-500 shadow-sm text-emerald-800 text-sm font-semibold">
