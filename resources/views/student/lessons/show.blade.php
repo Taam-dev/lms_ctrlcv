@@ -62,6 +62,9 @@
                 <!-- Thông tin giảng viên & khóa học dưới tên bài học -->
                 <div class="flex flex-wrap items-center gap-2.5 sm:gap-3.5 mt-2.5 text-xs text-slate-500">
                     <div class="flex items-center gap-2">
+                        @if($course->teacher_id)
+                            <a href="{{ route('users.profile', $course->teacher_id) }}" class="flex items-center gap-2 hover:opacity-90 transition" title="Xem hồ sơ giảng viên {{ $course->teacher->name ?? '' }}">
+                        @endif
                         @if($course->teacher && $course->teacher->avatar_url)
                             <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-6 h-6 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0">
                         @else
@@ -69,7 +72,10 @@
                                 {{ strtoupper(substr($course->teacher->name ?? 'G', 0, 1)) }}
                             </div>
                         @endif
-                        <span>Giảng viên: <strong class="text-slate-800 font-bold">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
+                        <span>Giảng viên: <strong class="text-slate-800 font-bold hover:text-pink-600 transition-colors">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
+                        @if($course->teacher_id)
+                            </a>
+                        @endif
                     </div>
 
                     <span>&bull;</span>

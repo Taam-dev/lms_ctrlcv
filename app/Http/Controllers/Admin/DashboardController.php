@@ -4,10 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Lesson;
 use App\Models\Quiz;
+use App\Models\Report;
 use App\Models\User;
+use App\Models\WalletTransaction;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -40,11 +47,17 @@ class DashboardController extends Controller
             'admins_count' => User::where('role', 'admin')->count(),
             'teachers_count' => User::where('role', 'teacher')->count(),
             'students_count' => User::where('role', 'student')->count(),
+
+            'total_reports' => Report::count(),
+            'pending_reports' => Report::where('status', 'pending')->count(),
+            'resolved_reports' => Report::where('status', 'resolved')->count(),
+            'dismissed_reports' => Report::where('status', 'dismissed')->count(),
         ];
 
         // Dữ liệu cho trang Tổng quan (Overview)
         $pendingCourses = Course::with(['teacher', 'lessons'])->where('status', 'pending')->latest()->take(6)->get();
         $pendingQuizzes = Quiz::with(['course', 'teacher'])->withCount('questions')->where('status', 'pending')->latest()->take(6)->get();
+        $pendingReports = Report::with(['reporter', 'reportable'])->where('status', 'pending')->latest()->take(6)->get();
         $recentCourses = Course::with(['teacher', 'lessons'])->withCount('lessons')->latest()->take(6)->get();
         $recentQuizzes = Quiz::with(['course', 'teacher'])->withCount('questions')->latest()->take(6)->get();
         $recentUsers = User::latest()->take(6)->get();
@@ -147,10 +160,28 @@ class DashboardController extends Controller
         }
         $users = $usersQuery->paginate(15);
 
+        // Lấy danh sách Báo cáo vi phạm (Tab reports)
+        $reportsQuery = Report::with(['reporter', 'resolvedBy', 'reportable'])->latest();
+        if ($statusFilter && in_array($statusFilter, ['pending', 'resolved', 'dismissed'])) {
+            $reportsQuery->where('status', $statusFilter);
+        }
+        if ($search !== '') {
+            $reportsQuery->where(function ($q) use ($search) {
+                $q->where('reason', 'like', "%{$search}%")
+                    ->orWhere('details', 'like', "%{$search}%")
+                    ->orWhereHas('reporter', function ($r) use ($search) {
+                        $r->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+        $reports = $reportsQuery->paginate(15);
+
         return view('admin.dashboard', compact(
             'stats',
             'pendingCourses',
             'pendingQuizzes',
+            'pendingReports',
             'recentCourses',
             'recentQuizzes',
             'recentUsers',
@@ -159,6 +190,7 @@ class DashboardController extends Controller
             'lessons',
             'coursesWithLessons',
             'users',
+            'reports',
             'currentTab',
             'statusFilter',
             'search'
@@ -196,5 +228,100 @@ class DashboardController extends Controller
         ]);
 
         return back()->with('success', "Đã thay đổi vai trò của người dùng \"{$user->name}\" từ {$oldRole} thành {$newRole} thành công!");
+    }
+
+    /**
+     * Chỉnh sửa số dư ví của người dùng trong hệ thống
+     */
+    public function updateUserWallet(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'balance' => ['required', 'integer', 'min:0', 'max:1000000000'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ], [
+            'balance.required' => 'Vui lòng nhập số dư ví mới.',
+            'balance.integer' => 'Số dư ví phải là số nguyên.',
+            'balance.min' => 'Số dư ví không thể là số âm.',
+            'balance.max' => 'Số dư ví tối đa là 1.000.000.000 đ.',
+        ]);
+
+        $oldBalance = (int) ($user->balance ?? 0);
+        $newBalance = (int) $validated['balance'];
+        $diff = $newBalance - $oldBalance;
+
+        DB::transaction(function () use ($user, $oldBalance, $newBalance, $diff, $validated) {
+            $user->update([
+                'balance' => $newBalance,
+            ]);
+
+            if ($diff !== 0) {
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'code' => 'ADJ_'.strtoupper(Str::random(8)),
+                    'type' => $diff > 0 ? 'deposit' : 'refund',
+                    'amount' => abs($diff),
+                    'balance_before' => $oldBalance,
+                    'balance_after' => $newBalance,
+                    'status' => 'completed',
+                    'description' => 'Admin điều chỉnh số dư ví'.(! empty($validated['note']) ? ': '.$validated['note'] : ''),
+                    'payment_method' => 'admin',
+                ]);
+            }
+        });
+
+        return back()->with('success', "Đã cập nhật số dư ví của người dùng \"{$user->name}\" thành ".number_format($newBalance, 0, ',', '.').' đ thành công!');
+    }
+
+    /**
+     * Xử lý báo cáo vi phạm (Đánh dấu đã giải quyết hoặc bác bỏ, tùy chọn xử lý đối tượng vi phạm)
+     */
+    public function updateReportStatus(Request $request, Report $report): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:resolve,dismiss'],
+            'admin_notes' => ['nullable', 'string', 'max:1000'],
+            'delete_content' => ['nullable', 'boolean'],
+            'reset_avatar' => ['nullable', 'boolean'],
+        ]);
+
+        $action = $validated['action'];
+        $notes = $validated['admin_notes'] ?? null;
+        $deleteContent = $request->boolean('delete_content');
+        $resetAvatar = $request->boolean('reset_avatar');
+
+        if ($action === 'resolve') {
+            // Nếu admin chọn gỡ avatar của tài khoản bị report
+            if ($resetAvatar && $report->reportable instanceof User) {
+                $reportedUser = $report->reportable;
+                if ($reportedUser->avatar && Storage::disk('public')->exists($reportedUser->avatar)) {
+                    Storage::disk('public')->delete($reportedUser->avatar);
+                }
+                $reportedUser->update(['avatar' => null]);
+            }
+
+            // Nếu admin chọn xóa bình luận vi phạm
+            if ($deleteContent && $report->reportable instanceof CourseReview) {
+                $report->reportable->delete();
+            }
+
+            $report->update([
+                'status' => 'resolved',
+                'admin_notes' => $notes,
+                'resolved_by' => auth()->id(),
+                'resolved_at' => now(),
+            ]);
+
+            return back()->with('success', 'Đã xử lý và giải quyết báo cáo vi phạm thành công!');
+        }
+
+        // Bác bỏ báo cáo
+        $report->update([
+            'status' => 'dismissed',
+            'admin_notes' => $notes,
+            'resolved_by' => auth()->id(),
+            'resolved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Đã bác bỏ báo cáo vi phạm!');
     }
 }

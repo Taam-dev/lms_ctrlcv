@@ -109,6 +109,9 @@
             <div class="flex items-center justify-between gap-3 mb-4">
                 <!-- Thông tin Giảng viên (luôn hiển thị cho cả đã đăng ký và chưa đăng ký) -->
                 <div class="flex items-center gap-2.5 min-w-0">
+                    @if($course->teacher_id)
+                        <a href="{{ route('users.profile', $course->teacher_id) }}" class="shrink-0 transition-transform hover:scale-105" title="Xem hồ sơ giảng viên {{ $teacherName }}">
+                    @endif
                     @if($course->teacher && $course->teacher->avatar_url)
                         <img src="{{ $course->teacher->avatar_url }}" alt="{{ $teacherName }}" class="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-pink-100">
                     @else
@@ -116,9 +119,16 @@
                             {{ strtoupper(substr($teacherName, 0, 1)) }}
                         </div>
                     @endif
+                    @if($course->teacher_id)
+                        </a>
+                    @endif
                     <div class="min-w-0 text-xs leading-tight">
                         <span class="block text-neutral-400 text-[10px] uppercase font-bold tracking-wider">Giảng viên</span>
-                        <span class="block font-bold text-neutral-800 truncate" title="{{ $teacherName }}">{{ $teacherName }}</span>
+                        @if($course->teacher_id)
+                            <a href="{{ route('users.profile', $course->teacher_id) }}" class="block font-bold text-neutral-800 truncate hover:text-pink-600 transition-colors" title="{{ $teacherName }}">{{ $teacherName }}</a>
+                        @else
+                            <span class="block font-bold text-neutral-800 truncate" title="{{ $teacherName }}">{{ $teacherName }}</span>
+                        @endif
                     </div>
                 </div>
 

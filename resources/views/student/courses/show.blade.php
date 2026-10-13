@@ -78,6 +78,9 @@
                 </h2>
                 <div class="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-xs sm:text-sm text-slate-500">
                     <div class="flex items-center gap-2.5">
+                        @if($course->teacher_id)
+                            <a href="{{ route('users.profile', $course->teacher_id) }}" class="shrink-0 transition-transform hover:scale-105" title="Xem hồ sơ giảng viên {{ $course->teacher->name ?? '' }}">
+                        @endif
                         @if($course->teacher && $course->teacher->avatar_url)
                             <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-pink-200 shadow-xs shrink-0">
                         @else
@@ -85,7 +88,18 @@
                                 {{ strtoupper(substr($course->teacher->name ?? 'G', 0, 1)) }}
                             </div>
                         @endif
-                        <span>Giảng viên: <strong class="text-slate-800 font-bold">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
+                        @if($course->teacher_id)
+                            </a>
+                        @endif
+                        <span>Giảng viên: 
+                            @if($course->teacher_id)
+                                <a href="{{ route('users.profile', $course->teacher_id) }}" class="text-slate-800 font-bold hover:text-pink-600 transition-colors">
+                                    {{ $course->teacher->name ?? 'Ban Đào Tạo' }}
+                                </a>
+                            @else
+                                <strong class="text-slate-800 font-bold">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong>
+                            @endif
+                        </span>
                     </div>
                     <span>&bull;</span>
                     <span>{{ $course->lessons->count() }} Bài giảng</span>
@@ -264,7 +278,15 @@
                                     Khóa học trực tuyến
                                 </span>
                                 <span>&bull;</span>
-                                <span>Giảng viên: <strong class="text-slate-800">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong></span>
+                                <span>Giảng viên: 
+                                    @if($course->teacher_id)
+                                        <a href="{{ route('users.profile', $course->teacher_id) }}" class="text-slate-800 font-bold hover:text-pink-600 transition-colors">
+                                            {{ $course->teacher->name ?? 'Ban Đào Tạo' }}
+                                        </a>
+                                    @else
+                                        <strong class="text-slate-800">{{ $course->teacher->name ?? 'Ban Đào Tạo' }}</strong>
+                                    @endif
+                                </span>
                                 <span>&bull;</span>
                                 <span>Ngày tạo: {{ $course->created_at->format('d/m/Y') }}</span>
                                 @if($isEnrolled && ($purchasedPrice ?? 0) > 0)
@@ -853,6 +875,9 @@
                                         
                                         <!-- Người đánh giá -->
                                         <div class="flex items-center gap-3">
+                                            @if($review->user_id)
+                                                <a href="{{ route('users.profile', $review->user_id) }}" class="shrink-0 transition-transform hover:scale-105" title="Xem hồ sơ của {{ $review->user->name ?? 'Học viên' }}">
+                                            @endif
                                             @if($review->user && $review->user->avatar_url)
                                                 <img src="{{ $review->user->avatar_url }}" alt="{{ $review->user->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-pink-100 shrink-0">
                                             @else
@@ -860,11 +885,20 @@
                                                     {{ strtoupper(substr($review->user->name ?? 'H', 0, 1)) }}
                                                 </div>
                                             @endif
+                                            @if($review->user_id)
+                                                </a>
+                                            @endif
 
                                             <div>
                                                 <div class="flex items-center gap-2">
                                                     <h5 class="font-bold text-slate-900 text-sm">
-                                                        {{ $review->user->name ?? 'Học viên ẩn danh' }}
+                                                        @if($review->user_id)
+                                                            <a href="{{ route('users.profile', $review->user_id) }}" class="hover:text-pink-600 transition-colors" title="Xem hồ sơ người dùng">
+                                                                {{ $review->user->name ?? 'Học viên ẩn danh' }}
+                                                            </a>
+                                                        @else
+                                                            {{ $review->user->name ?? 'Học viên ẩn danh' }}
+                                                        @endif
                                                     </h5>
                                                     @if(auth()->check() && $review->user_id === auth()->id())
                                                         <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-pink-50 text-pink-700 border border-pink-100">
@@ -882,7 +916,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Số sao & Nút xóa nếu có quyền -->
+                                        <!-- Số sao & Nút thao tác -->
                                         <div class="flex items-center gap-3">
                                             <div class="flex items-center gap-0.5 text-amber-400">
                                                 @for($s = 1; $s <= 5; $s++)
@@ -891,6 +925,17 @@
                                                     </svg>
                                                 @endfor
                                             </div>
+
+                                            @if(!auth()->check() || auth()->id() !== $review->user_id)
+                                                <button type="button"
+                                                        @click="$dispatch('open-review-report-modal', { id: {{ $review->id }}, author: '{{ addslashes($review->user->name ?? 'Người dùng') }}' })"
+                                                        class="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                                        title="Báo cáo bình luận vi phạm">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                                    </svg>
+                                                </button>
+                                            @endif
 
                                             @if(auth()->check() && (auth()->id() === $review->user_id || auth()->user()->isAdmin()))
                                                 <form action="{{ route('student.courses.reviews.destroy', [$course->slug ?: $course->id, $review->id]) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?');">
@@ -921,6 +966,150 @@
 
             </div>
 
+        </div>
+    </div>
+
+    <!-- Modal Báo cáo bình luận -->
+    <div x-data="{
+            open: false,
+            reviewId: null,
+            authorName: '',
+            selectedReason: 'negative_comment',
+            actionUrl: ''
+         }"
+         @open-review-report-modal.window="
+            reviewId = $event.detail.id;
+            authorName = $event.detail.author;
+            actionUrl = '{{ url('/reviews') }}/' + reviewId + '/report';
+            selectedReason = 'negative_comment';
+            open = true;
+         "
+         x-show="open"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;">
+        <div class="fixed inset-0 bg-neutral-950/70 backdrop-blur-xs transition-opacity"
+             @click="open = false"
+             x-show="open"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div x-show="open"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-pink-100 p-6 sm:p-8">
+
+                @auth
+                    <form method="POST" :action="actionUrl" class="space-y-5">
+                        @csrf
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-black text-slate-900 tracking-tight">Báo cáo bình luận vi phạm</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Người viết: <strong class="text-slate-800" x-text="authorName"></strong></p>
+                                </div>
+                            </div>
+                            <button type="button" @click="open = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                Chọn lý do báo cáo: <span class="text-rose-500">*</span>
+                            </label>
+
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
+                                       :class="selectedReason === 'negative_comment' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                                    <input type="radio" name="reason" value="negative_comment" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500" required>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">🤬</span>
+                                        <span class="text-xs">Bình luận tiêu cực / Thô tục / Công kích cá nhân</span>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
+                                       :class="selectedReason === 'spam' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                                    <input type="radio" name="reason" value="spam" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">📢</span>
+                                        <span class="text-xs">Spam / Quảng cáo rác / Lặp lại nội dung</span>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
+                                       :class="selectedReason === 'misinformation' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                                    <input type="radio" name="reason" value="misinformation" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">🚫</span>
+                                        <span class="text-xs">Thông tin sai lệch / Lừa đảo / Vi phạm pháp luật</span>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition"
+                                       :class="selectedReason === 'other' ? 'border-pink-500 bg-pink-50/50 text-pink-900 font-bold ring-1 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300 text-slate-700'">
+                                    <input type="radio" name="reason" value="other" x-model="selectedReason" class="text-pink-600 focus:ring-pink-500">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">💬</span>
+                                        <span class="text-xs">Lý do khác</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label for="review-report-details" class="block text-xs font-bold text-slate-700">
+                                Lý do:
+                            </label>
+                            <textarea id="review-report-details"
+                                      name="details"
+                                      rows="3"
+                                      placeholder="Vui lòng mô tả chi tiết lý do bạn báo cáo bình luận này..."
+                                      class="w-full text-xs rounded-2xl border-slate-200 focus:border-pink-500 focus:ring-pink-500 shadow-2xs placeholder-slate-400"></textarea>
+                            <p class="text-[11px] text-slate-400">Ban quản trị sẽ xem xét bình luận và có biện pháp xử lý thích hợp.</p>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-2">
+                            <button type="button" @click="open = false"
+                                    class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition">
+                                Hủy bỏ
+                            </button>
+                            <button type="submit"
+                                    class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition active:scale-95">
+                                Gửi báo cáo
+                            </button>
+                        </div>
+                    </form>
+                @else
+                    <div class="text-center py-4 space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m4-11a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-extrabold text-slate-800 text-base">Đăng nhập để báo cáo</h4>
+                            <p class="text-xs text-slate-500 mt-1">Bạn cần đăng nhập tài khoản để có thể báo cáo bình luận này.</p>
+                        </div>
+                        <div class="flex items-center justify-center gap-3 pt-2">
+                            <button type="button" @click="open = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs">Đóng</button>
+                            <a href="{{ route('login') }}" class="px-5 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs shadow-md shadow-pink-600/20 hover:bg-pink-700">Đăng nhập</a>
+                        </div>
+                    </div>
+                @endauth
+
+            </div>
         </div>
     </div>
 </x-app-layout>

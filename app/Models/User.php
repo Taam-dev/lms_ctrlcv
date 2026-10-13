@@ -143,4 +143,16 @@ class User extends Authenticatable
     {
         return $this->role === 'student';
     }
+
+    /**
+     * Nhãn hiển thị vai trò người dùng tiếng Việt
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return match ($this->role) {
+            'admin' => 'Quản trị viên',
+            'teacher' => 'Giảng viên',
+            default => 'Học viên',
+        };
+    }
 }

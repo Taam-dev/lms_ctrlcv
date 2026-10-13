@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\QuizController as AdminQuizController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Student\CourseController as StudentCourseController;
 use App\Http\Controllers\Student\QuizController as StudentQuizController;
@@ -26,6 +27,10 @@ Route::get('/courses', [StudentCourseController::class, 'list'])->name('courses.
 // Route xem chi tiết khóa học thân thiện chuẩn SEO (công khai cho cả khách & bot tìm kiếm)
 Route::get('/khoa-hoc/{slug}', [StudentCourseController::class, 'show'])->name('courses.show');
 Route::get('/courses/{id}', [StudentCourseController::class, 'show'])->name('student.courses.show');
+
+// Route xem hồ sơ cá nhân công khai (Giảng viên / Học viên)
+Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('users.profile');
+Route::get('/users/{user}', [ProfileController::class, 'show'])->name('users.show');
 
 Route::get('/dashboard', function () {
     if (auth()->user()->isInstructor()) {
@@ -66,6 +71,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/wallet/deposit', [WalletController::class, 'createDeposit'])->name('wallet.deposit.store');
     Route::post('/wallet/transactions/{transaction}/confirm', [WalletController::class, 'confirmDeposit'])->name('wallet.transactions.confirm');
     Route::post('/wallet/transactions/{transaction}/cancel', [WalletController::class, 'cancelDeposit'])->name('wallet.transactions.cancel');
+
+    // Route gửi báo cáo vi phạm (người dùng & bình luận)
+    Route::post('/users/{user}/report', [ReportController::class, 'storeUserReport'])->name('users.report');
+    Route::post('/reviews/{review}/report', [ReportController::class, 'storeReviewReport'])->name('reviews.report');
 });
 
 // Route cho Giảng viên (GV Portal)
@@ -122,6 +131,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Trang quản trị tổng quan
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::patch('users/{user}/role', [AdminDashboardController::class, 'updateUserRole'])->name('users.update-role');
+    Route::patch('users/{user}/wallet', [AdminDashboardController::class, 'updateUserWallet'])->name('users.update-wallet');
+    Route::post('reports/{report}/action', [AdminDashboardController::class, 'updateReportStatus'])->name('reports.action');
 
     // Quản lý & duyệt khóa học, bài giảng
     Route::resource('courses', AdminCourseController::class)->except(['show']);

@@ -5,8 +5,10 @@
     $panelLabel = 'Admin Panel';
     $breadcrumb = $breadcrumb ?? 'Bảng Điều Khiển Quản Trị';
     $panelHome = route('admin.dashboard');
-    $topPending = ($pendingCoursesCount ?? 0) + ($pendingQuizzesCount ?? 0);
-    $topPendingUrl = route('admin.dashboard', ['tab' => 'courses', 'status' => 'pending']);
+    $topPending = ($pendingCoursesCount ?? 0) + ($pendingQuizzesCount ?? 0) + ($pendingReportsCount ?? 0);
+    $topPendingUrl = ($pendingReportsCount ?? 0) > 0 && ($pendingCoursesCount ?? 0) === 0 && ($pendingQuizzesCount ?? 0) === 0
+        ? route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending'])
+        : route('admin.dashboard', ['tab' => 'courses', 'status' => 'pending']);
 
     $navGroups = [
         [
@@ -39,13 +41,20 @@
             ],
         ],
         [
-            'title' => 'Người dùng',
+            'title' => 'Người dùng & Báo cáo',
             'items' => [
                 [
                     'label' => 'Tài khoản người dùng',
                     'href' => route('admin.dashboard', ['tab' => 'users']),
                     'active' => $onDashboard && $tab === 'users',
                     'badge' => $totalUsersCount ?? null,
+                ],
+                [
+                    'label' => 'Báo cáo vi phạm',
+                    'href' => route('admin.dashboard', ['tab' => 'reports']),
+                    'active' => $onDashboard && $tab === 'reports',
+                    'badge' => ($pendingReportsCount ?? 0) > 0 ? ($pendingReportsCount . ' chờ') : null,
+                    'badgeWarn' => ($pendingReportsCount ?? 0) > 0,
                 ],
             ],
         ],

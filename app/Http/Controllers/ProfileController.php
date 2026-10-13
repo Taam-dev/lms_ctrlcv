@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Course;
+use App\Models\CourseReview;
+use App\Models\Enrollment;
+use App\Models\LessonCompletion;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +21,88 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    /**
+     * Hiển thị trang hồ sơ công khai của người dùng (Giảng viên / Học viên / Quản trị viên)
+     */
+    public function show(User $user): View
+    {
+        $courses = collect();
+        $totalStudents = 0;
+        $averageCourseRating = 0.0;
+        $totalReviewsReceived = 0;
+
+        // Nếu là giảng viên hoặc tài khoản có khóa học
+        if ($user->isTeacher() || $user->courses()->exists()) {
+            $courses = Course::where('teacher_id', $user->id)
+                ->where('status', 'approved')
+                ->with(['teacher'])
+                ->withCount(['lessons', 'reviews'])
+                ->withAvg('reviews', 'rating')
+                ->latest()
+                ->get();
+
+            $courseIds = $courses->pluck('id');
+            if ($courseIds->isNotEmpty()) {
+                $totalStudents = Enrollment::whereIn('course_id', $courseIds)
+                    ->distinct('student_id')
+                    ->count('student_id');
+
+                $reviewsQuery = CourseReview::whereIn('course_id', $courseIds);
+                $totalReviewsReceived = (clone $reviewsQuery)->count();
+                $averageCourseRating = round((float) ((clone $reviewsQuery)->avg('rating') ?? 0), 1);
+            }
+
+            // Gắn thông tin tiến độ / trạng thái đã học của người dùng hiện tại (nếu đã đăng nhập)
+            if (Auth::check()) {
+                $currentUserId = Auth::id();
+                $enrollments = Enrollment::where('student_id', $currentUserId)
+                    ->whereIn('course_id', $courseIds)
+                    ->get(['course_id', 'price_paid', 'created_at'])
+                    ->keyBy('course_id');
+
+                $completedCounts = LessonCompletion::where('student_id', $currentUserId)
+                    ->whereIn('course_id', $courseIds)
+                    ->groupBy('course_id')
+                    ->selectRaw('course_id, count(*) as total_completed')
+                    ->pluck('total_completed', 'course_id');
+
+                foreach ($courses as $c) {
+                    $enrollment = $enrollments->get($c->id);
+                    $c->is_enrolled = (bool) $enrollment;
+                    $c->purchased_price = $enrollment?->price_paid;
+                    $completed = (int) ($completedCounts[$c->id] ?? 0);
+                    $c->completed_lessons_count = $completed;
+                    $totalLessons = $c->lessons_count ?? $c->lessons()->count();
+                    $c->progress_percent = ($totalLessons > 0) ? (int) round(($completed / $totalLessons) * 100) : 0;
+                }
+            }
+        }
+
+        // Thống kê hoạt động của học viên
+        $enrolledCount = $user->enrollments()->count();
+        $completedLessonsCount = $user->lessonCompletions()->count();
+        $quizAttemptsCount = $user->quizAttempts()->count();
+
+        // Các đánh giá / nhận xét gần đây do người này viết
+        $userReviews = $user->courseReviews()
+            ->with(['course.teacher'])
+            ->latest()
+            ->take(6)
+            ->get();
+
+        return view('profile.show', compact(
+            'user',
+            'courses',
+            'totalStudents',
+            'averageCourseRating',
+            'totalReviewsReceived',
+            'enrolledCount',
+            'completedLessonsCount',
+            'quizAttemptsCount',
+            'userReviews'
+        ));
+    }
+
     /**
      * Display the user's profile form.
      */

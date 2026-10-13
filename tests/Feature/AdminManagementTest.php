@@ -464,4 +464,58 @@ class AdminManagementTest extends TestCase
         $resEmpty->assertOk();
         $resEmpty->assertSee('Không tìm thấy tài khoản người dùng khớp với');
     }
+
+    /**
+     * Admin có thể xem số dư ví và chỉnh sửa số dư ví của người dùng
+     */
+    public function test_admin_can_view_and_update_user_wallet_balance(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create([
+            'name' => 'Nguyễn Văn Ví',
+            'role' => 'student',
+            'balance' => 100000,
+        ]);
+
+        // Kiểm tra xem số dư ví có hiển thị trong danh sách người dùng
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'users']));
+        $response->assertOk();
+        $response->assertSee('100.000 đ');
+
+        // Admin cập nhật số dư ví thành 500.000 đ
+        $updateResponse = $this->actingAs($admin)->patch(route('admin.users.update-wallet', $user), [
+            'balance' => 500000,
+            'note' => 'Thưởng sự kiện học tập',
+        ]);
+
+        $updateResponse->assertRedirect();
+        $user->refresh();
+        $this->assertEquals(500000, $user->balance);
+
+        // Kiểm tra có tạo giao dịch WalletTransaction
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id' => $user->id,
+            'balance_before' => 100000,
+            'balance_after' => 500000,
+            'amount' => 400000,
+            'payment_method' => 'admin',
+        ]);
+    }
+
+    /**
+     * Người dùng thường không thể chỉnh sửa số dư ví của người khác
+     */
+    public function test_non_admin_cannot_update_user_wallet(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $targetUser = User::factory()->create(['role' => 'student', 'balance' => 50000]);
+
+        $response = $this->actingAs($student)->patch(route('admin.users.update-wallet', $targetUser), [
+            'balance' => 9999999,
+        ]);
+
+        $response->assertForbidden();
+        $targetUser->refresh();
+        $this->assertEquals(50000, $targetUser->balance);
+    }
 }

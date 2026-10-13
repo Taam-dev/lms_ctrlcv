@@ -1,4 +1,4 @@
-<x-admin-layout :breadcrumb="$currentTab === 'overview' ? 'Tổng quan Dashboard' : ($currentTab === 'courses' ? 'Quản lý Khóa học / Bài học' : ($currentTab === 'quizzes' ? 'Quản lý Bài kiểm tra' : 'Quản lý Người dùng'))">
+<x-admin-layout :breadcrumb="$currentTab === 'overview' ? 'Tổng quan Dashboard' : ($currentTab === 'courses' ? 'Quản lý Khóa học / Bài học' : ($currentTab === 'quizzes' ? 'Quản lý Bài kiểm tra' : ($currentTab === 'users' ? 'Quản lý Người dùng' : 'Quản lý Báo cáo vi phạm')))">
     <x-slot name="header">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
@@ -15,6 +15,8 @@
                         <span>Quản Lý & Duyệt Bài Kiểm Tra (Quizzes)</span>
                     @elseif($currentTab === 'users')
                         <span>Quản Lý Tài Khoản Người Dùng</span>
+                    @elseif($currentTab === 'reports')
+                        <span>Quản Lý Báo Cáo Vi Phạm (Reports)</span>
                     @endif
                 </h1>
                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
@@ -26,6 +28,8 @@
                         Xem trước, thẩm định chất lượng và phê duyệt các đề thi trắc nghiệm trực tuyến.
                     @elseif($currentTab === 'users')
                         Danh sách tài khoản học viên, giảng viên và Admin trong hệ thống.
+                    @elseif($currentTab === 'reports')
+                        Xem xét, xác thực và xử lý các báo cáo vi phạm tài khoản hoặc bình luận do người dùng gửi lên.
                     @endif
                 </p>
             </div>
@@ -56,6 +60,29 @@
                                 Đã loại bỏ
                             </a>
                         </div>
+                    @elseif($currentTab === 'reports')
+                        <!-- Bộ lọc trạng thái khi đang ở tab Báo cáo vi phạm -->
+                        <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold shrink-0">
+                            <a href="{{ route('admin.dashboard', array_filter(['tab' => 'reports', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition whitespace-nowrap {{ empty($statusFilter) ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                                Tất cả ({{ $stats['total_reports'] }})
+                            </a>
+                            <a href="{{ route('admin.dashboard', array_filter(['tab' => 'reports', 'status' => 'pending', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap {{ $statusFilter === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'pending' ? 'bg-white' : 'bg-amber-500' }}"></span>
+                                Chờ xử lý ({{ $stats['pending_reports'] }})
+                            </a>
+                            <a href="{{ route('admin.dashboard', array_filter(['tab' => 'reports', 'status' => 'resolved', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap {{ $statusFilter === 'resolved' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'resolved' ? 'bg-white' : 'bg-emerald-500' }}"></span>
+                                Đã xử lý ({{ $stats['resolved_reports'] }})
+                            </a>
+                            <a href="{{ route('admin.dashboard', array_filter(['tab' => 'reports', 'status' => 'dismissed', 'search' => $search])) }}" 
+                               class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap {{ $statusFilter === 'dismissed' ? 'bg-slate-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $statusFilter === 'dismissed' ? 'bg-white' : 'bg-slate-500' }}"></span>
+                                Đã bác bỏ ({{ $stats['dismissed_reports'] }})
+                            </a>
+                        </div>
                     @elseif($currentTab === 'users')
                         <!-- Huy hiệu thống kê người dùng -->
                         <div class="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs text-xs font-bold shrink-0">
@@ -78,7 +105,7 @@
                     @endif
                 </div>
 
-                @if(in_array($currentTab, ['courses', 'quizzes', 'users']))
+                @if(in_array($currentTab, ['courses', 'quizzes', 'users', 'reports']))
                     <!-- Thanh tìm kiếm ở DƯỚI (Vị trí tương tự bài kiểm tra, khóa học) -->
                     <form method="GET" action="{{ route('admin.dashboard') }}" class="flex items-center gap-2 w-full lg:w-auto justify-end">
                         <input type="hidden" name="tab" value="{{ $currentTab }}">
@@ -94,7 +121,7 @@
                             <input type="text"
                                    name="search"
                                    value="{{ $search ?? '' }}"
-                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, bài học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : 'Tìm theo tên, email, vai trò...') }}"
+                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, bài học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : ($currentTab === 'reports' ? 'Tìm theo lý do, chi tiết, người báo cáo...' : 'Tìm theo tên, email, vai trò...')) }}"
                                    class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                             @if(!empty($search))
                                 <a href="{{ route('admin.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
@@ -116,65 +143,80 @@
     <div class="space-y-8">
 
         <!-- ============================================== -->
-        <!-- 4 STATISTIC OVERVIEW CARDS (HIỂN THỊ TỔNG QUAN)-->
+        <!-- 5 STATISTIC OVERVIEW CARDS (HIỂN THỊ TỔNG QUAN)-->
         <!-- ============================================== -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <!-- 1. Courses Stats -->
             <a href="{{ route('admin.dashboard', ['tab' => 'courses']) }}" 
-               class="block bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-4">
+               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Khóa học</span>
-                    
                 </div>
                 <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_courses'] }}</div>
                 <div class="flex items-center gap-2 text-xs">
                     <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{{ $stats['approved_courses'] }} đã duyệt</span>
                     @if($stats['pending_courses'] > 0)
-                        <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_courses'] }} chờ duyệt</span>
+                        <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_courses'] }} chờ</span>
                     @endif
                 </div>
             </a>
 
             <!-- 2. Quizzes Stats -->
             <a href="{{ route('admin.dashboard', ['tab' => 'quizzes']) }}" 
-               class="block bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài kiểm tra (Quizzes)</span>
-                    
+               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài kiểm tra</span>
                 </div>
                 <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_quizzes'] }}</div>
                 <div class="flex items-center gap-2 text-xs">
                     <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{{ $stats['approved_quizzes'] }} đã duyệt</span>
                     @if($stats['pending_quizzes'] > 0)
-                        <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_quizzes'] }} chờ duyệt</span>
+                        <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_quizzes'] }} chờ</span>
                     @endif
                 </div>
             </a>
 
             <!-- 3. Lessons Stats -->
             <a href="{{ route('admin.courses.index') }}" 
-               class="block bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Tổng số Bài giảng</span>
-                    
+               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài giảng</span>
                 </div>
                 <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_lessons'] }}</div>
-                <div class="text-xs text-slate-500">
-                    Bao gồm video bài giảng và tài liệu học tập
+                <div class="text-xs text-slate-500 truncate">
+                    Video & tài liệu
                 </div>
             </a>
 
             <!-- 4. Users Stats -->
             <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}" 
-               class="block bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">Người dùng hệ thống</span>
-                    
+               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-md transition group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">Người dùng</span>
                 </div>
                 <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_users'] }}</div>
                 <div class="flex items-center gap-2 text-xs">
                     <span class="text-pink-700 font-bold bg-pink-50 px-2 py-0.5 rounded-md">{{ $stats['teachers_count'] }} GV</span>
                     <span class="text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">{{ $stats['students_count'] }} Học viên</span>
+                </div>
+            </a>
+
+            <!-- 5. Reports Stats -->
+            <a href="{{ route('admin.dashboard', ['tab' => 'reports']) }}" 
+               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-rose-300 hover:shadow-md transition group relative overflow-hidden {{ $stats['pending_reports'] > 0 ? 'ring-2 ring-rose-500/20' : '' }}">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-rose-600 transition">Báo cáo vi phạm</span>
+                    <span class="p-1 rounded-lg {{ $stats['pending_reports'] > 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </span>
+                </div>
+                <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_reports'] }}</div>
+                <div class="flex items-center gap-2 text-xs">
+                    @if($stats['pending_reports'] > 0)
+                        <span class="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded-md">{{ $stats['pending_reports'] }} chờ xử lý</span>
+                    @else
+                        <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">Không có vi phạm chờ</span>
+                    @endif
                 </div>
             </a>
         </div>
@@ -183,20 +225,29 @@
         <!-- PENDING APPROVAL ALERT BANNER                  -->
         <!-- ============================================== -->
         @php
-            $pendingTotal = $stats['pending_courses'] + $stats['pending_quizzes'];
+            $pendingTotal = $stats['pending_courses'] + $stats['pending_quizzes'] + $stats['pending_reports'];
         @endphp
         @if($pendingTotal > 0 && $currentTab === 'overview')
-            <div class="p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-rose-500/5 to-transparent border border-amber-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
-                    
                     <div>
-                        <h3 class="font-extrabold text-slate-900 text-base">Cần chú ý: Có {{ $pendingTotal }} nội dung đang chờ phê duyệt</h3>
+                        <h3 class="font-extrabold text-slate-900 text-base">Cần chú ý: Có {{ $pendingTotal }} nội dung đang chờ phê duyệt & xử lý</h3>
                         <p class="text-xs text-slate-600 mt-0.5">
-                            Bao gồm <strong class="text-amber-800">{{ $stats['pending_courses'] }} khóa học</strong> và <strong class="text-amber-800">{{ $stats['pending_quizzes'] }} bài kiểm tra Quiz</strong> do giảng viên gửi lên.
+                            Bao gồm
+                            @if($stats['pending_courses'] > 0)
+                                <strong class="text-amber-800">{{ $stats['pending_courses'] }} khóa học</strong>,
+                            @endif
+                            @if($stats['pending_quizzes'] > 0)
+                                <strong class="text-amber-800">{{ $stats['pending_quizzes'] }} bài kiểm tra</strong>,
+                            @endif
+                            @if($stats['pending_reports'] > 0)
+                                <strong class="text-rose-800">{{ $stats['pending_reports'] }} báo cáo vi phạm</strong>
+                            @endif
+                            cần quản trị viên kiểm tra.
                         </p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-2 shrink-0 flex-wrap">
                     @if($stats['pending_courses'] > 0)
                         <a href="{{ route('admin.dashboard', ['tab' => 'courses', 'status' => 'pending']) }}" 
                            class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition">
@@ -207,6 +258,12 @@
                         <a href="{{ route('admin.dashboard', ['tab' => 'quizzes', 'status' => 'pending']) }}" 
                            class="px-3.5 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition">
                             Duyệt Quizzes ({{ $stats['pending_quizzes'] }})
+                        </a>
+                    @endif
+                    @if($stats['pending_reports'] > 0)
+                        <a href="{{ route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending']) }}" 
+                           class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition">
+                            Xử lý báo cáo ({{ $stats['pending_reports'] }})
                         </a>
                     @endif
                 </div>
@@ -908,11 +965,28 @@
                 </div>
             @endif
 
-            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div x-data="{
+                walletModal: false,
+                selectedUser: { id: null, name: '', balance: 0 },
+                newBalance: 0,
+                note: '',
+                openWalletModal(id, name, balance) {
+                    this.selectedUser = { id: id, name: name, balance: balance };
+                    this.newBalance = balance;
+                    this.note = '';
+                    this.walletModal = true;
+                },
+                addAmount(amount) {
+                    this.newBalance = Math.max(0, parseInt(this.newBalance || 0) + amount);
+                },
+                formatNumber(num) {
+                    return new Intl.NumberFormat('vi-VN').format(num || 0);
+                }
+            }" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden relative">
                 <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/40">
                     <div>
                         <h3 class="font-extrabold text-slate-900 text-base">Danh Sách Tài Khoản & Phân Quyền</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Admin có thể trực tiếp chỉ định và điều chỉnh vai trò (Admin, Giảng viên, Học viên) cho từng tài khoản.</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Admin có thể quản lý vai trò, kiểm tra số dư ví và điều chỉnh trực tiếp ví tiền cho từng tài khoản.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
                         <span class="px-3 py-1 rounded-xl bg-pink-50 text-pink-700 font-bold border border-pink-200/80">Admin: {{ $stats['admins_count'] ?? 0 }}</span>
@@ -939,12 +1013,13 @@
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[850px]">
+                        <table class="w-full text-left border-collapse min-w-[950px]">
                             <thead>
                                 <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
                                     <th class="py-4 px-6 whitespace-nowrap">Họ và tên</th>
                                     <th class="py-4 px-4 whitespace-nowrap">Email</th>
                                     <th class="py-4 px-4 text-center whitespace-nowrap">Vai trò hiện tại</th>
+                                    <th class="py-4 px-4 text-center whitespace-nowrap">Ví (Số dư)</th>
                                     <th class="py-4 px-4 text-center whitespace-nowrap">Ngày đăng ký</th>
                                     <th class="py-4 px-6 text-center whitespace-nowrap">Chỉnh sửa vai trò</th>
                                 </tr>
@@ -954,16 +1029,21 @@
                                     <tr class="hover:bg-pink-50/20 transition">
                                         <td class="py-4 px-6 whitespace-nowrap">
                                              <div class="flex items-center gap-3">
-                                                @if($user->avatar_url)
-                                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0">
-                                                @else
-                                                    <div class="w-9 h-9 rounded-xl bg-pink-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                                                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                                                    </div>
-                                                @endif
+                                                <a href="{{ route('users.profile', $user) }}" target="_blank" class="shrink-0 transition-transform hover:scale-105" title="Xem trang cá nhân của {{ $user->name }}">
+                                                    @if($user->avatar_url)
+                                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0">
+                                                    @else
+                                                        <div class="w-9 h-9 rounded-xl bg-pink-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                                                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                        </div>
+                                                    @endif
+                                                </a>
                                                 <div>
                                                     <div class="font-bold text-slate-900 flex items-center gap-1.5">
-                                                        {{ $user->name }}
+                                                        <a href="{{ route('users.profile', $user) }}" target="_blank" class="hover:text-pink-600 transition-colors flex items-center gap-1" title="Xem trang cá nhân">
+                                                            <span>{{ $user->name }}</span>
+                                                            <svg class="w-3 h-3 text-slate-300 hover:text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                                        </a>
                                                         @if(auth()->id() === $user->id)
                                                             <span class="text-[10px] font-extrabold bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-md border border-pink-200">Bạn</span>
                                                         @endif
@@ -989,6 +1069,25 @@
                                                     Học viên
                                                 </span>
                                             @endif
+                                        </td>
+                                        <!-- Cột Ví (Số dư) & Nút sửa -->
+                                        <td class="py-4 px-4 text-center whitespace-nowrap">
+                                            <div class="inline-flex items-center justify-center gap-1.5">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black {{ ($user->balance ?? 0) > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-slate-100 text-slate-500 border border-slate-200/60' }}">
+                                                    <svg class="w-3.5 h-3.5 {{ ($user->balance ?? 0) > 0 ? 'text-emerald-600' : 'text-slate-400' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                                    </svg>
+                                                    <span>{{ number_format($user->balance ?? 0, 0, ',', '.') }} đ</span>
+                                                </span>
+                                                <button type="button"
+                                                        @click="openWalletModal({{ $user->id }}, '{{ addslashes($user->name) }}', {{ (int) ($user->balance ?? 0) }})"
+                                                        class="p-1.5 rounded-lg text-slate-400 hover:text-pink-600 hover:bg-pink-50 transition cursor-pointer border border-transparent hover:border-pink-200 shrink-0"
+                                                        title="Chỉnh sửa số dư ví của {{ $user->name }}">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </td>
                                         <td class="py-4 px-4 text-center text-xs text-slate-500 whitespace-nowrap">
                                             {{ $user->created_at->format('d/m/Y H:i') }}
@@ -1028,6 +1127,555 @@
                         {{ $users->appends(array_filter(['tab' => 'users', 'search' => $search]))->links() }}
                     </div>
                 @endif
+
+                <!-- Modal Chỉnh sửa số dư Ví người dùng -->
+                <div x-show="walletModal"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+                     style="display: none;"
+                     @keydown.escape.window="walletModal = false">
+
+                    <div @click.away="walletModal = false"
+                         x-show="walletModal"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-lg overflow-hidden">
+
+                        <!-- Modal Header -->
+                        <div class="p-6 bg-gradient-to-r from-pink-500 to-rose-600 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-base leading-tight">Chỉnh Sửa Ví Người Dùng</h4>
+                                    <p class="text-xs text-white/80 mt-0.5" x-text="selectedUser.name + ' (#' + selectedUser.id + ')'"></p>
+                                </div>
+                            </div>
+                            <button type="button" @click="walletModal = false" class="text-white/80 hover:text-white transition p-1 cursor-pointer">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body Form -->
+                        <form :action="'{{ url('admin/users') }}/' + selectedUser.id + '/wallet'" method="POST" class="p-6 space-y-5">
+                            @csrf
+                            @method('PATCH')
+
+                            <!-- Số dư hiện tại -->
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                                <div>
+                                    <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Số dư hiện tại</span>
+                                    <span class="text-sm font-extrabold text-slate-700" x-text="formatNumber(selectedUser.balance) + ' đ'"></span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Chênh lệch</span>
+                                    <span class="text-sm font-black" :class="(newBalance - selectedUser.balance) >= 0 ? 'text-emerald-600' : 'text-rose-600'"
+                                          x-text="((newBalance - selectedUser.balance) >= 0 ? '+' : '') + formatNumber(newBalance - selectedUser.balance) + ' đ'">
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Ô nhập số tiền mới -->
+                            <div>
+                                <label for="admin_wallet_balance" class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                                    Số dư ví mới (VNĐ) <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number"
+                                           id="admin_wallet_balance"
+                                           name="balance"
+                                           x-model.number="newBalance"
+                                           min="0"
+                                           max="1000000000"
+                                           step="1000"
+                                           required
+                                           class="w-full px-4 py-3 text-lg font-black text-slate-900 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 focus:outline-none transition pr-12">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">đ</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
+                                    <span>Đọc số:</span>
+                                    <strong class="text-pink-600 font-extrabold" x-text="formatNumber(newBalance) + ' đồng'"></strong>
+                                </p>
+                            </div>
+
+                            <!-- Phím tắt cộng nhanh -->
+                            <div>
+                                <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Phím tắt cộng/đặt nhanh</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" @click="addAmount(50000)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-pink-100 hover:text-pink-700 text-slate-700 text-xs font-bold transition cursor-pointer">+50.000 đ</button>
+                                    <button type="button" @click="addAmount(100000)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-pink-100 hover:text-pink-700 text-slate-700 text-xs font-bold transition cursor-pointer">+100.000 đ</button>
+                                    <button type="button" @click="addAmount(200000)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-pink-100 hover:text-pink-700 text-slate-700 text-xs font-bold transition cursor-pointer">+200.000 đ</button>
+                                    <button type="button" @click="addAmount(500000)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-pink-100 hover:text-pink-700 text-slate-700 text-xs font-bold transition cursor-pointer">+500.000 đ</button>
+                                    <button type="button" @click="addAmount(1000000)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-pink-100 hover:text-pink-700 text-slate-700 text-xs font-bold transition cursor-pointer">+1.000.000 đ</button>
+                                    <button type="button" @click="newBalance = 0" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition cursor-pointer">Về 0 đ</button>
+                                </div>
+                            </div>
+
+                            <!-- Ghi chú điều chỉnh -->
+                            <div>
+                                <label for="admin_wallet_note" class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                                    Ghi chú / Lý do điều chỉnh (Tùy chọn)
+                                </label>
+                                <input type="text"
+                                       id="admin_wallet_note"
+                                       name="note"
+                                       x-model="note"
+                                       maxlength="255"
+                                       placeholder="Ví dụ: Nạp bù hệ thống, thưởng sự kiện, hoàn tiền..."
+                                       class="w-full px-4 py-2.5 text-xs text-slate-800 rounded-2xl border border-slate-200 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 focus:outline-none transition">
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                                <button type="button" @click="walletModal = false" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 text-xs font-bold transition cursor-pointer">
+                                    Hủy bỏ
+                                </button>
+                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-extrabold shadow-md shadow-pink-600/30 transition cursor-pointer flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>Lưu số dư ví</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+        <!-- TAB 5: REPORTS (QUẢN LÝ BÁO CÁO VI PHẠM) -->
+        @elseif($currentTab === 'reports')
+            <div x-data="{
+                actionModal: false,
+                reportId: null,
+                actionUrl: '',
+                actionType: 'resolve',
+                reporterName: '',
+                targetTypeLabel: '',
+                targetName: '',
+                targetContent: '',
+                targetDetails: '',
+                reasonLabel: '',
+                userAvatarUrl: '',
+                isUserReport: false,
+                isReviewReport: false,
+                adminNotes: '',
+                resetAvatar: false,
+                deleteContent: true,
+
+                openAction(report, targetType, targetName, targetContent, reasonLabel, detailsText, avatarUrl) {
+                    this.reportId = report.id;
+                    this.actionUrl = '{{ url('/admin/reports') }}/' + report.id + '/action';
+                    this.actionType = 'resolve';
+                    this.reporterName = report.reporter ? report.reporter.name : 'Người dùng ẩn danh';
+                    this.targetTypeLabel = targetType;
+                    this.targetName = targetName;
+                    this.targetContent = targetContent;
+                    this.reasonLabel = reasonLabel;
+                    this.targetDetails = detailsText;
+                    this.userAvatarUrl = avatarUrl || '';
+                    this.isUserReport = (report.reportable_type === 'App\\Models\\User' || report.reportable_type === 'user');
+                    this.isReviewReport = (report.reportable_type === 'App\\Models\\CourseReview' || report.reportable_type === 'review');
+                    this.adminNotes = report.admin_notes || '';
+                    this.resetAvatar = false;
+                    this.deleteContent = true;
+                    this.actionModal = true;
+                }
+            }" class="space-y-6">
+
+                <!-- Header Info & Statistics Cards for Reports Tab -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Tổng báo cáo</span>
+                        <div class="text-2xl font-black text-slate-900">{{ $stats['total_reports'] }}</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Từ người dùng toàn hệ thống</div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-5 border border-amber-200/80 shadow-2xs bg-amber-50/20">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">Đang chờ xử lý</span>
+                        <div class="text-2xl font-black text-amber-600">{{ $stats['pending_reports'] }}</div>
+                        <div class="text-[11px] text-amber-600/80 mt-1">Cần xem xét kiểm duyệt</div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-5 border border-emerald-200/80 shadow-2xs bg-emerald-50/20">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">Đã giải quyết</span>
+                        <div class="text-2xl font-black text-emerald-600">{{ $stats['resolved_reports'] }}</div>
+                        <div class="text-[11px] text-emerald-600/80 mt-1">Đã xử lý thỏa đáng</div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Đã bác bỏ</span>
+                        <div class="text-2xl font-black text-slate-700">{{ $stats['dismissed_reports'] }}</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Không vi phạm tiêu chuẩn</div>
+                    </div>
+                </div>
+
+                <!-- Main Reports Table Card -->
+                <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="font-extrabold text-base text-slate-900 tracking-tight flex items-center gap-2">
+                                <span>Danh sách Báo cáo vi phạm</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-pink-100 text-pink-700">
+                                    {{ $reports->total() }} bản ghi
+                                </span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Kiểm tra các nội dung hoặc tài khoản bị khiếu nại để giữ môi trường học tập lành mạnh.</p>
+                        </div>
+                    </div>
+
+                    @if($reports->isEmpty())
+                        <div class="p-16 text-center space-y-3">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <h3 class="font-extrabold text-slate-800 text-sm">Không tìm thấy báo cáo vi phạm nào</h3>
+                            <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                                {{ !empty($search) || !empty($statusFilter) ? 'Không có báo cáo nào khớp với điều kiện lọc hiện tại.' : 'Hệ thống hiện không có báo cáo vi phạm nào cần xử lý.' }}
+                            </p>
+                        </div>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-[11px] font-black uppercase tracking-wider text-slate-400 bg-slate-50/70">
+                                        <th class="py-3.5 px-5">ID & Thời gian</th>
+                                        <th class="py-3.5 px-5">Người báo cáo</th>
+                                        <th class="py-3.5 px-5">Đối tượng bị báo cáo</th>
+                                        <th class="py-3.5 px-5">Lý do & Chi tiết</th>
+                                        <th class="py-3.5 px-5 text-center">Trạng thái</th>
+                                        <th class="py-3.5 px-5 text-right">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-xs">
+                                    @foreach($reports as $report)
+                                        <tr class="hover:bg-pink-50/30 transition">
+                                            <!-- ID & Thời gian -->
+                                            <td class="py-4 px-5 align-top whitespace-nowrap">
+                                                <div class="font-extrabold text-slate-900">#{{ $report->id }}</div>
+                                                <div class="text-[11px] text-slate-400 mt-0.5">{{ $report->created_at->format('d/m/Y H:i') }}</div>
+                                                <div class="text-[10px] text-slate-400">{{ $report->created_at->diffForHumans() }}</div>
+                                            </td>
+
+                                            <!-- Người báo cáo -->
+                                            <td class="py-4 px-5 align-top">
+                                                @if($report->reporter)
+                                                    <div class="flex items-center gap-2.5">
+                                                        <a href="{{ route('users.profile', $report->reporter->id) }}" class="shrink-0 hover:opacity-80 transition" title="Xem hồ sơ">
+                                                            @if($report->reporter->avatar_url)
+                                                                <img src="{{ $report->reporter->avatar_url }}" alt="{{ $report->reporter->name }}" class="w-8 h-8 rounded-full object-cover border border-slate-200">
+                                                            @else
+                                                                <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                                                                    {{ strtoupper(substr($report->reporter->name, 0, 1)) }}
+                                                                </div>
+                                                            @endif
+                                                        </a>
+                                                        <div class="min-w-0">
+                                                            <a href="{{ route('users.profile', $report->reporter->id) }}" class="font-bold text-slate-900 hover:text-pink-600 transition truncate block">
+                                                                {{ $report->reporter->name }}
+                                                            </a>
+                                                            <span class="text-[11px] text-slate-400 block truncate">{{ $report->reporter->email }}</span>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <span class="italic text-slate-400">Người dùng đã xóa</span>
+                                                @endif
+                                            </td>
+
+                                            <!-- Đối tượng bị báo cáo (Polymorphic) -->
+                                            <td class="py-4 px-5 align-top max-w-xs">
+                                                @if($report->reportable_type === 'App\Models\User' || $report->reportable_type === 'user')
+                                                    <div class="space-y-1.5">
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                            👤 Tài khoản người dùng
+                                                        </span>
+                                                        @if($report->reportable)
+                                                            <div class="flex items-center gap-2 mt-1">
+                                                                <a href="{{ route('users.profile', $report->reportable->id) }}" class="shrink-0 hover:opacity-80 transition" title="Xem hồ sơ người bị báo cáo">
+                                                                    @if($report->reportable->avatar_url)
+                                                                        <img src="{{ $report->reportable->avatar_url }}" alt="{{ $report->reportable->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-indigo-200">
+                                                                    @else
+                                                                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs border border-indigo-200">
+                                                                            {{ strtoupper(substr($report->reportable->name, 0, 1)) }}
+                                                                        </div>
+                                                                    @endif
+                                                                </a>
+                                                                <div class="min-w-0">
+                                                                    <a href="{{ route('users.profile', $report->reportable->id) }}" class="font-bold text-slate-900 hover:text-pink-600 transition block truncate">
+                                                                        {{ $report->reportable->name }}
+                                                                    </a>
+                                                                    <div class="text-[11px] text-slate-400 truncate">{{ $report->reportable->email }}</div>
+                                                                </div>
+                                                            </div>
+                                                        @else
+                                                            <div class="text-[11px] italic text-slate-400">Tài khoản này đã bị xóa khỏi hệ thống.</div>
+                                                        @endif
+                                                    </div>
+                                                @elseif($report->reportable_type === 'App\Models\CourseReview' || $report->reportable_type === 'review')
+                                                    <div class="space-y-1.5">
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                            💬 Bình luận / Đánh giá
+                                                        </span>
+                                                        @if($report->reportable)
+                                                            <div class="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-[11px]">
+                                                                <div class="flex items-center justify-between gap-1">
+                                                                    <span class="font-bold text-slate-800 truncate">
+                                                                        Tác giả: {{ $report->reportable->user->name ?? 'Người dùng' }}
+                                                                    </span>
+                                                                    <span class="text-amber-500 font-extrabold shrink-0">{{ $report->reportable->rating }} ★</span>
+                                                                </div>
+                                                                @if(!empty($report->reportable->comment))
+                                                                    <p class="text-slate-600 italic line-clamp-2">"{!! e($report->reportable->comment) !!}"</p>
+                                                                @endif
+                                                                @if($report->reportable->course)
+                                                                    <div class="pt-1 text-[10px] text-slate-400 truncate">
+                                                                        Khóa học: <a href="{{ route('courses.show', $report->reportable->course->slug ?: $report->reportable->course->id) }}" target="_blank" class="text-pink-600 hover:underline font-semibold">{{ $report->reportable->course->title }}</a>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @else
+                                                            <div class="text-[11px] italic text-slate-400">Bình luận này đã bị xóa hoặc không còn tồn tại.</div>
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    <span class="text-slate-500">{{ $report->type_label }} (#{{ $report->reportable_id }})</span>
+                                                @endif
+                                            </td>
+
+                                            <!-- Lý do & Chi tiết -->
+                                            <td class="py-4 px-5 align-top max-w-xs">
+                                                <div class="space-y-1.5">
+                                                    <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+                                                        <span>{{ $report->reason_label }}</span>
+                                                    </div>
+                                                    @if(!empty($report->details))
+                                                        <div class="p-2.5 rounded-xl bg-rose-50/50 border border-rose-100 text-rose-900 text-[11px] leading-relaxed">
+                                                            <span class="font-bold text-rose-700">Lý do từ người báo cáo:</span>
+                                                            <p class="mt-0.5 whitespace-pre-wrap">{{ $report->details }}</p>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-[11px] text-slate-400 italic">Không có mô tả chi tiết thêm.</span>
+                                                    @endif
+
+                                                    @if(!empty($report->admin_notes))
+                                                        <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700">
+                                                            <span class="font-bold text-slate-900">Ghi chú của Admin:</span>
+                                                            <p class="mt-0.5 italic">{{ $report->admin_notes }}</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </td>
+
+                                            <!-- Trạng thái -->
+                                            <td class="py-4 px-5 align-top text-center whitespace-nowrap">
+                                                @if($report->status === 'pending')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                        Chờ xử lý
+                                                    </span>
+                                                @elseif($report->status === 'resolved')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        Đã xử lý
+                                                    </span>
+                                                    @if($report->resolvedBy)
+                                                        <div class="text-[10px] text-slate-400 mt-1">Bởi: {{ $report->resolvedBy->name }}</div>
+                                                        <div class="text-[10px] text-slate-400">{{ $report->resolved_at?->diffForHumans() }}</div>
+                                                    @endif
+                                                @elseif($report->status === 'dismissed')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                        Đã bác bỏ
+                                                    </span>
+                                                    @if($report->resolvedBy)
+                                                        <div class="text-[10px] text-slate-400 mt-1">Bởi: {{ $report->resolvedBy->name }}</div>
+                                                        <div class="text-[10px] text-slate-400">{{ $report->resolved_at?->diffForHumans() }}</div>
+                                                    @endif
+                                                @endif
+                                            </td>
+
+                                            <!-- Thao tác -->
+                                            <td class="py-4 px-5 align-top text-right whitespace-nowrap">
+                                                @php
+                                                    $targetName = '';
+                                                    $targetContent = '';
+                                                    $avatarUrl = '';
+                                                    if ($report->reportable instanceof \App\Models\User) {
+                                                        $targetName = $report->reportable->name;
+                                                        $avatarUrl = $report->reportable->avatar_url ?? '';
+                                                    } elseif ($report->reportable instanceof \App\Models\CourseReview) {
+                                                        $targetName = $report->reportable->user->name ?? 'Người dùng';
+                                                        $targetContent = $report->reportable->comment ?? '';
+                                                    }
+                                                @endphp
+
+                                                <button type="button"
+                                                        @click="openAction({{ Js::from($report) }}, '{{ $report->type_label }}', '{{ addslashes($targetName) }}', '{{ addslashes($targetContent) }}', '{{ addslashes($report->reason_label) }}', '{{ addslashes($report->details ?? '') }}', '{{ $avatarUrl }}')"
+                                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold text-xs transition {{ $report->status === 'pending' ? 'bg-pink-600 hover:bg-pink-700 text-white shadow-xs cursor-pointer' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer' }}">
+                                                    <span>{{ $report->status === 'pending' ? 'Xử lý vi phạm' : 'Xem chi tiết' }}</span>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="p-5 border-t border-slate-100">
+                            {{ $reports->links() }}
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Modal Xử lý / Xem chi tiết Báo cáo vi phạm -->
+                <div x-show="actionModal"
+                     x-cloak
+                     class="fixed inset-0 z-50 overflow-y-auto"
+                     style="display: none;">
+                    <div class="fixed inset-0 bg-neutral-950/70 backdrop-blur-xs transition-opacity"
+                         @click="actionModal = false"
+                         x-show="actionModal"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"></div>
+
+                    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                        <div x-show="actionModal"
+                             x-transition:enter="ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave="ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                             class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl border border-pink-100 p-6 sm:p-8">
+
+                            <form method="POST" :action="actionUrl" class="space-y-5">
+                                @csrf
+                                <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-black text-slate-900 tracking-tight">Xử lý báo cáo vi phạm</h3>
+                                            <p class="text-xs text-slate-500 mt-0.5">Báo cáo #<span x-text="reportId"></span> &bull; Người gửi: <strong class="text-slate-800" x-text="reporterName"></strong></p>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="actionModal = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+
+                                <!-- Nội dung bị khiếu nại tóm tắt -->
+                                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-slate-700" x-text="targetTypeLabel"></span>
+                                        <span class="px-2 py-0.5 rounded-md font-extrabold text-[10px] uppercase bg-pink-100 text-pink-700" x-text="reasonLabel"></span>
+                                    </div>
+                                    <div class="font-bold text-slate-900">
+                                        Đối tượng: <span class="text-pink-600" x-text="targetName"></span>
+                                    </div>
+                                    <template x-if="targetContent">
+                                        <div class="p-2.5 rounded-xl bg-white border border-slate-200 italic text-slate-700" x-text="'&ldquo;' + targetContent + '&rdquo;'"></div>
+                                    </template>
+                                    <template x-if="targetDetails">
+                                        <div class="pt-1 text-[11px] text-slate-600">
+                                            <strong class="text-slate-800">Lý do chi tiết:</strong>
+                                            <p class="mt-0.5" x-text="targetDetails"></p>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Quyết định xử lý của Admin -->
+                                <div class="space-y-3">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                        Quyết định của Quản trị viên: <span class="text-rose-500">*</span>
+                                    </label>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <label class="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition"
+                                               :class="actionType === 'resolve' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 font-bold ring-1 ring-emerald-500/30' : 'border-slate-200 text-slate-700 hover:border-slate-300'">
+                                            <input type="radio" name="action" value="resolve" x-model="actionType" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" required>
+                                            <div>
+                                                <span class="text-xs block font-bold">Xác nhận vi phạm &amp; Giải quyết</span>
+                                                <span class="text-[11px] font-normal text-slate-500 block mt-0.5">Xử lý đối tượng vi phạm và khép lại báo cáo.</span>
+                                            </div>
+                                        </label>
+
+                                        <label class="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition"
+                                               :class="actionType === 'dismiss' ? 'border-slate-500 bg-slate-50 text-slate-900 font-bold ring-1 ring-slate-500/30' : 'border-slate-200 text-slate-700 hover:border-slate-300'">
+                                            <input type="radio" name="action" value="dismiss" x-model="actionType" class="mt-0.5 text-slate-700 focus:ring-slate-500">
+                                            <div>
+                                                <span class="text-xs block font-bold">Bác bỏ báo cáo</span>
+                                                <span class="text-[11px] font-normal text-slate-500 block mt-0.5">Nội dung hợp lệ, không vi phạm tiêu chuẩn.</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Tùy chọn xử lý đi kèm khi xác nhận vi phạm -->
+                                <div x-show="actionType === 'resolve'" class="space-y-2.5 p-4 rounded-2xl bg-amber-50/50 border border-amber-200">
+                                    <span class="block text-xs font-bold text-amber-900 uppercase tracking-wider">Hành động khắc phục:</span>
+
+                                    <!-- Nếu là User và có avatar -->
+                                    <template x-if="isUserReport">
+                                        <label class="flex items-center gap-2.5 text-xs text-slate-800 cursor-pointer">
+                                            <input type="checkbox" name="reset_avatar" value="1" x-model="resetAvatar" class="rounded text-pink-600 focus:ring-pink-500">
+                                            <span>Gỡ bỏ ảnh đại diện (avatar) của tài khoản này về mặc định</span>
+                                        </label>
+                                    </template>
+
+                                    <!-- Nếu là Review -->
+                                    <template x-if="isReviewReport">
+                                        <label class="flex items-center gap-2.5 text-xs text-slate-800 cursor-pointer">
+                                            <input type="checkbox" name="delete_content" value="1" x-model="deleteContent" class="rounded text-rose-600 focus:ring-rose-500">
+                                            <span>Xóa bình luận / nhận xét vi phạm này khỏi khóa học</span>
+                                        </label>
+                                    </template>
+                                </div>
+
+                                <!-- Ghi chú phản hồi / lý do xử lý của Admin -->
+                                <div class="space-y-1.5">
+                                    <label for="admin_report_notes" class="block text-xs font-bold text-slate-700">
+                                        Ghi chú xử lý của Quản trị viên (Tùy chọn):
+                                    </label>
+                                    <textarea id="admin_report_notes"
+                                              name="admin_notes"
+                                              x-model="adminNotes"
+                                              rows="2"
+                                              placeholder="Ví dụ: Đã gỡ avatar phản cảm và nhắc nhở thành viên..."
+                                              class="w-full text-xs rounded-2xl border-slate-200 focus:border-pink-500 focus:ring-pink-500 shadow-2xs placeholder-slate-400"></textarea>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                                    <button type="button" @click="actionModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer">
+                                        Hủy bỏ
+                                    </button>
+                                    <button type="submit"
+                                            :class="actionType === 'resolve' ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20' : 'bg-slate-800 hover:bg-slate-900 text-white shadow-slate-800/20'"
+                                            class="px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 cursor-pointer">
+                                        <span x-text="actionType === 'resolve' ? 'Lưu & Giải quyết vi phạm' : 'Lưu & Bác bỏ báo cáo'"></span>
+                                    </button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
             </div>
         @endif
 

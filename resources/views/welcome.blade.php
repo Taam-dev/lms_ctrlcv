@@ -146,10 +146,16 @@
 
                                                         <div class="flex items-center justify-between gap-2 text-xs text-neutral-400">
                                                             <div class="flex items-center gap-2 min-w-0">
+                                                                @if($course->teacher_id)
+                                                                    <a href="{{ route('users.profile', $course->teacher_id) }}" class="flex items-center gap-2 hover:text-pink-400 transition-colors min-w-0" title="Xem hồ sơ giảng viên {{ $course->teacher->name ?? '' }}">
+                                                                @endif
                                                                 @if($course->teacher && $course->teacher->avatar_url)
                                                                     <img src="{{ $course->teacher->avatar_url }}" alt="{{ $course->teacher->name }}" class="w-4 h-4 rounded-full object-cover shrink-0">
                                                                 @endif
                                                                 <span class="truncate">GV: {{ $course->teacher->name ?? 'Ban Đào Tạo' }}</span>
+                                                                @if($course->teacher_id)
+                                                                    </a>
+                                                                @endif
                                                             </div>
                                                             @php
                                                                 $heroRevCount = (int) ($course->reviews_count ?? $course->reviews()->count());

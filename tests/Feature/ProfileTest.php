@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -293,5 +295,54 @@ class ProfileTest extends TestCase
             ]);
 
         Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_public_profile_can_be_viewed_by_guest_and_shows_teacher_courses(): void
+    {
+        $teacher = User::factory()->create([
+            'name' => 'Thầy Giáo Ba',
+            'role' => 'teacher',
+        ]);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa Học Lập Trình Python',
+            'status' => 'approved',
+            'price' => 50000,
+        ]);
+
+        $response = $this->get(route('users.profile', $teacher));
+        $response->assertOk();
+        $response->assertSee('Thầy Giáo Ba');
+        $response->assertSee('Giảng viên');
+        $response->assertSee('Khóa Học Lập Trình Python');
+    }
+
+    public function test_public_profile_displays_student_reviews(): void
+    {
+        $student = User::factory()->create([
+            'name' => 'Nguyễn Học Sinh',
+            'role' => 'student',
+        ]);
+
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa Học ReactJS',
+            'status' => 'approved',
+        ]);
+
+        CourseReview::create([
+            'course_id' => $course->id,
+            'user_id' => $student->id,
+            'rating' => 5,
+            'comment' => 'Khóa học tuyệt vời và dễ hiểu!',
+        ]);
+
+        $response = $this->get(route('users.profile', $student));
+        $response->assertOk();
+        $response->assertSee('Nguyễn Học Sinh');
+        $response->assertSee('Học viên');
+        $response->assertSee('Khóa học tuyệt vời và dễ hiểu!');
     }
 }
