@@ -928,7 +928,9 @@
 
                                             @if(!auth()->check() || auth()->id() !== $review->user_id)
                                                 <button type="button"
+                                                        x-data
                                                         @click="$dispatch('open-review-report-modal', { id: {{ $review->id }}, author: '{{ addslashes($review->user->name ?? 'Người dùng') }}' })"
+                                                        onclick="window.dispatchEvent(new CustomEvent('open-review-report-modal', { detail: { id: {{ $review->id }}, author: '{{ addslashes($review->user->name ?? 'Người dùng') }}' } }))"
                                                         class="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                                                         title="Báo cáo bình luận vi phạm">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -986,8 +988,7 @@
          "
          x-show="open"
          x-cloak
-         class="fixed inset-0 z-50 overflow-y-auto"
-         style="display: none;">
+         class="fixed inset-0 z-50 overflow-y-auto">
         <div class="fixed inset-0 bg-neutral-950/70 backdrop-blur-xs transition-opacity"
              @click="open = false"
              x-show="open"

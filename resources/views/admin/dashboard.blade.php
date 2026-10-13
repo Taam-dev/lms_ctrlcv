@@ -145,81 +145,83 @@
         <!-- ============================================== -->
         <!-- 5 STATISTIC OVERVIEW CARDS (HIỂN THỊ TỔNG QUAN)-->
         <!-- ============================================== -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <!-- 1. Courses Stats -->
-            <a href="{{ route('admin.dashboard', ['tab' => 'courses']) }}" 
-               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Khóa học</span>
-                </div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_courses'] }}</div>
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{{ $stats['approved_courses'] }} đã duyệt</span>
-                    @if($stats['pending_courses'] > 0)
-                        <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_courses'] }} chờ</span>
-                    @endif
-                </div>
-            </a>
+        @if($currentTab === 'overview')
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- 1. Courses Stats -->
+                <a href="{{ route('admin.dashboard', ['tab' => 'courses']) }}" 
+                   class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Khóa học</span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_courses'] }}</div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{{ $stats['approved_courses'] }} đã duyệt</span>
+                        @if($stats['pending_courses'] > 0)
+                            <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_courses'] }} chờ</span>
+                        @endif
+                    </div>
+                </a>
 
-            <!-- 2. Quizzes Stats -->
-            <a href="{{ route('admin.dashboard', ['tab' => 'quizzes']) }}" 
-               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài kiểm tra</span>
-                </div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_quizzes'] }}</div>
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{{ $stats['approved_quizzes'] }} đã duyệt</span>
-                    @if($stats['pending_quizzes'] > 0)
-                        <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_quizzes'] }} chờ</span>
-                    @endif
-                </div>
-            </a>
+                <!-- 2. Quizzes Stats -->
+                <a href="{{ route('admin.dashboard', ['tab' => 'quizzes']) }}" 
+                   class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài kiểm tra</span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_quizzes'] }}</div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">{{ $stats['approved_quizzes'] }} đã duyệt</span>
+                        @if($stats['pending_quizzes'] > 0)
+                            <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md">{{ $stats['pending_quizzes'] }} chờ</span>
+                        @endif
+                    </div>
+                </a>
 
-            <!-- 3. Lessons Stats -->
-            <a href="{{ route('admin.courses.index') }}" 
-               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài giảng</span>
-                </div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_lessons'] }}</div>
-                <div class="text-xs text-slate-500 truncate">
-                    Video & tài liệu
-                </div>
-            </a>
+                <!-- 3. Lessons Stats -->
+                <a href="{{ route('admin.courses.index') }}" 
+                   class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài giảng</span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_lessons'] }}</div>
+                    <div class="text-xs text-slate-500 truncate">
+                        Video & tài liệu
+                    </div>
+                </a>
 
-            <!-- 4. Users Stats -->
-            <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}" 
-               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-md transition group relative overflow-hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">Người dùng</span>
-                </div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_users'] }}</div>
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-pink-700 font-bold bg-pink-50 px-2 py-0.5 rounded-md">{{ $stats['teachers_count'] }} GV</span>
-                    <span class="text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">{{ $stats['students_count'] }} Học viên</span>
-                </div>
-            </a>
+                <!-- 4. Users Stats -->
+                <a href="{{ route('admin.dashboard', ['tab' => 'users']) }}" 
+                   class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-md transition group relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">Người dùng</span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_users'] }}</div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-pink-700 font-bold bg-pink-50 px-2 py-0.5 rounded-md">{{ $stats['teachers_count'] }} GV</span>
+                        <span class="text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">{{ $stats['students_count'] }} Học viên</span>
+                    </div>
+                </a>
 
-            <!-- 5. Reports Stats -->
-            <a href="{{ route('admin.dashboard', ['tab' => 'reports']) }}" 
-               class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-rose-300 hover:shadow-md transition group relative overflow-hidden {{ $stats['pending_reports'] > 0 ? 'ring-2 ring-rose-500/20' : '' }}">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-rose-600 transition">Báo cáo vi phạm</span>
-                    <span class="p-1 rounded-lg {{ $stats['pending_reports'] > 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500' }}">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    </span>
-                </div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_reports'] }}</div>
-                <div class="flex items-center gap-2 text-xs">
-                    @if($stats['pending_reports'] > 0)
-                        <span class="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded-md">{{ $stats['pending_reports'] }} chờ xử lý</span>
-                    @else
-                        <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">Không có vi phạm chờ</span>
-                    @endif
-                </div>
-            </a>
-        </div>
+                <!-- 5. Reports Stats -->
+                <a href="{{ route('admin.dashboard', ['tab' => 'reports']) }}" 
+                   class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-rose-300 hover:shadow-md transition group relative overflow-hidden {{ $stats['pending_reports'] > 0 ? 'ring-2 ring-rose-500/20' : '' }}">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-rose-600 transition">Báo cáo vi phạm</span>
+                        <span class="p-1 rounded-lg {{ $stats['pending_reports'] > 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500' }}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </span>
+                    </div>
+                    <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_reports'] }}</div>
+                    <div class="flex items-center gap-2 text-xs">
+                        @if($stats['pending_reports'] > 0)
+                            <span class="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded-md">{{ $stats['pending_reports'] }} chờ xử lý</span>
+                        @else
+                            <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">Không có vi phạm chờ</span>
+                        @endif
+                    </div>
+                </a>
+            </div>
+        @endif
 
         <!-- ============================================== -->
         <!-- PENDING APPROVAL ALERT BANNER                  -->
@@ -1013,21 +1015,21 @@
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[950px]">
+                        <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                                    <th class="py-4 px-6 whitespace-nowrap">Họ và tên</th>
-                                    <th class="py-4 px-4 whitespace-nowrap">Email</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Vai trò hiện tại</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Ví (Số dư)</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Ngày đăng ký</th>
-                                    <th class="py-4 px-6 text-center whitespace-nowrap">Chỉnh sửa vai trò</th>
+                                    <th class="py-3.5 px-4 whitespace-nowrap">Họ và tên</th>
+                                    <th class="py-3.5 px-3 whitespace-nowrap">Email</th>
+                                    <th class="py-3.5 px-3 text-center whitespace-nowrap">Vai trò hiện tại</th>
+                                    <th class="py-3.5 px-3 text-center whitespace-nowrap">Ví (Số dư)</th>
+                                    <th class="py-3.5 px-3 text-center whitespace-nowrap">Ngày đăng ký</th>
+                                    <th class="py-3.5 px-4 text-center whitespace-nowrap">Chỉnh sửa vai trò</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-sm">
                                 @foreach($users as $user)
                                     <tr class="hover:bg-pink-50/20 transition">
-                                        <td class="py-4 px-6 whitespace-nowrap">
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
                                              <div class="flex items-center gap-3">
                                                 <a href="{{ route('users.profile', $user) }}" target="_blank" class="shrink-0 transition-transform hover:scale-105" title="Xem trang cá nhân của {{ $user->name }}">
                                                     @if($user->avatar_url)
@@ -1052,10 +1054,10 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="py-4 px-4 text-slate-600 text-xs font-medium whitespace-nowrap">
+                                        <td class="py-3.5 px-3 text-slate-600 text-xs font-medium whitespace-nowrap">
                                             {{ $user->email }}
                                         </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
+                                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                             @if($user->role === 'admin')
                                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-pink-100 text-pink-700 border border-pink-200 whitespace-nowrap shrink-0">
                                                     Admin
@@ -1071,9 +1073,9 @@
                                             @endif
                                         </td>
                                         <!-- Cột Ví (Số dư) & Nút sửa -->
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
+                                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                             <div class="inline-flex items-center justify-center gap-1.5">
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black {{ ($user->balance ?? 0) > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-slate-100 text-slate-500 border border-slate-200/60' }}">
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-black {{ ($user->balance ?? 0) > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-slate-100 text-slate-500 border border-slate-200/60' }}">
                                                     <svg class="w-3.5 h-3.5 {{ ($user->balance ?? 0) > 0 ? 'text-emerald-600' : 'text-slate-400' }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                                                     </svg>
@@ -1089,10 +1091,10 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="py-4 px-4 text-center text-xs text-slate-500 whitespace-nowrap">
+                                        <td class="py-3.5 px-3 text-center text-xs text-slate-500 whitespace-nowrap">
                                             {{ $user->created_at->format('d/m/Y H:i') }}
                                         </td>
-                                        <td class="py-4 px-6 text-center whitespace-nowrap">
+                                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                             @if($user->role === 'admin')
                                                 <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200" title="{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Vai trò Quản trị viên cố định' }}">
                                                     <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1101,19 +1103,19 @@
                                                     <span>{{ $user->id === auth()->id() ? 'Tài khoản của bạn' : 'Cố định' }}</span>
                                                 </div>
                                             @else
-                                                <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-2 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">
+                                                <form action="{{ route('admin.users.update-role', $user) }}" method="POST" class="inline-flex items-center justify-center gap-1.5 flex-nowrap shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn cập nhật vai trò cho người dùng \'{{ addslashes($user->name) }}\'?');">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <select name="role" class="text-xs font-medium py-1.5 pl-3 pr-8 w-36 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
+                                                    <select name="role" class="text-xs font-medium py-1.5 pl-2.5 pr-7 w-28 sm:w-32 rounded-xl border border-slate-200 bg-white text-slate-800 cursor-pointer focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 shadow-2xs">
                                                         <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Học viên</option>
                                                         <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }}>Giảng viên</option>
                                                         <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
                                                     </select>
-                                                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0" title="Cập nhật vai trò">
+                                                    <button type="submit" class="px-2.5 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition active:scale-95 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0" title="Cập nhật vai trò">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                         </svg>
-                                                        Lưu
+                                                        <span>Lưu</span>
                                                     </button>
                                                 </form>
                                             @endif
