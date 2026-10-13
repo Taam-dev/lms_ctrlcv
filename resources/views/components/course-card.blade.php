@@ -94,6 +94,18 @@
         </div>
 
         <div class="mt-auto pt-4 border-t border-pink-50">
+            @if($isEnrolled && ($course->purchased_price ?? 0) > 0)
+                <div class="mb-3 px-3 py-1.5 bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                    <span class="text-slate-500 font-bold text-[11px] flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Đã mua với giá:</span>
+                    </span>
+                    <span class="font-black text-emerald-700 text-xs">
+                        {{ number_format($course->purchased_price, 0, ',', '.') }} <span class="text-[10px] font-bold text-slate-500">đ</span>
+                    </span>
+                </div>
+            @endif
+
             <div class="flex items-center justify-between gap-3 mb-4">
                 <!-- Thông tin Giảng viên (luôn hiển thị cho cả đã đăng ký và chưa đăng ký) -->
                 <div class="flex items-center gap-2.5 min-w-0">
@@ -150,18 +162,6 @@
                     </div>
                 @endif
             </div>
-
-            @if($isEnrolled && ($course->purchased_price ?? 0) > 0)
-                <div class="mb-3 px-3 py-1.5 bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                    <span class="text-slate-500 font-bold text-[11px] flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Đã mua với giá:</span>
-                    </span>
-                    <span class="font-black text-emerald-700 text-xs">
-                        {{ number_format($course->purchased_price, 0, ',', '.') }} <span class="text-[10px] font-bold text-slate-500">đ</span>
-                    </span>
-                </div>
-            @endif
 
             @if($isEnrolled)
                 <a href="{{ route('courses.show', $course->slug ?: $course->id) }}"
