@@ -83,6 +83,7 @@ class QuizJsonService
             'passing_score' => null,
             'randomize_questions' => null,
             'question_limit' => null,
+            'max_attempts' => null,
             'starts_at' => null,
             'ends_at' => null,
         ];
@@ -126,6 +127,9 @@ class QuizJsonService
             }
             if (isset($quizSource['question_limit']) && is_numeric($quizSource['question_limit'])) {
                 $quizInfo['question_limit'] = (int) $quizSource['question_limit'];
+            }
+            if (isset($quizSource['max_attempts']) && is_numeric($quizSource['max_attempts'])) {
+                $quizInfo['max_attempts'] = (int) $quizSource['max_attempts'];
             }
             if (isset($quizSource['starts_at']) && is_string($quizSource['starts_at'])) {
                 $quizInfo['starts_at'] = trim($quizSource['starts_at']);

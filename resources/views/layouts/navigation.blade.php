@@ -27,8 +27,11 @@
             </div>
 
             <!-- Auth -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:gap-2.5 sm:ms-6">
                 @auth
+                    <!-- Icon chuông thông báo trắng đen (kế bên và bên trái profile) -->
+                    <x-notification-bell :dark="true" />
+
                     <x-dropdown align="right" width="64">
                         <x-slot name="trigger">
                             <button class="inline-flex items-center gap-3 px-3 py-1.5 border border-white/15 hover:border-pink-500 text-left focus:outline-none transition duration-150">
@@ -159,6 +162,17 @@
                         <span class="px-2 py-0.5 rounded text-xs font-black bg-neutral-900 text-white border border-neutral-700">
                             {{ number_format(Auth::user()->balance ?? 0, 0, ',', '.') }} đ
                         </span>
+                    </a>
+                    <a href="{{ route('notifications.index') }}" class="flex items-center justify-between px-3 py-2 text-sm text-neutral-200 hover:text-white hover:bg-white/5 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span class="font-bold">Thông báo</span>
+                        </div>
+                        @if(Auth::user()->unreadNotificationsCount() > 0)
+                            <span class="px-2 py-0.5 rounded text-xs font-black bg-pink-600 text-white">
+                                {{ Auth::user()->unreadNotificationsCount() }} mới
+                            </span>
+                        @endif
                     </a>
                     <a href="{{ route('profile.edit') }}" class="block px-3 py-2 text-sm text-neutral-300 hover:text-white">
                         Hồ sơ cá nhân

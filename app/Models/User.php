@@ -155,4 +155,20 @@ class User extends Authenticatable
             default => 'Học viên',
         };
     }
+
+    /**
+     * Danh sách thông báo trong hệ thống
+     */
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    /**
+     * Đếm số lượng thông báo chưa đọc
+     */
+    public function unreadNotificationsCount(): int
+    {
+        return $this->appNotifications()->whereNull('read_at')->count();
+    }
 }

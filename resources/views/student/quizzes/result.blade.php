@@ -4,7 +4,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
                 <div class="flex items-center gap-2 mb-2">
-                    <span class="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-pink-600 text-white">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/15 text-pink-300 border border-pink-500/25 tracking-wide">
                         {{ $quiz->type_name }}
                     </span>
                     <span class="text-xs text-neutral-400 font-bold">
@@ -46,28 +46,37 @@
                 @if($isStaff)
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
-                           class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
+                           class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Bảng điểm học viên
                         </a>
                     @else
                         <a href="{{ route('instructor.quizzes.results', $quiz->id) }}" 
-                           class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
+                           class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Bảng điểm học viên
                         </a>
                     @endif
                 @else
                     <a href="{{ route('student.quizzes.index') }}" 
-                       class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider border border-white/20 hover:border-white text-neutral-300 hover:text-white transition">
+                       class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-white/20 hover:border-white text-neutral-300 hover:text-white transition">
                         &larr; Quizzes
                     </a>
-                    @if(!$quiz->isExpired() && !$quiz->isNotStarted())
+                    @php
+                        $studentAttemptsCount = $quiz->attempts()->where('student_id', auth()->id())->count();
+                        $hasReachedMax = $quiz->max_attempts !== null && $quiz->max_attempts > 0 && $studentAttemptsCount >= $quiz->max_attempts;
+                    @endphp
+                    @if($hasReachedMax)
+                        <span class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed"
+                              title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
+                            Hết lượt làm lại ({{ $studentAttemptsCount }}/{{ $quiz->max_attempts }})
+                        </span>
+                    @elseif(!$quiz->isExpired() && !$quiz->isNotStarted())
                         <button type="button" 
                                 @click="confirmModalOpen = true"
-                                class="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-pink-600 hover:bg-pink-500 text-white transition cursor-pointer">
+                                class="px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-pink-600 hover:bg-pink-700 text-white transition cursor-pointer shadow-sm">
                             Làm lại bài thi
                         </button>
                     @elseif($quiz->isExpired())
-                        <span class="px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed">
+                        <span class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed">
                             Đã hết hạn thi
                         </span>
                     @endif
@@ -75,58 +84,172 @@
             </div>
         </div>
 
-        <!-- Modal Xác nhận Làm lại Bài Kiểm tra -->
+        @php
+            $quizTeacher = $quiz->teacher ?? $quiz->course?->teacher;
+            $tName = $quizTeacher?->name ?? 'Ban Giảng Huấn';
+            $tAvatar = $quizTeacher?->avatar_url;
+            $tInitial = strtoupper(mb_substr($tName, 0, 1, 'UTF-8'));
+            $courseTitle = $quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do';
+            $qLimit = $quiz->question_limit && $quiz->question_limit < $quiz->questions_count ? $quiz->question_limit : $quiz->questions_count;
+        @endphp
+
+        <!-- Modal Xác nhận Làm lại Bài Kiểm tra (Modern Clean Light Card) -->
         <div x-show="confirmModalOpen" 
              x-cloak
-             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-sm"
+             class="fixed inset-0 z-50 overflow-y-auto"
+             role="dialog" 
+             aria-modal="true"
+             aria-labelledby="modal-retake-quiz-title"
+             @keydown.escape.window="confirmModalOpen = false"
              style="display: none;">
-            <div @click.away="confirmModalOpen = false"
-                 class="w-full max-w-lg bg-neutral-900 border-2 border-pink-600 text-white shadow-2xl p-6 sm:p-8 space-y-6 text-left">
-                
-                <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-pink-600/20 border border-pink-500 text-pink-500 flex items-center justify-center shrink-0">
-                        <svg class="w-6 h-6 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <span class="text-[10px] uppercase font-black tracking-widest text-pink-400 block mb-1">Xác nhận làm lại đề thi</span>
-                        <h3 class="text-lg sm:text-xl font-black text-white leading-snug line-clamp-2">
-                            {{ $quiz->title }}
-                        </h3>
-                        <p class="text-xs text-neutral-400 mt-1">
-                            Thời gian: <strong class="text-pink-400">{{ $quiz->duration_minutes }} phút</strong>
-                        </p>
-                    </div>
-                </div>
+            
+            <!-- Backdrop mờ tối sang trọng -->
+            <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+                 x-show="confirmModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="confirmModalOpen = false"></div>
 
-                <div class="bg-rose-950/50 border-l-4 border-rose-500 border-y border-r border-rose-900/60 p-4 space-y-2">
-                    <div class="flex items-center gap-2 text-rose-300 font-black text-xs uppercase tracking-wider">
-                        <svg class="w-4 h-4 shrink-0 text-rose-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        <span>Quy chế thi bắt buộc</span>
+            <div class="min-h-full flex items-center justify-center p-4 text-center sm:p-0">
+                <!-- Hộp thoại Modal bo góc mềm mại, sang trọng -->
+                <div x-show="confirmModalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full max-w-lg border border-slate-100"
+                     @click.stop="">
+                    
+                    <!-- Header Modal với hiệu ứng gradient nhẹ nhàng và nút đóng (X) -->
+                    <div class="bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-pink-500/5 px-6 pt-6 pb-5 border-b border-pink-100/70 relative">
+                        <button type="button" 
+                                @click="confirmModalOpen = false"
+                                class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center shadow-xs transition cursor-pointer"
+                                title="Đóng">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+
+                        <div class="flex items-start gap-4 pr-8">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-600 to-rose-600 text-white flex items-center justify-center shadow-lg shadow-pink-500/25 shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-100/80 text-pink-700 uppercase tracking-wider mb-1.5">
+                                    Xác nhận làm lại bài thi
+                                </span>
+                                <h3 id="modal-retake-quiz-title" class="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug line-clamp-2">
+                                    {{ $quiz->title }}
+                                </h3>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-xs text-rose-100 font-semibold leading-relaxed">
-                        Một khi đã bắt đầu thì <strong class="text-white underline decoration-rose-400">bắt buộc phải nộp bài</strong>, <strong class="text-rose-300">không thể hủy giữa chừng</strong>!
-                    </p>
-                    <p class="text-[11px] text-neutral-300 leading-normal">
-                        Thời gian sẽ bắt đầu đếm ngược ngay lập tức. Trong khi làm bài, nếu chuyển tab hoặc chuyển trang khác, bạn sẽ bắt buộc phải nộp bài.
-                    </p>
-                </div>
 
-                <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2 border-t border-white/10">
-                    <button type="button" 
-                            @click="confirmModalOpen = false"
-                            class="w-full sm:w-auto px-6 py-2.5 border border-white/20 hover:border-white text-neutral-300 hover:text-white text-xs font-black uppercase tracking-wider transition cursor-pointer text-center">
-                        Không
-                    </button>
-                    <a href="{{ route('student.quizzes.take', $quiz->id) }}"
-                       class="w-full sm:w-auto px-7 py-2.5 bg-pink-600 hover:bg-pink-500 text-white text-xs font-black uppercase tracking-wider transition shadow-lg shadow-pink-600/30 cursor-pointer text-center">
-                        Làm &rarr;
-                    </a>
-                </div>
+                    <!-- Nội dung chi tiết bài thi -->
+                    <div class="p-6 space-y-4">
+                        <!-- Thông tin Khóa học & Giảng viên + Chỉ số bài thi -->
+                        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-3">
+                            <div class="flex items-center justify-between text-xs text-slate-600 flex-wrap gap-2">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="text-slate-400 font-medium shrink-0">Khóa học:</span>
+                                    <span class="font-bold text-slate-800 truncate">{{ $courseTitle }}</span>
+                                </div>
+                                @if($tName)
+                                    <div class="flex items-center gap-1.5 text-slate-700 font-medium shrink-0">
+                                        @if($tAvatar)
+                                            <img src="{{ $tAvatar }}" class="w-4 h-4 rounded-full object-cover">
+                                        @else
+                                            <span class="w-4 h-4 rounded-full bg-pink-100 text-pink-700 text-[9px] font-bold inline-flex items-center justify-center">{{ $tInitial }}</span>
+                                        @endif
+                                        <span>GV: <strong class="text-slate-900 font-semibold">{{ $tName }}</strong></span>
+                                    </div>
+                                @endif
+                            </div>
 
+                            <!-- Thống kê thông số: Thời gian, Số câu hỏi, Điểm đạt, Lượt làm -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200/60 text-center">
+                                <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
+                                    <span class="block text-[10px] uppercase font-bold text-slate-400">Thời gian</span>
+                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block">{{ $quiz->duration_minutes }} phút</span>
+                                </div>
+                                <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
+                                    <span class="block text-[10px] uppercase font-bold text-slate-400">Số câu</span>
+                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block">{{ $qLimit }} câu</span>
+                                </div>
+                                <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
+                                    <span class="block text-[10px] uppercase font-bold text-slate-400">Điểm đạt</span>
+                                    <span class="text-sm font-extrabold text-pink-600 mt-0.5 block">&ge; {{ $quiz->passing_score }}</span>
+                                </div>
+                                <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
+                                    <span class="block text-[10px] uppercase font-bold text-slate-400">Lượt làm</span>
+                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block">
+                                        @if($quiz->max_attempts)
+                                            {{ $studentAttemptsCount }}/{{ $quiz->max_attempts }}
+                                        @else
+                                            Thoải mái
+                                        @endif
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lưu ý & Quy chế thi trang nhã, rõ ràng -->
+                        <div class="bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/80 rounded-2xl p-4 space-y-2.5">
+                            <div class="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                                <svg class="w-4 h-4 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Lưu ý quan trọng trước khi bắt đầu</span>
+                            </div>
+                            <ul class="space-y-1.5 text-xs text-amber-950/90 leading-relaxed">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-amber-600 font-bold leading-tight">•</span>
+                                    <span>Thời gian làm bài sẽ đếm ngược <strong>ngay lập tức</strong> khi bạn xác nhận.</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-amber-600 font-bold leading-tight">•</span>
+                                    <span>Lần thi mới sẽ được <strong>ghi nhận điểm số riêng biệt</strong> và lưu lại tiến độ.</span>
+                                </li>
+                                @if($quiz->max_attempts)
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-amber-600 font-bold leading-tight">•</span>
+                                        <span>Bài thi giới hạn tối đa <strong>{{ $quiz->max_attempts }} lần làm</strong> (bạn đã hoàn thành {{ $studentAttemptsCount }} lần, còn lại <strong>{{ max(0, $quiz->max_attempts - $studentAttemptsCount) }}</strong> lượt).</span>
+                                    </li>
+                                @endif
+                                <li class="flex items-start gap-2">
+                                    <span class="text-amber-600 font-bold leading-tight">•</span>
+                                    <span>Vui lòng không chuyển tab hay rời trang thi để tránh bị tự động nộp bài.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Footer nút thao tác tự nhiên, lịch sự -->
+                    <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5">
+                        <button type="button" 
+                                @click="confirmModalOpen = false"
+                                class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-white text-slate-600 hover:text-slate-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center">
+                            Để sau
+                        </button>
+                        <a href="{{ route('student.quizzes.take', $quiz->id) }}"
+                           class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-extrabold uppercase tracking-wider transition shadow-md shadow-pink-600/25 hover:shadow-pink-600/35 cursor-pointer text-center inline-flex items-center justify-center gap-1.5">
+                            <span>Bắt đầu làm bài</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                </div>
             </div>
         </div>
     </section>
@@ -138,8 +261,7 @@
                 $canViewResultDetails = $quiz->show_result_after_completion || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher() || auth()->user()->isInstructor()));
             @endphp
 
-            @if($canViewResultDetails)
-                @if($isStaff)
+            @if($isStaff)
                     <!-- Khối Giám sát vi phạm / Cảnh cáo (Chỉ dành cho Giảng viên & Admin - Ẩn hoàn toàn với học viên) -->
                     <div x-data="{ hideWarningCount: false }" class="bg-white border-2 border-dashed {{ ($attempt->warning_count ?? 0) > 0 ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300 bg-slate-50/40' }} p-6 relative shadow-xs">
                         <!-- Nút icon trắng đen nhỏ ở trên góc bên phải để ẩn/hiện số lần bị cảnh cáo -->
@@ -242,28 +364,6 @@
                         </div>
                     </dl>
                 </div>
-            @else
-                <!-- Thông báo bảo mật kết quả khi giảng viên chọn Không cho xem kết quả -->
-                <div class="bg-white border-2 border-dashed border-pink-200 p-8 sm:p-12 text-center space-y-4 shadow-sm">
-                    <div class="inline-block px-3.5 py-1 text-xs font-black uppercase tracking-widest bg-blue-100 text-blue-800 rounded-full">
-                        ĐÃ NỘP BÀI THÀNH CÔNG
-                    </div>
-                    <div class="w-16 h-16 rounded-2xl bg-pink-50 border border-pink-200 text-pink-600 flex items-center justify-center mx-auto text-3xl font-black shadow-xs">
-                        🔒
-                    </div>
-                    <div class="max-w-md mx-auto space-y-1.5">
-                        <h2 class="text-xl font-black text-neutral-900">
-                            Kết quả bài thi được bảo mật
-                        </h2>
-                        <p class="text-xs text-neutral-600 leading-relaxed">
-                            Giảng viên đã cài đặt <strong class="text-neutral-900">không công khai kết quả và đáp án chi tiết</strong> sau khi hoàn thành cho bài kiểm tra này.
-                        </p>
-                        <p class="text-[11px] text-neutral-400 leading-relaxed">
-                            Toàn bộ bài làm của bạn đã được ghi nhận an toàn trên hệ thống và sẽ được giảng viên tổng kết sau.
-                        </p>
-                    </div>
-                </div>
-            @endif
 
             @if($canViewResultDetails)
                 <!-- Chi tiết từng câu hỏi và đối chiếu đáp án -->
@@ -379,6 +479,23 @@
                     </div>
                 @endforeach
             </div>
+            @else
+                <!-- Thông báo khi cấu hình không cho xem câu hỏi & đáp án chi tiết -->
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-8 sm:p-10 text-center space-y-3 shadow-xs">
+                    <div class="w-12 h-12 rounded-2xl bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center mx-auto text-xl font-bold shadow-2xs">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <div class="max-w-md mx-auto space-y-1">
+                        <h3 class="text-base font-extrabold text-slate-900">
+                            Câu hỏi &amp; đáp án chi tiết không hiển thị
+                        </h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Theo cài đặt của bài kiểm tra này, học viên chỉ xem điểm số sau khi nộp bài mà không hiển thị lại nội dung câu hỏi và đáp án chi tiết.
+                        </p>
+                    </div>
+                </div>
             @endif
 
             <div class="text-center pt-4">

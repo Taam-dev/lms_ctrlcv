@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Notification;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
+use App\Models\User;
 use App\Services\AiQuizGeneratorService;
 use App\Services\QuizJsonService;
 use Illuminate\Http\Request;
@@ -61,6 +64,10 @@ class QuizController extends Controller
         $startsAt = $request->filled('starts_at') ? $request->input('starts_at') : ($extracted['quiz']['starts_at'] ?? null);
         $endsAt = $request->filled('ends_at') ? $request->input('ends_at') : ($extracted['quiz']['ends_at'] ?? null);
         $questionLimit = $request->filled('question_limit') ? (int) $request->input('question_limit') : ($extracted['quiz']['question_limit'] ?? null);
+        $maxAttempts = $request->filled('max_attempts') ? (int) $request->input('max_attempts') : ($extracted['quiz']['max_attempts'] ?? null);
+        if ($maxAttempts !== null && $maxAttempts <= 0) {
+            $maxAttempts = null;
+        }
 
         $validator = validator([
             'course_id' => $courseId,
@@ -69,6 +76,7 @@ class QuizController extends Controller
             'duration_minutes' => $duration,
             'passing_score' => $passingScore,
             'question_limit' => $questionLimit,
+            'max_attempts' => $maxAttempts,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
         ], [
@@ -78,6 +86,7 @@ class QuizController extends Controller
             'duration_minutes' => 'required|integer|min:1|max:300',
             'passing_score' => 'required|numeric|min:0|max:10',
             'question_limit' => 'nullable|integer|min:1',
+            'max_attempts' => 'nullable|integer|min:1',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ], [
@@ -131,9 +140,31 @@ class QuizController extends Controller
             'show_result_after_completion' => $showResult,
             'status' => 'pending', // Mặc định chờ admin duyệt
             'question_limit' => $questionLimit,
+            'max_attempts' => $maxAttempts,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
         ], $extracted['questions']);
+
+        if ($quiz->course_id && $quiz->status === 'approved') {
+            $studentIds = Enrollment::where('course_id', $quiz->course_id)->pluck('student_id');
+            $courseTitle = $quiz->course ? $quiz->course->title : 'khóa học';
+            Notification::send(
+                $studentIds,
+                'Bài kiểm tra mới',
+                "Khóa học \"{$courseTitle}\" vừa có bài kiểm tra mới: \"{$quiz->title}\". Hãy tham gia làm bài ngay!",
+                route('student.quizzes.take', $quiz->id),
+                'quiz_created'
+            );
+        } elseif ($quiz->status === 'pending') {
+            $adminIds = User::where('role', 'admin')->pluck('id');
+            Notification::send(
+                $adminIds,
+                'Bài kiểm tra mới chờ duyệt',
+                'Giảng viên '.auth()->user()->name." vừa tạo bài kiểm tra \"{$quiz->title}\" cần phê duyệt.",
+                route('admin.quizzes.index', ['status' => 'pending']),
+                'quiz_pending'
+            );
+        }
 
         $qCount = count($extracted['questions']);
         $message = $qCount > 0
@@ -168,6 +199,10 @@ class QuizController extends Controller
             $type = 'quiz';
         }
         $questionLimit = $request->filled('question_limit') ? (int) $request->input('question_limit') : null;
+        $maxAttempts = $request->filled('max_attempts') ? (int) $request->input('max_attempts') : null;
+        if ($maxAttempts !== null && $maxAttempts <= 0) {
+            $maxAttempts = null;
+        }
 
         $validator = validator([
             'course_id' => $courseId,
@@ -177,6 +212,7 @@ class QuizController extends Controller
             'duration_minutes' => $request->duration_minutes,
             'passing_score' => $request->passing_score,
             'question_limit' => $questionLimit,
+            'max_attempts' => $maxAttempts,
             'starts_at' => $request->starts_at,
             'ends_at' => $request->ends_at,
         ], [
@@ -187,6 +223,7 @@ class QuizController extends Controller
             'duration_minutes' => 'required|integer|min:1|max:300',
             'passing_score' => 'required|numeric|min:0|max:10',
             'question_limit' => 'nullable|integer|min:1',
+            'max_attempts' => 'nullable|integer|min:1',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ], [
@@ -235,6 +272,7 @@ class QuizController extends Controller
             'duration_minutes' => $request->duration_minutes,
             'passing_score' => $request->passing_score,
             'question_limit' => $questionLimit,
+            'max_attempts' => $maxAttempts,
             'randomize_questions' => $request->boolean('randomize_questions'),
             'show_result_after_completion' => $request->boolean('show_result_after_completion'),
             'starts_at' => $request->filled('starts_at') ? $request->starts_at : null,

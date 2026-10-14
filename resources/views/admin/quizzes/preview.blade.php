@@ -70,7 +70,7 @@
     <div class="max-w-5xl mx-auto space-y-6">
 
         <!-- Thông số bài thi -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
             <div>
                 <span class="text-xs text-slate-400 block mb-1">Thời gian làm bài</span>
                 <strong class="text-base text-slate-900 font-black">{{ $quiz->duration_minutes }} phút</strong>
@@ -80,15 +80,21 @@
                 <strong class="text-base text-pink-600 font-black">&ge; {{ $quiz->passing_score }}/10</strong>
             </div>
             <div>
+                <span class="text-xs text-slate-400 block mb-1">Số lần làm lại</span>
+                <strong class="text-base text-slate-900 font-black">
+                    {{ $quiz->max_attempts ? $quiz->max_attempts . ' lần' : 'Thoải mái' }}
+                </strong>
+            </div>
+            <div>
                 <span class="text-xs text-slate-400 block mb-1">Xáo trộn câu hỏi</span>
                 <strong class="text-base {{ $quiz->randomize_questions ? 'text-emerald-600' : 'text-slate-500' }} font-black">
                     {{ $quiz->randomize_questions ? 'Có (Bật)' : 'Không (Tắt)' }}
                 </strong>
             </div>
             <div>
-                <span class="text-xs text-slate-400 block mb-1">Xem kết quả sau khi làm</span>
+                <span class="text-xs text-slate-400 block mb-1">Xem kết quả sau thi</span>
                 <strong class="text-base {{ $quiz->show_result_after_completion ? 'text-emerald-600' : 'text-slate-500' }} font-black">
-                    {{ $quiz->show_result_after_completion ? 'Có (Cho phép)' : 'Không (Ẩn)' }}
+                    {{ $quiz->show_result_after_completion ? 'Có' : 'Ẩn' }}
                 </strong>
             </div>
             <div>

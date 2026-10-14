@@ -8,6 +8,7 @@ use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonCompletion;
+use App\Models\Notification;
 use App\Models\QuizAttempt;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
@@ -535,6 +536,20 @@ class CourseController extends Controller
                 'comment' => ! empty($validated['comment']) ? trim($validated['comment']) : null,
             ]
         );
+
+        // Gửi thông báo đến giảng viên/chủ khóa học
+        if ($course->teacher_id && $course->teacher_id !== auth()->id()) {
+            $reviewerName = auth()->user()->name;
+            $starText = "{$validated['rating']}/5 sao";
+            $commentSnippet = ! empty($validated['comment']) ? ': "'.Str::limit($validated['comment'], 80).'"' : '.';
+            Notification::send(
+                $course->teacher_id,
+                'Đánh giá mới cho khóa học',
+                "Học viên {$reviewerName} đã đánh giá {$starText} cho khóa học \"{$course->title}\"{$commentSnippet}",
+                route('courses.show', $course->slug ?? $course->id),
+                'course_reviewed'
+            );
+        }
 
         return back()->with('success', 'Cảm ơn bạn! Đánh giá khóa học đã được lưu thành công.');
     }

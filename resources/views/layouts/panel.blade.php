@@ -145,6 +145,7 @@
                             <span class="whitespace-nowrap">{{ $topPending }} mục chờ duyệt</span>
                         </a>
                     @endif
+                    <x-notification-bell :dark="false" />
                     <a href="{{ route('home') }}" class="hidden sm:inline text-xs font-bold uppercase tracking-wider text-neutral-500 hover:text-pink-600 transition">
                         Trang chủ
                     </a>

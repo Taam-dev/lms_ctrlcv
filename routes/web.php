@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\QuizController as AdminQuizController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SitemapController;
@@ -75,6 +76,11 @@ Route::middleware(['auth'])->group(function () {
     // gửi báo cáo vi phạm
     Route::post('/users/{user}/report', [ReportController::class, 'storeUserReport'])->name('users.report');
     Route::post('/reviews/{review}/report', [ReportController::class, 'storeReviewReport'])->name('reviews.report');
+
+    // thông báo hệ thống
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}/go', [NotificationController::class, 'go'])->name('notifications.go');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
 });
 
 // route cho giảng viên

@@ -120,15 +120,28 @@
                     </div>
 
                     <div>
-                        <label for="status" class="block text-sm font-bold text-slate-900 mb-1.5">
-                            Trạng thái phê duyệt <span class="text-rose-500">*</span>
+                        <label for="max_attempts" class="block text-sm font-bold text-slate-900 mb-1.5">
+                            Số lần làm lại tối đa
                         </label>
-                        <select name="status" id="status" class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
-                            <option value="approved" {{ old('status', $quiz->status) === 'approved' ? 'selected' : '' }}>Đã duyệt (Approved)</option>
-                            <option value="pending" {{ old('status', $quiz->status) === 'pending' ? 'selected' : '' }}>Chờ duyệt (Pending)</option>
-                            <option value="rejected" {{ old('status', $quiz->status) === 'rejected' ? 'selected' : '' }}>Từ chối / Tạm ẩn (Rejected)</option>
-                        </select>
+                        <input type="number" name="max_attempts" id="max_attempts" value="{{ old('max_attempts', $quiz->max_attempts) }}" min="1"
+                               placeholder="Thoải mái (mặc định)"
+                               class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                        <p class="text-slate-400 text-xs mt-1">Để trống = thoải mái.</p>
+                        @error('max_attempts')
+                            <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
+                </div>
+
+                <div>
+                    <label for="status" class="block text-sm font-bold text-slate-900 mb-1.5">
+                        Trạng thái phê duyệt <span class="text-rose-500">*</span>
+                    </label>
+                    <select name="status" id="status" class="w-full max-w-sm rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                        <option value="approved" {{ old('status', $quiz->status) === 'approved' ? 'selected' : '' }}>Đã duyệt (Approved)</option>
+                        <option value="pending" {{ old('status', $quiz->status) === 'pending' ? 'selected' : '' }}>Chờ duyệt (Pending)</option>
+                        <option value="rejected" {{ old('status', $quiz->status) === 'rejected' ? 'selected' : '' }}>Từ chối / Tạm ẩn (Rejected)</option>
+                    </select>
                 </div>
 
                 <!-- Thời gian mở và hạn chót làm bài kiểm tra -->
@@ -184,7 +197,7 @@
                         <div>
                             <span class="font-bold text-slate-900 text-sm block">Có thể xem kết quả sau khi hoàn thành</span>
                             <span class="text-slate-500 text-xs block leading-relaxed mt-0.5">
-                                Cho phép học viên xem lại kết quả và đáp án chi tiết sau khi nộp bài.
+                                Cho phép học viên xem lại kết quả và đáp án chi tiết sau khi nộp bài. Nếu chọn "Không", học viên chỉ xem được điểm số mà không hiển thị lại câu hỏi và đáp án chi tiết.
                             </span>
                         </div>
                         <div class="flex items-center gap-4 shrink-0 bg-white px-3.5 py-1.5 rounded-xl border border-pink-200">

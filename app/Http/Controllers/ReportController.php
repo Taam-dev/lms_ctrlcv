@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourseReview;
+use App\Models\Notification;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -48,6 +49,24 @@ class ReportController extends Controller
             'status' => 'pending',
         ]);
 
+        // Gửi thông báo đến tất cả quản trị viên
+        $adminIds = User::where('role', 'admin')->pluck('id');
+        $reporterName = Auth::user()->name;
+        $reasonLabels = [
+            'avatar_inappropriate' => 'Ảnh đại diện không phù hợp',
+            'name_inappropriate' => 'Tên hiển thị phản cảm',
+            'harassment' => 'Quấy rối / Công kích',
+            'other' => 'Lý do khác',
+        ];
+        $reasonText = $reasonLabels[$validated['reason']] ?? $validated['reason'];
+        Notification::send(
+            $adminIds,
+            'Báo cáo người dùng vi phạm',
+            "Người dùng {$reporterName} đã báo cáo tài khoản {$user->name} ({$reasonText}).",
+            route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending']),
+            'user_reported'
+        );
+
         return back()->with('success', 'Cảm ơn bạn! Báo cáo vi phạm tài khoản đã được gửi đến ban quản trị để kiểm duyệt.');
     }
 
@@ -87,6 +106,24 @@ class ReportController extends Controller
             'details' => $validated['details'] ?? null,
             'status' => 'pending',
         ]);
+
+        // Gửi thông báo đến tất cả quản trị viên
+        $adminIds = User::where('role', 'admin')->pluck('id');
+        $reporterName = Auth::user()->name;
+        $reasonLabels = [
+            'negative_comment' => 'Bình luận thù địch / Tiêu cực',
+            'spam' => 'Spam / Quảng cáo',
+            'misinformation' => 'Thông tin sai lệch',
+            'other' => 'Lý do khác',
+        ];
+        $reasonText = $reasonLabels[$validated['reason']] ?? $validated['reason'];
+        Notification::send(
+            $adminIds,
+            'Báo cáo bình luận vi phạm',
+            "Người dùng {$reporterName} đã báo cáo một đánh giá khóa học ({$reasonText}).",
+            route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending']),
+            'user_reported'
+        );
 
         return back()->with('success', 'Cảm ơn bạn! Báo cáo bình luận vi phạm đã được gửi đến ban quản trị để kiểm duyệt.');
     }

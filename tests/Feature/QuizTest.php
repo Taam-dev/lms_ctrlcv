@@ -987,9 +987,22 @@ class QuizTest extends TestCase
 
         $response = $this->actingAs($student)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
         $response->assertOk();
-        $response->assertSee('Kết quả bài thi được bảo mật');
+        // Học viên vẫn xem được bảng điểm và điểm số tổng kết
+        $response->assertSee('10.0');
+        $response->assertSee('/ 10 điểm');
+        $response->assertSee('KẾT QUẢ: ĐẠT YÊU CẦU');
+        $response->assertSee('Câu hỏi &amp; đáp án chi tiết không hiển thị', false);
+        // Nhưng KHÔNG hiển thị lại câu hỏi và đáp án chi tiết
         $response->assertDontSee('Đối chiếu đáp án chi tiết');
+        $response->assertDontSee('Câu hỏi bảo mật 1?');
         $response->assertDontSee('Giải thích bí mật');
+
+        // Giảng viên xem kết quả học viên vẫn thấy đầy đủ câu hỏi và lời giải thích
+        $teacherResponse = $this->actingAs($teacher)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
+        $teacherResponse->assertOk();
+        $teacherResponse->assertSee('Đối chiếu đáp án chi tiết');
+        $teacherResponse->assertSee('Câu hỏi bảo mật 1?');
+        $teacherResponse->assertSee('Giải thích bí mật');
     }
 
     /**
@@ -1272,5 +1285,214 @@ class QuizTest extends TestCase
         $adminResultsResponse->assertSee('Thao tác');
         $adminResultsResponse->assertSee('Xem');
         $adminResultsResponse->assertSee(':5');
+    }
+
+    /**
+     * Admin và giảng viên có thể tạo và cập nhật quiz với giới hạn số lần làm bài (max_attempts)
+     */
+    public function test_admin_and_teacher_can_create_and_update_quiz_with_max_attempts(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Test Max Attempts',
+            'status' => 'approved',
+        ]);
+
+        // 1. Admin tạo quiz với max_attempts = 3
+        $adminResponse = $this->actingAs($admin)->post(route('admin.quizzes.store'), [
+            'course_id' => $course->id,
+            'title' => 'Admin Quiz with Max Attempts',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'max_attempts' => 3,
+        ]);
+        $adminResponse->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'title' => 'Admin Quiz with Max Attempts',
+            'max_attempts' => 3,
+        ]);
+
+        // 2. Admin tạo quiz để trống max_attempts -> mặc định null (thoải mái)
+        $adminResponse2 = $this->actingAs($admin)->post(route('admin.quizzes.store'), [
+            'course_id' => $course->id,
+            'title' => 'Admin Quiz Unlimited Attempts',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'max_attempts' => '',
+        ]);
+        $adminResponse2->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'title' => 'Admin Quiz Unlimited Attempts',
+            'max_attempts' => null,
+        ]);
+
+        // 3. Teacher tạo quiz với max_attempts = 2
+        $teacherResponse = $this->actingAs($teacher)->post(route('teacher.quizzes.store'), [
+            'course_id' => $course->id,
+            'title' => 'Teacher Quiz with Max Attempts',
+            'duration_minutes' => 15,
+            'passing_score' => 6.0,
+            'max_attempts' => 2,
+        ]);
+        $teacherResponse->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'title' => 'Teacher Quiz with Max Attempts',
+            'max_attempts' => 2,
+        ]);
+
+        $createdQuiz = Quiz::where('title', 'Teacher Quiz with Max Attempts')->first();
+
+        // 4. Teacher cập nhật max_attempts lên 5
+        $updateResponse = $this->actingAs($teacher)->put(route('teacher.quizzes.update', $createdQuiz->id), [
+            'title' => 'Teacher Quiz with Max Attempts Updated',
+            'duration_minutes' => 20,
+            'passing_score' => 6.0,
+            'max_attempts' => 5,
+        ]);
+        $updateResponse->assertRedirect();
+        $this->assertDatabaseHas('quizzes', [
+            'id' => $createdQuiz->id,
+            'title' => 'Teacher Quiz with Max Attempts Updated',
+            'max_attempts' => 5,
+        ]);
+    }
+
+    /**
+     * Học viên bị chặn làm bài và nộp bài khi đã đạt số lần làm lại tối đa
+     */
+    public function test_student_cannot_take_or_submit_quiz_when_max_attempts_reached(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Python',
+            'status' => 'approved',
+        ]);
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz giới hạn 2 lần làm',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'max_attempts' => 2,
+            'status' => 'approved',
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Câu hỏi 1?',
+            'order' => 1,
+        ]);
+        QuizOption::create([
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Đáp án đúng',
+            'is_correct' => true,
+        ]);
+
+        // Lần 1: Học viên vào thi thành công
+        $take1 = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $take1->assertOk();
+
+        // Học viên nộp bài lần 1
+        $submit1 = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [$question->id => 0],
+        ]);
+        $submit1->assertRedirect();
+        $this->assertEquals(1, $quiz->attempts()->where('student_id', $student->id)->count());
+
+        // Lần 2: Học viên vào thi lần 2 thành công
+        $take2 = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $take2->assertOk();
+
+        // Học viên nộp bài lần 2
+        $submit2 = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [$question->id => 0],
+        ]);
+        $submit2->assertRedirect();
+        $this->assertEquals(2, $quiz->attempts()->where('student_id', $student->id)->count());
+
+        // Đã đạt giới hạn tối đa 2 lần
+        $this->assertTrue($quiz->hasReachedMaxAttempts($student));
+        $this->assertEquals(0, $quiz->getRemainingAttempts($student));
+
+        // Lần 3: Học viên cố tình vào link làm bài -> bị redirect và thông báo lỗi
+        $take3 = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $take3->assertRedirect();
+        $take3->assertSessionHas('error');
+
+        // Học viên cố tình gửi request POST submit -> bị abort 403
+        $submit3 = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [$question->id => 0],
+        ]);
+        $submit3->assertStatus(403);
+    }
+
+    /**
+     * Học viên có thể làm bài nhiều lần nếu không cài đặt max_attempts (mặc định thoải mái)
+     */
+    public function test_student_can_take_quiz_unlimited_times_when_max_attempts_is_null(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học JavaScript',
+            'status' => 'approved',
+        ]);
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz không giới hạn lần làm',
+            'duration_minutes' => 20,
+            'passing_score' => 5.0,
+            'max_attempts' => null,
+            'status' => 'approved',
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'JavaScript là gì?',
+            'order' => 1,
+        ]);
+        QuizOption::create([
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Ngôn ngữ lập trình web',
+            'is_correct' => true,
+        ]);
+
+        // Tạo sẵn 5 lượt làm bài của học viên này
+        for ($i = 0; $i < 5; $i++) {
+            QuizAttempt::create([
+                'quiz_id' => $quiz->id,
+                'student_id' => $student->id,
+                'total_questions' => 1,
+                'correct_answers' => 1,
+                'score' => 10.0,
+                'is_passed' => true,
+                'completed_at' => now(),
+            ]);
+        }
+
+        $this->assertFalse($quiz->hasReachedMaxAttempts($student));
+        $this->assertNull($quiz->getRemainingAttempts($student));
+
+        // Học viên vẫn có thể vào làm bài lần thứ 6 bình thường
+        $takeResponse = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertOk();
     }
 }

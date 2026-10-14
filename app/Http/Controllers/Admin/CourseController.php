@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -279,6 +280,16 @@ class CourseController extends Controller
     {
         $course = Course::findOrFail($id);
         $course->update(['status' => 'approved']);
+
+        if ($course->teacher_id && $course->teacher_id !== auth()->id()) {
+            Notification::send(
+                $course->teacher_id,
+                'Khóa học đã được phê duyệt',
+                "Khóa học \"{$course->title}\" của bạn đã được quản trị viên duyệt và sẵn sàng cho học viên tham gia.",
+                route('instructor.courses.edit', $course->id),
+                'course_approved'
+            );
+        }
 
         return back()->with('success', 'Đã duyệt khóa học thành công!');
     }

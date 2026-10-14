@@ -18,6 +18,7 @@ class Quiz extends Model
         'show_result_after_completion',
         'status',
         'question_limit',
+        'max_attempts',
         'starts_at',
         'ends_at',
     ];
@@ -55,6 +56,30 @@ class Quiz extends Model
         return ! $this->isExpired() && ! $this->isNotStarted();
     }
 
+    public function hasReachedMaxAttempts(int|User $student): bool
+    {
+        if ($this->max_attempts === null || $this->max_attempts <= 0) {
+            return false;
+        }
+
+        $studentId = $student instanceof User ? $student->id : $student;
+        $count = $this->attempts()->where('student_id', $studentId)->count();
+
+        return $count >= $this->max_attempts;
+    }
+
+    public function getRemainingAttempts(int|User $student): ?int
+    {
+        if ($this->max_attempts === null || $this->max_attempts <= 0) {
+            return null; // Không giới hạn
+        }
+
+        $studentId = $student instanceof User ? $student->id : $student;
+        $count = $this->attempts()->where('student_id', $studentId)->count();
+
+        return max(0, $this->max_attempts - $count);
+    }
+
     protected function casts(): array
     {
         return [
@@ -63,6 +88,7 @@ class Quiz extends Model
             'passing_score' => 'float',
             'duration_minutes' => 'integer',
             'question_limit' => 'integer',
+            'max_attempts' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];

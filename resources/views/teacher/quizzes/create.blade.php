@@ -648,8 +648,8 @@
                             @enderror
                         </div>
 
-                        <!-- 3 Cột: Thời gian làm bài & Điểm đạt & Số lượng câu hỏi mỗi lượt thi -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+                        <!-- 4 Cột: Thời gian làm bài & Điểm đạt & Số lượng câu hỏi mỗi lượt thi & Số lần làm lại tối đa -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
                             <div>
                                 <label for="duration_minutes" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center">
                                     Thời gian làm bài (Phút) <span class="text-rose-500 ml-0.5">*</span>
@@ -690,6 +690,21 @@
                                     ⚠️ Không được vượt quá tổng <span x-text="totalQuestions"></span> câu hỏi hiện có!
                                 </p>
                                 @error('question_limit')
+                                    <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="max_attempts" class="block text-sm font-bold text-slate-900 mb-1.5 min-h-[22px] flex items-center justify-between">
+                                    <span>Số lần làm lại tối đa</span>
+                                </label>
+                                <input type="number" name="max_attempts" id="max_attempts" x-model="maxAttempts" min="1"
+                                       placeholder="Thoải mái (mặc định)"
+                                       class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                                <p class="text-slate-400 text-xs mt-1">
+                                    Để trống = thoải mái (không giới hạn).
+                                </p>
+                                @error('max_attempts')
                                     <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -750,7 +765,7 @@
                                 <div>
                                     <span class="font-bold text-slate-900 text-sm block">Có thể xem kết quả sau khi hoàn thành</span>
                                     <span class="text-slate-500 text-xs block leading-relaxed mt-0.5">
-                                        Quy định xem học viên có được phép xem lại kết quả và đáp án chi tiết sau khi nộp bài hay không.
+                                        Cho phép học viên xem lại kết quả và đáp án chi tiết sau khi nộp bài. Nếu chọn "Không", học viên chỉ xem được điểm số mà không hiển thị lại câu hỏi và đáp án chi tiết.
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-4 shrink-0 bg-white px-3.5 py-1.5 rounded-xl border border-pink-200">
@@ -814,6 +829,7 @@
                 durationMinutes: @json(old('duration_minutes', 15)),
                 passingScore: @json(old('passing_score', 5.0)),
                 questionLimit: @json(old('question_limit', '')),
+                maxAttempts: @json(old('max_attempts', '')),
                 startsAt: @json(old('starts_at', '')),
                 endsAt: @json(old('ends_at', '')),
                 randomizeQuestions: true,
@@ -1427,6 +1443,9 @@
                         }
                         if (quizObj.question_limit !== undefined && !this.questionLimit) {
                             this.questionLimit = quizObj.question_limit;
+                        }
+                        if (quizObj.max_attempts !== undefined && !this.maxAttempts) {
+                            this.maxAttempts = quizObj.max_attempts;
                         }
                         if (quizObj.randomize_questions !== undefined) {
                             this.randomizeQuestions = Boolean(quizObj.randomize_questions);

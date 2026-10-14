@@ -105,6 +105,14 @@ class QuizController extends Controller
             }
         }
 
+        // Kiểm tra số lần làm lại bài kiểm tra tối đa
+        if ($quiz->hasReachedMaxAttempts(auth()->id())) {
+            $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
+
+            return redirect($redirectRoute)
+                ->with('error', 'Bạn đã sử dụng hết số lần làm bài kiểm tra này (tối đa '.$quiz->max_attempts.' lần).');
+        }
+
         // Kiểm tra bài quiz đã có câu hỏi chưa
         $questionCount = $quiz->questions()->count();
         if ($questionCount === 0) {
@@ -155,6 +163,11 @@ class QuizController extends Controller
             if (! $isEnrolled) {
                 abort(403, 'Bạn cần đăng ký khóa học để có thể thực hiện bài kiểm tra này.');
             }
+        }
+
+        // Kiểm tra số lần làm lại bài kiểm tra tối đa
+        if ($quiz->hasReachedMaxAttempts(auth()->id())) {
+            abort(403, 'Bạn đã sử dụng hết số lần làm bài kiểm tra này (tối đa '.$quiz->max_attempts.' lần).');
         }
 
         // Lấy danh sách câu hỏi đã được giao cho học viên trong lượt làm bài này
