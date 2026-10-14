@@ -384,7 +384,7 @@ class QuizController extends Controller
     {
         abort_if($quiz->teacher_id !== auth()->id(), 403);
 
-        $quiz->load('course');
+        $quiz->load(['course', 'questions.options']);
         $attempts = QuizAttempt::with('student')
             ->where('quiz_id', $quiz->id)
             ->latest()

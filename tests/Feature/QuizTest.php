@@ -1155,4 +1155,122 @@ class QuizTest extends TestCase
             'ends_at' => 'Thời hạn làm bài ít nhất là 1 tiếng.',
         ]);
     }
+
+    /**
+     * Kiem tra luu so lan hoc vien bi canh cao vao quiz_attempt khi nop bai
+     */
+    public function test_student_quiz_submission_records_warning_count(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'type' => 'quiz',
+            'title' => 'Bài thi kiểm tra cảnh cáo',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Câu hỏi 1?',
+            'order_number' => 1,
+        ]);
+
+        $option = QuizOption::create([
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Đáp án đúng',
+            'is_correct' => true,
+        ]);
+
+        $response = $this->actingAs($student)->post(route('student.quizzes.submit', $quiz->id), [
+            'question_ids' => [$question->id],
+            'answers' => [$question->id => $option->id],
+            'warning_count' => 3,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('quiz_attempts', [
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'warning_count' => 3,
+        ]);
+    }
+
+    /**
+     * Kiem tra thong tin canh cao bi an voi hoc vien nhung hien thi cho giang vien va admin
+     */
+    public function test_warning_count_is_hidden_from_student_but_visible_to_teacher_and_admin(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'type' => 'quiz',
+            'title' => 'Bài thi quy chế bảo mật cảnh cáo',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'show_result_after_completion' => true,
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Câu hỏi quy chế?',
+            'order_number' => 1,
+        ]);
+
+        $option = QuizOption::create([
+            'quiz_question_id' => $question->id,
+            'option_text' => 'Đáp án A',
+            'is_correct' => true,
+        ]);
+
+        $attempt = QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'total_questions' => 1,
+            'correct_answers' => 1,
+            'score' => 10.0,
+            'is_passed' => true,
+            'warning_count' => 5,
+            'completed_at' => now(),
+        ]);
+
+        // 1. Hoc vien xem ket qua cua chinh minh -> KHONG duoc thay thong tin canh cao
+        $studentResponse = $this->actingAs($student)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
+        $studentResponse->assertOk();
+        $studentResponse->assertDontSee('GIÁM SÁT VI PHẠM (ADMIN & GIẢNG VIÊN)');
+        $studentResponse->assertDontSee('Số lần học viên bị cảnh cáo chuyển tab:');
+
+        // 2. Giang vien xem ket qua hoc vien -> THAY thong tin canh cao :5
+        $teacherResponse = $this->actingAs($teacher)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
+        $teacherResponse->assertOk();
+        $teacherResponse->assertSee('GIÁM SÁT VI PHẠM (ADMIN &amp; GIẢNG VIÊN)', false);
+        $teacherResponse->assertSee(':5');
+
+        // 3. Admin xem ket qua hoc vien -> THAY thong tin canh cao :5
+        $adminResponse = $this->actingAs($admin)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
+        $adminResponse->assertOk();
+        $adminResponse->assertSee('GIÁM SÁT VI PHẠM (ADMIN &amp; GIẢNG VIÊN)', false);
+        $adminResponse->assertSee(':5');
+
+        // 4. Giang vien xem trang danh sach results -> Co cot thao tac va nut Xem
+        $teacherResultsResponse = $this->actingAs($teacher)->get(route('instructor.quizzes.results', $quiz->id));
+        $teacherResultsResponse->assertOk();
+        $teacherResultsResponse->assertSee('Thao tác');
+        $teacherResultsResponse->assertSee('Xem');
+        $teacherResultsResponse->assertSee(':5');
+
+        // 5. Admin xem trang danh sach results -> Co cot thao tac va nut Xem
+        $adminResultsResponse = $this->actingAs($admin)->get(route('admin.quizzes.results', $quiz->id));
+        $adminResultsResponse->assertOk();
+        $adminResultsResponse->assertSee('Thao tác');
+        $adminResultsResponse->assertSee('Xem');
+        $adminResultsResponse->assertSee(':5');
+    }
 }

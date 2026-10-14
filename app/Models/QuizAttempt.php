@@ -14,6 +14,7 @@ class QuizAttempt extends Model
         'score',
         'is_passed',
         'answers',
+        'warning_count',
         'completed_at',
     ];
 
@@ -23,6 +24,7 @@ class QuizAttempt extends Model
             'score' => 'float',
             'is_passed' => 'boolean',
             'answers' => 'array',
+            'warning_count' => 'integer',
             'completed_at' => 'datetime',
         ];
     }

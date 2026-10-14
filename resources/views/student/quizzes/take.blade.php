@@ -119,6 +119,7 @@
             <!-- Form nộp bài quiz -->
             <form id="quiz-form" action="{{ route('student.quizzes.submit', $quiz->id) }}" method="POST" class="space-y-6">
                 @csrf
+                <input type="hidden" name="warning_count" id="quiz-warning-count" value="0">
 
                 @foreach($questions as $index => $question)
                     <input type="hidden" name="question_ids[]" value="{{ $question->id }}">
@@ -276,11 +277,15 @@
                 <p class="text-xs text-amber-100 font-bold leading-relaxed">
                     Hệ thống phát hiện bạn vừa chuyển sang tab khác trong trình duyệt!
                 </p>
+                <div class="p-2.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-xs text-amber-200 font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0 animate-ping"></span>
+                    <span>Lần cảnh cáo này đã được hệ thống ghi nhận và lưu lại vào kết quả bài làm.</span>
+                </div>
                 <p class="text-xs text-amber-200 leading-relaxed font-semibold">
                     Quy chế thi trực tuyến nghiêm cấm học viên rời khỏi giao diện làm bài. Nếu bạn tiếp tục chuyển tab hay chuyển sang trang khác, bạn <span class="text-white underline font-black">sẽ bắt buộc phải nộp bài</span> trước khi làm xong!
                 </p>
                 <p class="text-[11px] text-neutral-400 leading-normal">
-                    Hãy tập trung hoàn thành bài thi trên giao diện này để kết quả bài làm được công nhận hợp lệ.
+                    Số lần cảnh cáo sẽ được lưu trữ trong hệ thống để Giảng viên và Quản trị viên đối chiếu khi tổng kết bài thi.
                 </p>
             </div>
 
@@ -567,9 +572,17 @@
                 if (document.hidden) {
                     // Học viên vừa rời tab hoặc chuyển sang ứng dụng khác
                     tabSwitchCount++;
+                    const hiddenWarningInput = document.getElementById('quiz-warning-count');
+                    if (hiddenWarningInput) {
+                        hiddenWarningInput.value = tabSwitchCount;
+                    }
                 } else {
                     // Học viên quay lại bài thi -> Hiện cảnh báo vi phạm quy chế
                     if (tabSwitchCount > 0) {
+                        const hiddenWarningInput = document.getElementById('quiz-warning-count');
+                        if (hiddenWarningInput) {
+                            hiddenWarningInput.value = tabSwitchCount;
+                        }
                         if (tabSwitchCountText) {
                             tabSwitchCountText.innerText = tabSwitchCount;
                         }

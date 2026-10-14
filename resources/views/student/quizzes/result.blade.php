@@ -31,23 +31,46 @@
                     </div>
                     <span>&bull;</span>
                     <span>Nộp bài lúc: {{ $attempt->completed_at ? $attempt->completed_at->format('H:i d/m/Y') : $attempt->created_at->format('H:i d/m/Y') }}</span>
+                    @php
+                        $isStaff = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher() || auth()->user()->isInstructor());
+                    @endphp
+                    @if($isStaff)
+                        <span>&bull;</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-pink-600/30 border border-pink-500/40 text-pink-200 text-xs font-bold">
+                            Học viên: <strong class="text-white">{{ $attempt->student->name ?? 'N/A' }}</strong> ({{ $attempt->student->email ?? '' }})
+                        </span>
+                    @endif
                 </div>
             </div>
             <div class="flex items-center gap-3 shrink-0">
-                <a href="{{ route('student.quizzes.index') }}" 
-                   class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider border border-white/20 hover:border-white text-neutral-300 hover:text-white transition">
-                    &larr; Quizzes
-                </a>
-                @if(!$quiz->isExpired() && !$quiz->isNotStarted())
-                    <button type="button" 
-                            @click="confirmModalOpen = true"
-                            class="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-pink-600 hover:bg-pink-500 text-white transition cursor-pointer">
-                        Làm lại bài thi
-                    </button>
-                @elseif($quiz->isExpired())
-                    <span class="px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed">
-                        Đã hết hạn thi
-                    </span>
+                @if($isStaff)
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
+                           class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
+                            &larr; Bảng điểm học viên
+                        </a>
+                    @else
+                        <a href="{{ route('instructor.quizzes.results', $quiz->id) }}" 
+                           class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
+                            &larr; Bảng điểm học viên
+                        </a>
+                    @endif
+                @else
+                    <a href="{{ route('student.quizzes.index') }}" 
+                       class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider border border-white/20 hover:border-white text-neutral-300 hover:text-white transition">
+                        &larr; Quizzes
+                    </a>
+                    @if(!$quiz->isExpired() && !$quiz->isNotStarted())
+                        <button type="button" 
+                                @click="confirmModalOpen = true"
+                                class="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-pink-600 hover:bg-pink-500 text-white transition cursor-pointer">
+                            Làm lại bài thi
+                        </button>
+                    @elseif($quiz->isExpired())
+                        <span class="px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed">
+                            Đã hết hạn thi
+                        </span>
+                    @endif
                 @endif
             </div>
         </div>
@@ -116,6 +139,74 @@
             @endphp
 
             @if($canViewResultDetails)
+                @if($isStaff)
+                    <!-- Khối Giám sát vi phạm / Cảnh cáo (Chỉ dành cho Giảng viên & Admin - Ẩn hoàn toàn với học viên) -->
+                    <div x-data="{ hideWarningCount: false }" class="bg-white border-2 border-dashed {{ ($attempt->warning_count ?? 0) > 0 ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300 bg-slate-50/40' }} p-6 relative shadow-xs">
+                        <!-- Nút icon trắng đen nhỏ ở trên góc bên phải để ẩn/hiện số lần bị cảnh cáo -->
+                        <div class="absolute top-4 right-4">
+                            <button type="button" 
+                                    @click="hideWarningCount = !hideWarningCount"
+                                    class="w-7 h-7 rounded bg-black text-white hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center transition cursor-pointer shadow-xs"
+                                    :title="hideWarningCount ? 'Hiện lại số lần cảnh cáo' : 'Ẩn số lần cảnh cáo'">
+                                <template x-if="!hideWarningCount">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                                    </svg>
+                                </template>
+                                <template x-if="hideWarningCount">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </template>
+                            </button>
+                        </div>
+
+                        <div class="pr-10">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-neutral-900 text-white rounded">
+                                    GIÁM SÁT VI PHẠM (ADMIN &amp; GIẢNG VIÊN)
+                                </span>
+                                <span class="text-xs text-neutral-500 font-semibold">
+                                    Học viên: <strong class="text-neutral-900">{{ $attempt->student->name ?? 'N/A' }}</strong> ({{ $attempt->student->email ?? '' }})
+                                </span>
+                            </div>
+
+                            <!-- Khối hiển thị số lần cảnh cáo -->
+                            <div class="flex items-center gap-3.5 mt-3">
+                                <div class="w-11 h-11 rounded-xl {{ ($attempt->warning_count ?? 0) > 0 ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-emerald-100 text-emerald-700 border border-emerald-300' }} flex items-center justify-center shrink-0">
+                                    @if(($attempt->warning_count ?? 0) > 0)
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                    @else
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    @endif
+                                </div>
+
+                                <div>
+                                    <span class="text-xs font-bold text-neutral-600 block">Số lần học viên bị cảnh cáo chuyển tab:</span>
+                                    <div class="mt-0.5 flex items-baseline gap-1.5">
+                                        <span x-show="!hideWarningCount" class="text-2xl sm:text-3xl font-black font-mono {{ ($attempt->warning_count ?? 0) > 0 ? 'text-amber-600' : 'text-neutral-900' }}">
+                                            :{{ $attempt->warning_count ?? 0 }}
+                                        </span>
+                                        <span x-show="hideWarningCount" x-cloak class="inline-block px-2.5 py-0.5 bg-neutral-200 text-neutral-600 rounded text-xs font-mono font-bold tracking-widest">
+                                            •••• (Đã ẩn)
+                                        </span>
+                                        <span x-show="!hideWarningCount" class="text-xs text-neutral-500 font-semibold">lần vi phạm</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] text-neutral-400 mt-2.5">
+                                * Lưu ý: Thông tin cảnh cáo vi phạm này được bảo mật trên hệ thống và <strong>không hiển thị cho học viên xem</strong>.
+                            </p>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Card Bảng điểm & Tổng quan kết quả -->
                 <div class="bg-white border border-pink-100 p-8 sm:p-10 text-center relative shadow-sm">
                     <div class="inline-block px-3 py-1 text-xs font-black uppercase tracking-widest mb-4 {{ $attempt->is_passed ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">
@@ -269,9 +360,20 @@
 
                         <!-- Lời giải thích của giảng viên -->
                         @if($question->explanation)
-                            <div class="p-3.5 bg-neutral-950 text-white text-xs border-l-2 border-pink-500">
-                                <strong class="text-pink-400 block mb-0.5 uppercase tracking-wider text-[10px]">Giải thích:</strong>
-                                <p class="text-neutral-300 leading-relaxed">{{ $question->explanation }}</p>
+                            <div class="mt-4 p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 border-l-4 border-l-amber-500 flex items-start gap-3 shadow-2xs">
+                                <div class="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5" title="Lời giải thích">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <strong class="text-amber-900 block mb-1 uppercase tracking-wider text-[11px] font-black">
+                                        Giải thích chi tiết:
+                                    </strong>
+                                    <p class="text-slate-800 text-xs sm:text-[13px] leading-relaxed whitespace-pre-line font-normal">
+                                        {{ $question->explanation }}
+                                    </p>
+                                </div>
                             </div>
                         @endif
                     </div>

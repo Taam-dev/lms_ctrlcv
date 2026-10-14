@@ -196,6 +196,7 @@ class QuizController extends Controller
             'score' => $score,
             'is_passed' => $isPassed,
             'answers' => $submittedAnswers,
+            'warning_count' => max(0, (int) $request->input('warning_count', 0)),
             'completed_at' => now(),
         ]);
 
@@ -214,6 +215,7 @@ class QuizController extends Controller
         }
 
         $quiz->load(['course.teacher', 'teacher', 'questions.options']);
+        $attempt->load('student');
 
         return view('student.quizzes.result', compact('quiz', 'attempt'));
     }

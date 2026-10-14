@@ -407,7 +407,7 @@ class QuizController extends Controller
      */
     public function results(Quiz $quiz)
     {
-        $quiz->load('course');
+        $quiz->load(['course', 'questions.options']);
         $attempts = QuizAttempt::with('student')
             ->where('quiz_id', $quiz->id)
             ->latest()
