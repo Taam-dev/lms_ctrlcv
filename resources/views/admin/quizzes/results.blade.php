@@ -14,9 +14,14 @@
                     Kết Quả Làm Bài: {{ $quiz->title }}
                 </h1>
             </div>
-            <a href="{{ route('admin.quizzes.index') }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs transition">
-                &larr; Quay lại danh sách Quizzes
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('admin.dashboard', ['tab' => 'attempts']) }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs transition">
+                    &larr; Tất cả kết quả
+                </a>
+                <a href="{{ route('admin.quizzes.index') }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs transition">
+                    Danh sách Quizzes
+                </a>
+            </div>
         </div>
     </x-slot>
 

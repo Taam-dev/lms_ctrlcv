@@ -11,6 +11,7 @@ use App\Models\QuizQuestion;
 use App\Services\AiQuizGeneratorService;
 use App\Services\QuizJsonService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
@@ -79,7 +80,25 @@ class QuizController extends Controller
             'question_limit' => 'nullable|integer|min:1',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
+        ], [
+            'ends_at.after_or_equal' => 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.',
+            'ends_at.date' => 'Thời gian kết thúc không đúng định dạng ngày tháng.',
+            'starts_at.date' => 'Thời gian bắt đầu không đúng định dạng ngày tháng.',
         ]);
+
+        $validator->after(function ($validator) use ($startsAt, $endsAt) {
+            if ($startsAt && $endsAt && ! $validator->errors()->has('ends_at')) {
+                try {
+                    $start = Carbon::parse($startsAt);
+                    $end = Carbon::parse($endsAt);
+                    if ($start->diffInMinutes($end, false) < 60) {
+                        $validator->errors()->add('ends_at', 'Thời hạn làm bài ít nhất là 1 tiếng.');
+                    }
+                } catch (\Exception $e) {
+                    // bo qua loi dinh dang
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -92,7 +111,7 @@ class QuizController extends Controller
             ])->withInput();
         }
 
-        // Nếu có chọn khóa học, kiểm tra quyền sở hữu của giảng viên
+        // kiem tra khoa hoc thuoc ve giang vien
         if ($courseId) {
             $course = Course::where('id', $courseId)
                 ->where('teacher_id', auth()->id())
@@ -170,7 +189,25 @@ class QuizController extends Controller
             'question_limit' => 'nullable|integer|min:1',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
+        ], [
+            'ends_at.after_or_equal' => 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.',
+            'ends_at.date' => 'Thời gian kết thúc không đúng định dạng ngày tháng.',
+            'starts_at.date' => 'Thời gian bắt đầu không đúng định dạng ngày tháng.',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            if ($request->filled('starts_at') && $request->filled('ends_at') && ! $validator->errors()->has('ends_at')) {
+                try {
+                    $start = Carbon::parse($request->starts_at);
+                    $end = Carbon::parse($request->ends_at);
+                    if ($start->diffInMinutes($end, false) < 60) {
+                        $validator->errors()->add('ends_at', 'Thời hạn làm bài ít nhất là 1 tiếng.');
+                    }
+                } catch (\Exception $e) {
+                    // bo qua loi dinh dang
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -183,7 +220,7 @@ class QuizController extends Controller
             ])->withInput();
         }
 
-        // Đảm bảo khóa học chọn thuộc về giảng viên nếu có chọn
+        // kiem tra khoa hoc thuoc ve giang vien
         if ($courseId) {
             Course::where('id', $courseId)
                 ->where('teacher_id', auth()->id())

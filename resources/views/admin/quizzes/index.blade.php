@@ -236,6 +236,10 @@
                                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Chỉnh sửa cấu hình Quiz">
                                                 Sửa
                                             </a>
+                                            <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
+                                               class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem kết quả học viên">
+                                                Kết quả
+                                            </a>
 
                                             {{-- 1. KHI MỚI TẠO (CHỜ DUYỆT): HIỆN DUYỆT & TỪ CHỐI --}}
                                             @if($quiz->status === 'pending')

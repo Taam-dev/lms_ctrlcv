@@ -1,4 +1,4 @@
-# Robots.txt chuẩn SEO cho website học trực tuyến Ctrl C+V (https://ctrlcv.io.vn)
+# cấu hình bot tìm kiếm
 User-agent: *
 Allow: /
 Allow: /courses
@@ -7,7 +7,7 @@ Allow: /images/
 Allow: /build/
 Allow: /storage/
 
-# Chặn bot thu thập thông tin các trang quản trị, riêng tư, thanh toán và bài thi nội bộ
+# chặn bot vào trang quản trị với riêng tư
 Disallow: /admin/
 Disallow: /instructor/
 Disallow: /teacher/
@@ -21,5 +21,5 @@ Disallow: /quizzes/*/result/
 Disallow: /courses/*/lessons/
 Disallow: /courses/*/enroll
 
-# Đường dẫn sitemap chính thức cho Google Search Console
+# link sitemap
 Sitemap: https://ctrlcv.io.vn/sitemap.xml

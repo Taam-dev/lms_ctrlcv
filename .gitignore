@@ -1,6 +1,4 @@
-# -----------------------------------------------------------------------------
-# 1. Môi trường & Khóa bí mật (Environment & Secret Keys)
-# -----------------------------------------------------------------------------
+# file môi trường
 .env
 .env.*
 !.env.example
@@ -10,7 +8,7 @@
 .env.testing
 /auth.json
 
-# Khóa bảo mật & Chứng chỉ SSL/TLS
+# key và chứng chỉ
 *.pem
 *.key
 *.crt
@@ -23,9 +21,7 @@ id_ed25519*
 /storage/oauth-*.key
 /storage/oauth-*.pub
 
-# -----------------------------------------------------------------------------
-# 2. Cơ sở dữ liệu & Tệp sao lưu (Database & Dumps)
-# -----------------------------------------------------------------------------
+# database và file backup
 *.sqlite
 *.sqlite-journal
 *.sqlite3
@@ -37,15 +33,13 @@ id_ed25519*
 /database/*.db
 /database/*.sql
 
-# -----------------------------------------------------------------------------
-# 3. Laravel Storage & Logs (Bộ nhớ đệm, Phiên làm việc & Tải lên)
-# -----------------------------------------------------------------------------
+# log hệ thống
 *.log
 /storage/logs/*
 !/storage/logs/.gitignore
 /storage/pail
 
-# Framework cache, views, sessions
+# cache session view
 /storage/framework/cache/*
 !/storage/framework/cache/.gitignore
 !/storage/framework/cache/data/.gitignore
@@ -56,16 +50,14 @@ id_ed25519*
 /storage/framework/testing/*
 !/storage/framework/testing/.gitignore
 
-# Tệp tin người dùng tải lên (User uploads & private storage)
+# file upload
 /storage/app/*
 !/storage/app/.gitignore
 !/storage/app/public/.gitignore
 !/storage/app/private/.gitignore
 /public/storage
 
-# -----------------------------------------------------------------------------
-# 4. Gói phụ thuộc & Tệp build Frontend (Dependencies & Build Artifacts)
-# -----------------------------------------------------------------------------
+# thư viện và build frontend
 /vendor
 /node_modules
 /public/build
@@ -76,9 +68,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# -----------------------------------------------------------------------------
-# 5. Công cụ phát triển & Trình biên soạn (IDEs, Editors & AI Assistants)
-# -----------------------------------------------------------------------------
+# config ide
 /.idea
 /.vscode
 /.cursor/
@@ -98,9 +88,7 @@ _ide_helper_models.php
 .phpunit.result.cache
 /.phpunit.cache
 
-# -----------------------------------------------------------------------------
-# 6. Tệp tạm của Hệ điều hành (Operating System Files)
-# -----------------------------------------------------------------------------
+# file rác hệ điều hành
 .DS_Store
 .DS_Store?
 ._*
@@ -111,9 +99,8 @@ Thumbs.db
 desktop.ini
 Desktop.ini
 
-# -----------------------------------------------------------------------------
-# 7. Môi trường máy chủ ảo (Homestead / Vagrant)
-# -----------------------------------------------------------------------------
+# máy chủ ảo
 Homestead.json
 Homestead.yaml
 /.vagrant
+

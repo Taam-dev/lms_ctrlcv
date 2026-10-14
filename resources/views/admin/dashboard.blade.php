@@ -26,6 +26,8 @@
                         Kiểm duyệt và quản trị tất cả các khóa học và bài học do giảng viên đăng tải lên nền tảng.
                     @elseif($currentTab === 'quizzes')
                         Xem trước, thẩm định chất lượng và phê duyệt các đề thi trắc nghiệm trực tuyến.
+                    @elseif($currentTab === 'attempts')
+                        Xem kết quả và lịch sử làm bài trắc nghiệm của học viên đối với các bài kiểm tra do bạn biên soạn.
                     @elseif($currentTab === 'users')
                         Danh sách tài khoản học viên, giảng viên và Admin trong hệ thống.
                     @elseif($currentTab === 'reports')
@@ -105,7 +107,7 @@
                     @endif
                 </div>
 
-                @if(in_array($currentTab, ['courses', 'quizzes', 'users', 'reports']))
+                @if(in_array($currentTab, ['courses', 'quizzes', 'attempts', 'users', 'reports']))
                     <!-- Thanh tìm kiếm ở DƯỚI (Vị trí tương tự bài kiểm tra, khóa học) -->
                     <form method="GET" action="{{ route('admin.dashboard') }}" class="flex items-center gap-2 w-full lg:w-auto justify-end">
                         <input type="hidden" name="tab" value="{{ $currentTab }}">
@@ -121,7 +123,7 @@
                             <input type="text"
                                    name="search"
                                    value="{{ $search ?? '' }}"
-                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, bài học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : ($currentTab === 'reports' ? 'Tìm theo lý do, chi tiết, người báo cáo...' : 'Tìm theo tên, email, vai trò...')) }}"
+                                   placeholder="{{ $currentTab === 'courses' ? 'Tìm khóa học, bài học, giảng viên...' : ($currentTab === 'quizzes' ? 'Tìm bài kiểm tra, khóa học, GV...' : ($currentTab === 'attempts' ? 'Tìm học viên, email, đề thi, điểm (vd: 5, 8.5, >=8)...' : ($currentTab === 'reports' ? 'Tìm theo lý do, chi tiết, người báo cáo...' : 'Tìm theo tên, email, vai trò...')))}}"
                                    class="w-full pl-10 pr-9 py-2 bg-white border border-slate-200/90 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-2xs">
                             @if(!empty($search))
                                 <a href="{{ route('admin.dashboard', array_filter(['tab' => $currentTab, 'status' => $statusFilter])) }}"
@@ -905,6 +907,10 @@
                                                    class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0">
                                                     Sửa
                                                 </a>
+                                                <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
+                                                   class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem kết quả học viên">
+                                                    Kết quả
+                                                </a>
 
                                                 @if($quiz->status === 'pending')
                                                     <form action="{{ route('admin.quizzes.approve', $quiz->id) }}" method="POST" class="inline shrink-0">
@@ -948,6 +954,135 @@
                                 @endforeach
                             </tbody>
                         </table>
+                    </div>
+                @endif
+            </div>
+
+        <!-- TAB: ATTEMPTS (KẾT QUẢ HỌC VIÊN CỦA ADMIN) -->
+        @elseif($currentTab === 'attempts')
+            @if(!empty($search))
+                <div class="p-3.5 mb-5 rounded-2xl bg-white border border-pink-100 flex items-center justify-between gap-3 shadow-2xs text-xs">
+                    <div class="flex items-center gap-2 text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-pink-600"></span>
+                        <span>Kết quả tìm kiếm cho: <strong class="text-pink-600">"{{ $search }}"</strong> ({{ $attempts->total() }} lượt nộp bài khớp)</span>
+                    </div>
+                    <a href="{{ route('admin.dashboard', ['tab' => 'attempts']) }}"
+                       class="font-bold text-slate-500 hover:text-pink-600 transition">
+                        &times; Xóa tìm kiếm
+                    </a>
+                </div>
+            @endif
+
+            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/40">
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-base">Kết Quả Học Viên (Quizzes Của Bạn)</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Theo dõi lịch sử làm bài, số câu đúng và điểm số của học viên trên các bài kiểm tra do bạn biên soạn.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-xl bg-pink-50 text-pink-700 text-xs font-bold border border-pink-200/80">
+                            {{ $attempts->total() }} lượt nộp bài
+                        </span>
+                    </div>
+                </div>
+
+                @if($attempts->isEmpty())
+                    <div class="p-16 text-center">
+                        <h4 class="font-bold text-slate-800 text-base mb-1">
+                            @if(!empty($search))
+                                Không tìm thấy kết quả làm bài nào khớp với "{{ $search }}"
+                            @else
+                                Chưa có học viên nào làm bài kiểm tra của bạn
+                            @endif
+                        </h4>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto">
+                            @if(!empty($search))
+                                Vui lòng thử tìm kiếm bằng tên học viên, email, đề thi hoặc điểm số khác (ví dụ: "5", "8.5", ">=8", "đạt").
+                            @else
+                                Khi học viên tham gia và hoàn thành các bài trắc nghiệm do bạn tạo, kết quả và điểm số chi tiết sẽ hiển thị tại đây.
+                            @endif
+                        </p>
+                        @if(!empty($search))
+                            <div class="pt-3">
+                                <a href="{{ route('admin.dashboard', ['tab' => 'attempts']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                                    Xóa tìm kiếm
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[850px]">
+                            <thead>
+                                <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                    <th class="py-4 px-6 min-w-[200px]">Học viên</th>
+                                    <th class="py-4 px-4 min-w-[220px]">Bài kiểm tra & Khóa học</th>
+                                    <th class="py-4 px-4 text-center whitespace-nowrap">Số câu đúng</th>
+                                    <th class="py-4 px-4 text-center whitespace-nowrap">Điểm số</th>
+                                    <th class="py-4 px-4 text-center whitespace-nowrap">Kết quả</th>
+                                    <th class="py-4 px-4 text-center whitespace-nowrap">Thời gian nộp</th>
+                                    <th class="py-4 px-6 text-right whitespace-nowrap">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                @foreach($attempts as $attempt)
+                                    <tr class="hover:bg-pink-50/20 transition">
+                                        <td class="py-4 px-6 whitespace-nowrap">
+                                            <div class="flex items-center gap-2.5">
+                                                @if($attempt->student && $attempt->student->avatar_url)
+                                                    <img src="{{ $attempt->student->avatar_url }}" alt="{{ $attempt->student->name }}" class="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0">
+                                                @else
+                                                    <div class="w-8 h-8 rounded-lg bg-pink-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                                                        {{ strtoupper(substr($attempt->student->name ?? 'H', 0, 1)) }}
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <div class="font-bold text-slate-900">{{ $attempt->student->name ?? 'N/A' }}</div>
+                                                    <div class="text-xs text-slate-500">{{ $attempt->student->email ?? '' }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-4">
+                                            <div class="font-semibold text-slate-900">{{ $attempt->quiz->title ?? 'N/A' }}</div>
+                                            <div class="text-xs text-slate-500">
+                                                {{ $attempt->quiz->course ? 'Khóa: ' . $attempt->quiz->course->title : 'Bài kiểm tra Tự do' }}
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-4 text-center font-medium whitespace-nowrap">
+                                            {{ $attempt->correct_answers }} / {{ $attempt->total_questions }} câu
+                                        </td>
+                                        <td class="py-4 px-4 text-center whitespace-nowrap">
+                                            <span class="font-black text-base {{ $attempt->is_passed ? 'text-emerald-600' : 'text-rose-600' }}">
+                                                {{ number_format($attempt->score, 1) }}
+                                            </span>
+                                            <span class="text-xs text-slate-400">/10</span>
+                                        </td>
+                                        <td class="py-4 px-4 text-center whitespace-nowrap">
+                                            @if($attempt->is_passed)
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                    ĐẠT
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
+                                                    CHƯA ĐẠT
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="py-4 px-4 text-center text-xs text-slate-500 whitespace-nowrap">
+                                            {{ $attempt->completed_at ? $attempt->completed_at->format('d/m/Y H:i') : $attempt->created_at->format('d/m/Y H:i') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-right whitespace-nowrap">
+                                            <a href="{{ route('admin.quizzes.results', $attempt->quiz_id) }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem bảng điểm bài kiểm tra này">
+                                                Xem bảng điểm
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-slate-100">
+                        {{ $attempts->appends(array_filter(['tab' => 'attempts', 'search' => $search]))->links() }}
                     </div>
                 @endif
             </div>
@@ -1024,6 +1159,7 @@
                                     <th class="py-3 px-2 text-center whitespace-nowrap">Ví (Số dư)</th>
                                     <th class="py-3 px-2 text-center whitespace-nowrap">Ngày đăng ký</th>
                                     <th class="py-3 px-3 text-center whitespace-nowrap">Chỉnh sửa vai trò</th>
+                                    <th class="py-3 px-3 text-center whitespace-nowrap">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-sm">
@@ -1117,6 +1253,27 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                         </svg>
                                                         <span>Lưu</span>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-3 text-center whitespace-nowrap">
+                                            @if($user->role === 'admin')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-400 text-xs font-semibold border border-slate-200/60" title="Không thể xóa tài khoản Quản trị viên">
+                                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                    </svg>
+                                                    <span>Bảo vệ</span>
+                                                </span>
+                                            @else
+                                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản \'{{ addslashes($user->name) }}\' ({{ addslashes($user->email) }})? Mọi dữ liệu liên quan sẽ bị xóa.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent text-xs font-bold transition inline-flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs active:scale-95" title="Xóa tài khoản này">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                        </svg>
+                                                        <span>Xóa</span>
                                                     </button>
                                                 </form>
                                             @endif

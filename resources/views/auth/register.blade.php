@@ -45,15 +45,33 @@
                 <x-input-error :messages="$errors->get('name')" class="mt-1 text-xs text-rose-400" />
             </div>
 
-            <!-- Email Address -->
+            <!-- email -->
             <div x-data="{
                 email: '{{ old('email', '') }}',
                 emailError: '',
                 isChecking: false,
-                checkEmail() {
-                    const val = (this.email || '').trim().toLowerCase();
-                    if (!val || !val.includes('@') || !val.includes('.')) {
+                validateEmail() {
+                    const rawVal = (this.email || '').trim();
+                    if (/^[A-Z\p{Lu}]/u.test(rawVal)) {
+                        this.emailError = 'Email không hợp lệ';
+                        return;
+                    }
+                    if (this.emailError === 'Email không hợp lệ') {
                         this.emailError = '';
+                    }
+                    this.checkEmail();
+                },
+                checkEmail() {
+                    const rawVal = (this.email || '').trim();
+                    if (/^[A-Z\p{Lu}]/u.test(rawVal)) {
+                        this.emailError = 'Email không hợp lệ';
+                        return;
+                    }
+                    const val = rawVal.toLowerCase();
+                    if (!val || !val.includes('@') || !val.includes('.')) {
+                        if (this.emailError !== 'Email không hợp lệ') {
+                            this.emailError = '';
+                        }
                         return;
                     }
                     this.isChecking = true;
@@ -64,13 +82,13 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ email: val })
+                        body: JSON.stringify({ email: rawVal })
                     })
                     .then(res => res.json())
                     .then(data => {
                         this.isChecking = false;
-                        if (data.exists) {
-                            this.emailError = 'Email đã được sử dụng';
+                        if (data.message) {
+                            this.emailError = data.message;
                         } else {
                             this.emailError = '';
                         }
@@ -79,7 +97,7 @@
                         this.isChecking = false;
                     });
                 }
-            }" x-init="if (email) checkEmail()">
+            }" x-init="if (email) validateEmail()">
                 <div class="flex items-center justify-between mb-1.5">
                     <label for="email" class="block text-xs font-medium text-neutral-300">
                         Email
@@ -93,8 +111,8 @@
                     type="email"
                     name="email"
                     x-model="email"
-                    @input.debounce.350ms="checkEmail()"
-                    @blur="checkEmail()"
+                    @input="validateEmail()"
+                    @blur="validateEmail()"
                     required
                     autocomplete="username"
                     placeholder="email@example.com"
@@ -104,7 +122,9 @@
                 <template x-if="emailError">
                     <p class="mt-1 text-xs text-rose-400 font-medium" x-text="emailError"></p>
                 </template>
-                <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs text-rose-400" />
+                <div x-show="!emailError">
+                    <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs text-rose-400" />
+                </div>
             </div>
 
             <!-- Mật khẩu -->

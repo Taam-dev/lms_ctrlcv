@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\CourseReview;
 use App\Models\Lesson;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\Report;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -30,7 +31,9 @@ class DashboardController extends Controller
         $statusFilter = $request->query('status');
         $search = trim((string) $request->query('search', ''));
 
-        // Thống kê số liệu hệ thống
+        // thong ke so lieu he thong
+        $adminQuizIds = Quiz::where('teacher_id', auth()->id())->pluck('id');
+
         $stats = [
             'total_courses' => Course::count(),
             'pending_courses' => Course::where('status', 'pending')->count(),
@@ -43,6 +46,7 @@ class DashboardController extends Controller
             'rejected_quizzes' => Quiz::where('status', 'rejected')->count(),
 
             'total_lessons' => Lesson::count(),
+            'total_attempts' => QuizAttempt::whereIn('quiz_id', $adminQuizIds)->count(),
             'total_users' => User::count(),
             'admins_count' => User::where('role', 'admin')->count(),
             'teachers_count' => User::where('role', 'teacher')->count(),
@@ -177,6 +181,66 @@ class DashboardController extends Controller
         }
         $reports = $reportsQuery->paginate(15);
 
+        // lay ket qua hoc vien lam quiz do admin tao
+        $attemptsQuery = QuizAttempt::with(['student', 'quiz.course'])
+            ->whereIn('quiz_id', $adminQuizIds)
+            ->latest();
+
+        if ($search !== '' && $currentTab === 'attempts') {
+            $lowerSearch = mb_strtolower($search);
+
+            // xu ly tim kiem theo diem so:
+            $scoreOperator = null;
+            $scoreValue = null;
+            $cleanScoreSearch = trim(preg_replace('/^(?:điểm|diem)\s*:?\s*/iu', '', $search));
+
+            if (preg_match('/^(>=|<=|>|<|=)\s*([0-9]+(?:\.[0-9]+)?)(?:\s*\/\s*10)?$/', $cleanScoreSearch, $matches)) {
+                $scoreOperator = $matches[1];
+                $scoreValue = (float) $matches[2];
+            } elseif (preg_match('/^([0-9]+(?:\.[0-9]+)?)(?:\s*\/\s*10)?$/', $cleanScoreSearch, $matches)) {
+                $scoreOperator = '=';
+                $scoreValue = (float) $matches[1];
+            }
+
+            $correctAnswersCount = null;
+            if (preg_match('/^([0-9]+)\s*(?:câu|cau)$/iu', $cleanScoreSearch, $matches)) {
+                $correctAnswersCount = (int) $matches[1];
+            }
+
+            $statusPassed = null;
+            if (str_contains($lowerSearch, 'không đạt') || str_contains($lowerSearch, 'chưa đạt') || $lowerSearch === 'fail' || $lowerSearch === 'truot') {
+                $statusPassed = false;
+            } elseif (str_contains($lowerSearch, 'đạt') || $lowerSearch === 'dat' || $lowerSearch === 'pass') {
+                $statusPassed = true;
+            }
+
+            $attemptsQuery->where(function ($q) use ($search, $scoreOperator, $scoreValue, $correctAnswersCount, $statusPassed) {
+                $q->whereHas('student', function ($s) use ($search) {
+                    $s->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })->orWhereHas('quiz', function ($qz) use ($search) {
+                    $qz->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('course', function ($c) use ($search) {
+                            $c->where('title', 'like', "%{$search}%");
+                        });
+                });
+
+                if ($scoreOperator !== null && $scoreValue !== null) {
+                    $q->orWhere('score', $scoreOperator, $scoreValue);
+                }
+
+                if ($correctAnswersCount !== null) {
+                    $q->orWhere('correct_answers', $correctAnswersCount);
+                }
+
+                if ($statusPassed !== null) {
+                    $q->orWhere('is_passed', $statusPassed);
+                }
+            });
+        }
+
+        $attempts = $attemptsQuery->paginate(15);
+
         return view('admin.dashboard', compact(
             'stats',
             'pendingCourses',
@@ -191,10 +255,45 @@ class DashboardController extends Controller
             'coursesWithLessons',
             'users',
             'reports',
+            'attempts',
             'currentTab',
             'statusFilter',
             'search'
         ));
+    }
+
+    /**
+     * xoa tai khoan nguoi dung khoi he thong
+     */
+    public function destroyUser(User $user): RedirectResponse
+    {
+        // chan tu xoa chinh minh
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Bạn không thể tự xóa tài khoản của chính mình!');
+        }
+
+        // chan xoa admin khac
+        if ($user->role === 'admin') {
+            return back()->with('error', 'Bạn không được phép xóa tài khoản của Quản trị viên khác!');
+        }
+
+        $userName = $user->name;
+
+        DB::transaction(function () use ($user) {
+            // xoa avatar neu co
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // xoa bao cao vi pham lien quan den user
+            Report::where('reportable_type', User::class)
+                ->where('reportable_id', $user->id)
+                ->delete();
+
+            $user->delete();
+        });
+
+        return back()->with('success', "Đã xóa vĩnh viễn tài khoản \"{$userName}\" khỏi hệ thống thành công!");
     }
 
     /**

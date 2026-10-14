@@ -85,7 +85,7 @@ class Lesson extends Model
 
         $raw = trim($this->content);
 
-        // Trường hợp người dùng dán nguyên đoạn thẻ <iframe>
+        // dán nguyên thẻ iframe
         if (str_contains($raw, '<iframe') && preg_match('/src=["\']([^"\']+)["\']/i', $raw, $iframeMatches)) {
             return [
                 'type' => 'iframe',
@@ -94,14 +94,14 @@ class Lesson extends Model
             ];
         }
 
-        // Tách lấy URL đầu tiên nếu nội dung có lẫn text
+        // lấy url đầu tiên
         if (preg_match('/https?:\/\/[^\s"\'<>]+/i', $raw, $urlMatch)) {
             $url = $urlMatch[0];
         } else {
             $url = $raw;
         }
 
-        // 1. YouTube (youtube.com, youtu.be, shorts, live, embed)
+        // youtube
         if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i', $url, $ytMatches)) {
             return [
                 'type' => 'youtube',
@@ -110,7 +110,7 @@ class Lesson extends Model
             ];
         }
 
-        // 2. TikTok (tiktok.com/@user/video/ID, /v/ID, /player/v1/ID, vt.tiktok.com, vm.tiktok.com)
+        // tiktok
         if (preg_match('/(?:tiktok\.com\/(?:@[^\/]+\/video\/|v\/|embed\/v2\/|embed\/|player\/v1\/))(\d+)/i', $url, $ttMatches)) {
             return [
                 'type' => 'tiktok',
@@ -160,7 +160,7 @@ class Lesson extends Model
             }
         }
 
-        // 3. Facebook Video (watch, share, reel, fb.watch, fb.com)
+        // facebook
         if (preg_match('/(?:facebook\.com|fb\.watch|fb\.com)/i', $url)) {
             return [
                 'type' => 'facebook',
@@ -169,7 +169,7 @@ class Lesson extends Model
             ];
         }
 
-        // 3. Google Drive (file/d/.../view, open?id=...)
+        // google drive
         if (preg_match('/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/i', $url, $driveMatches)) {
             return [
                 'type' => 'drive',
@@ -178,7 +178,7 @@ class Lesson extends Model
             ];
         }
 
-        // 4. Vimeo
+        // vimeo
         if (preg_match('/(?:vimeo\.com\/)(?:video\/|channels\/[^\/]+\/|groups\/[^\/]+\/videos\/|album\/[^\/]+\/video\/|)(\d+)/i', $url, $vimeoMatches)) {
             return [
                 'type' => 'vimeo',
@@ -187,7 +187,7 @@ class Lesson extends Model
             ];
         }
 
-        // 5. Loom
+        // loom
         if (preg_match('/loom\.com\/share\/([a-zA-Z0-9]+)/i', $url, $loomMatches)) {
             return [
                 'type' => 'loom',
@@ -196,7 +196,7 @@ class Lesson extends Model
             ];
         }
 
-        // 6. Direct video files (.mp4, .webm, .ogg, .mov, hoặc storage/)
+        // file video trực tiếp
         if (preg_match('/\.(mp4|webm|ogg|mov)(\?.*)?$/i', $url) || str_starts_with($url, 'storage/') || str_starts_with($url, 'videos/')) {
             $directUrl = (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'))
                 ? $url
@@ -209,7 +209,7 @@ class Lesson extends Model
             ];
         }
 
-        // 7. Generic iframe nếu URL có chứa chữ embed
+        // iframe embed
         if (str_contains($url, 'embed') && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'))) {
             return [
                 'type' => 'iframe',

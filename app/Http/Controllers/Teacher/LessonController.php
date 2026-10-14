@@ -30,7 +30,7 @@ class LessonController extends Controller
             'order_number' => 'required|integer|min:1',
         ]);
 
-        // Tránh tạo bài giảng trùng lặp khi bấm nút Lưu nhiều lần liên tục
+        // tránh bấm lưu nhiều lần bị trùng
         $lockKey = 'create_lesson_'.auth()->id().'_'.$course->id;
         $lock = Cache::lock($lockKey, 5);
 

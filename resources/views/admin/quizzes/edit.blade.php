@@ -226,6 +226,23 @@
                             e.preventDefault();
                             return false;
                         }
+
+                        const startInput = document.getElementById('starts_at');
+                        const endInput = document.getElementById('ends_at');
+                        if (startInput && endInput && startInput.value && endInput.value) {
+                            const diff = new Date(endInput.value) - new Date(startInput.value);
+                            if (diff < 0) {
+                                alert('Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.');
+                                e.preventDefault();
+                                return false;
+                            }
+                            if (diff < 3600000) {
+                                alert('Thời hạn làm bài ít nhất là 1 tiếng.');
+                                e.preventDefault();
+                                return false;
+                            }
+                        }
+
                         form.dataset.submitting = 'true';
                         btn.disabled = true;
                         btn.style.pointerEvents = 'none';

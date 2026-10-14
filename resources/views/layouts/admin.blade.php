@@ -38,6 +38,12 @@
                     'badge' => ($pendingQuizzesCount ?? 0) > 0 ? ($pendingQuizzesCount . ' chờ') : ($totalQuizzesCount ?? null),
                     'badgeWarn' => ($pendingQuizzesCount ?? 0) > 0,
                 ],
+                [
+                    'label' => 'Kết quả học viên',
+                    'href' => route('admin.dashboard', ['tab' => 'attempts']),
+                    'active' => ($onDashboard && $tab === 'attempts') || request()->routeIs('admin.quizzes.results*'),
+                    'badge' => ($totalAttemptsCount ?? 0) > 0 ? (string) $totalAttemptsCount : null,
+                ],
             ],
         ],
         [

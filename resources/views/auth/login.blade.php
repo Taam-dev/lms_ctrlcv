@@ -32,10 +32,40 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-4">
+        <form method="POST" action="{{ route('login') }}" class="space-y-4" x-data="{
+            email: '{{ old('email', '') }}',
+            password: '',
+            emailError: '',
+            passwordError: '',
+            validateEmail() {
+                const raw = (this.email || '').trim();
+                if (/^[A-Z\p{Lu}]/u.test(raw)) {
+                    this.emailError = 'Email không hợp lệ';
+                    return;
+                }
+                if (this.emailError === 'Email không hợp lệ') {
+                    this.emailError = '';
+                }
+            },
+            validatePassword() {
+                const val = this.password || '';
+                if (val.length > 0 && val.length < 8) {
+                    this.passwordError = 'Mật khẩu phải có tối thiểu 8 ký tự.';
+                } else {
+                    this.passwordError = '';
+                }
+            },
+            submitForm(e) {
+                this.validateEmail();
+                this.validatePassword();
+                if (this.emailError || this.passwordError) {
+                    e.preventDefault();
+                }
+            }
+        }" x-init="if (email) validateEmail()" @submit="submitForm($event)">
             @csrf
 
-            <!-- Email Address -->
+            <!-- email -->
             <div>
                 <label for="email" class="block text-xs font-medium text-neutral-300 mb-1.5">
                     Email
@@ -44,18 +74,26 @@
                     id="email"
                     type="email"
                     name="email"
-                    value="{{ old('email') }}"
+                    x-model="email"
+                    @input="validateEmail()"
+                    @blur="validateEmail()"
                     required
                     autofocus
                     autocomplete="username"
                     placeholder="email@example.com"
                     class="block w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition duration-150"
+                    :class="{ 'border-rose-500/70': emailError }"
                 />
-                <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs text-rose-400" />
+                <template x-if="emailError">
+                    <p class="mt-1 text-xs text-rose-400 font-medium" x-text="emailError"></p>
+                </template>
+                <div x-show="!emailError">
+                    <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs text-rose-400" />
+                </div>
             </div>
 
-            <!-- Password -->
-            <div>
+            <!-- password -->
+            <div x-data="{ show: false }">
                 <div class="flex items-center justify-between mb-1.5">
                     <label for="password" class="block text-xs font-medium text-neutral-300">
                         Mật khẩu
@@ -69,16 +107,20 @@
                         </a>
                     @endif
                 </div>
-                <div class="relative" x-data="{ show: false }">
+                <div class="relative">
                     <input
                         id="password"
                         :type="show ? 'text' : 'password'"
                         type="password"
                         name="password"
+                        x-model="password"
+                        @input="validatePassword()"
+                        @blur="validatePassword()"
                         required
                         autocomplete="current-password"
                         placeholder="••••••••"
                         class="block w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 pr-10 text-sm text-white placeholder-neutral-500 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition duration-150"
+                        :class="{ 'border-rose-500/70': passwordError }"
                     />
                     <button
                         type="button"
@@ -95,7 +137,12 @@
                         </svg>
                     </button>
                 </div>
-                <x-input-error :messages="$errors->get('password')" class="mt-1 text-xs text-rose-400" />
+                <template x-if="passwordError">
+                    <p class="mt-1 text-xs text-rose-400 font-medium" x-text="passwordError"></p>
+                </template>
+                <div x-show="!passwordError">
+                    <x-input-error :messages="$errors->get('password')" class="mt-1 text-xs text-rose-400" />
+                </div>
             </div>
 
             <!-- Remember Me -->

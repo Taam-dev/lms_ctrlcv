@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -517,5 +518,171 @@ class AdminManagementTest extends TestCase
         $response->assertForbidden();
         $targetUser->refresh();
         $this->assertEquals(50000, $targetUser->balance);
+    }
+
+    /**
+     * admin xem danh sach ket qua hoc vien cua quiz do admin tao
+     */
+    public function test_admin_can_view_student_attempts_for_own_quizzes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['name' => 'Tran Thi Lan', 'role' => 'student']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Quiz Admin Toan Cao Cap',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'score' => 9.0,
+            'correct_answers' => 9,
+            'total_questions' => 10,
+            'is_passed' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'attempts']));
+        $response->assertOk();
+        $response->assertSee('Tran Thi Lan');
+        $response->assertSee('Quiz Admin Toan Cao Cap');
+        $response->assertSee('9.0');
+        $response->assertSee('ĐẠT');
+    }
+
+    /**
+     * admin loc ket qua hoc vien theo diem so trong tab attempts
+     */
+    public function test_admin_can_filter_student_attempts(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $studentPass = User::factory()->create(['name' => 'Sinh Vien Dat', 'role' => 'student']);
+        $studentFail = User::factory()->create(['name' => 'Sinh Vien Truot', 'role' => 'student']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Quiz Kiem Thu',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $studentPass->id,
+            'score' => 9.0,
+            'correct_answers' => 9,
+            'total_questions' => 10,
+            'is_passed' => true,
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $studentFail->id,
+            'score' => 3.0,
+            'correct_answers' => 3,
+            'total_questions' => 10,
+            'is_passed' => false,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', [
+            'tab' => 'attempts',
+            'search' => '>=8',
+        ]));
+        $response->assertOk();
+        $response->assertSee('Sinh Vien Dat');
+        $response->assertDontSee('Sinh Vien Truot');
+    }
+
+    /**
+     * admin xem trang ket qua chi tiet cua bai quiz
+     */
+    public function test_admin_can_view_quiz_results_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['name' => 'Le Van Tam', 'role' => 'student']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Kiem Tra Thuong Xuyen 1',
+            'type' => 'quiz',
+            'duration_minutes' => 20,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'score' => 8.0,
+            'correct_answers' => 8,
+            'total_questions' => 10,
+            'is_passed' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.quizzes.results', $quiz->id));
+        $response->assertOk();
+        $response->assertSee('Kiem Tra Thuong Xuyen 1');
+        $response->assertSee('Le Van Tam');
+        $response->assertSee('8.0');
+    }
+
+    /**
+     * admin xoa tai khoan nguoi dung thanh cong
+     */
+    public function test_admin_can_delete_user(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create([
+            'name' => 'Nguoi Dung Sap Bi Xoa',
+            'email' => 'deluser@example.com',
+            'role' => 'student',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(route('admin.users.destroy', $student));
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('users', ['id' => $student->id]);
+    }
+
+    /**
+     * admin khong the tu xoa chinh minh
+     */
+    public function test_admin_cannot_delete_self(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->delete(route('admin.users.destroy', $admin));
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    /**
+     * admin khong the xoa admin khac
+     */
+    public function test_admin_cannot_delete_another_admin(): void
+    {
+        $admin1 = User::factory()->create(['role' => 'admin']);
+        $admin2 = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin1)->delete(route('admin.users.destroy', $admin2));
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('users', ['id' => $admin2->id]);
+    }
+
+    /**
+     * nguoi dung thuong khong the xoa tai khoan
+     */
+    public function test_non_admin_cannot_delete_user(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $otherUser = User::factory()->create(['role' => 'student']);
+
+        $response = $this->actingAs($student)->delete(route('admin.users.destroy', $otherUser));
+        $response->assertForbidden();
+        $this->assertDatabaseHas('users', ['id' => $otherUser->id]);
     }
 }

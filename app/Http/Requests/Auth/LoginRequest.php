@@ -28,8 +28,18 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                // khong cho chu cai dau viet hoa
+                function ($attribute, $value, $fail) {
+                    if (preg_match('/^[A-Z\p{Lu}]/u', ltrim((string) $value))) {
+                        $fail('Email không hợp lệ');
+                    }
+                },
+            ],
+            'password' => ['required', 'string', 'min:8'],
         ];
     }
 
@@ -43,7 +53,10 @@ class LoginRequest extends FormRequest
         return [
             'email.required' => 'Vui lòng nhập email.',
             'email.email' => 'Địa chỉ email không đúng định dạng.',
+            'email.string' => 'Email không hợp lệ.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
+            'password.string' => 'Mật khẩu không hợp lệ.',
+            'password.min' => 'Mật khẩu phải có tối thiểu :min ký tự.',
         ];
     }
 

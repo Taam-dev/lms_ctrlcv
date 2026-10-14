@@ -74,5 +74,30 @@ class RegistrationTest extends TestCase
                 'exists' => false,
                 'message' => null,
             ]);
+
+        $responseUppercase = $this->postJson('/check-email', [
+            'email' => 'Capitalized@example.com',
+        ]);
+
+        $responseUppercase->assertOk()
+            ->assertJson([
+                'exists' => false,
+                'message' => 'Email không hợp lệ',
+            ]);
+    }
+
+    public function test_registration_fails_when_email_starts_with_uppercase_letter(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Capital User',
+            'email' => 'Capital@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'email' => 'Email không hợp lệ',
+        ]);
+        $this->assertGuest();
     }
 }

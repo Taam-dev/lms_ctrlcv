@@ -15,20 +15,20 @@ use App\Http\Controllers\Teacher\LessonController as TeacherLessonController;
 use App\Http\Controllers\Teacher\QuizController as TeacherQuizController;
 use Illuminate\Support\Facades\Route;
 
-// Sơ đồ trang web Sitemap XML động chuẩn Google Search Console
+// sitemap xml
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
-// Trang chủ hiển thị danh sách khóa học
+// trang chủ
 Route::get('/', [StudentCourseController::class, 'index'])->name('home');
 
-// Trang riêng hiển thị tất cả khóa học
+// danh sách tất cả khóa học
 Route::get('/courses', [StudentCourseController::class, 'list'])->name('courses.index');
 
-// Route xem chi tiết khóa học thân thiện chuẩn SEO (công khai cho cả khách & bot tìm kiếm)
+// chi tiết khóa học
 Route::get('/khoa-hoc/{slug}', [StudentCourseController::class, 'show'])->name('courses.show');
 Route::get('/courses/{id}', [StudentCourseController::class, 'show'])->name('student.courses.show');
 
-// Route xem hồ sơ cá nhân công khai (Giảng viên / Học viên)
+// xem hồ sơ cá nhân
 Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('users.profile');
 Route::get('/users/{user}', [ProfileController::class, 'show'])->name('users.show');
 
@@ -42,7 +42,7 @@ Route::get('/dashboard', function () {
     return redirect()->route('home');
 })->middleware(['auth'])->name('dashboard');
 
-// Route chung cho người dùng đã đăng nhập (profile, học viên học bài và làm bài trắc nghiệm)
+// các route khi đã đăng nhập
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -50,43 +50,43 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/forgot-password', [ProfileController::class, 'sendPasswordResetLink'])->name('profile.forgot-password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Route học viên đăng ký khóa học và học bài giảng (hỗ trợ cả slug chuẩn SEO và ID)
+    // học viên đăng ký và học bài
     Route::post('/courses/{id}/enroll', [StudentCourseController::class, 'enroll'])->name('student.courses.enroll');
     Route::get('/khoa-hoc/{courseId}/bai-hoc/{lessonId}', [StudentCourseController::class, 'viewLesson'])->name('student.lessons.friendly');
     Route::get('/courses/{courseId}/lessons/{lessonId}', [StudentCourseController::class, 'viewLesson'])->name('student.lessons.show');
     Route::post('/courses/{courseId}/lessons/{lessonId}/complete', [StudentCourseController::class, 'completeLesson'])->name('student.lessons.complete');
 
-    // Route học viên làm bài trắc nghiệm (Quizzes)
+    // học viên làm quiz
     Route::get('/quizzes', [StudentQuizController::class, 'index'])->name('student.quizzes.index');
     Route::get('/quizzes/{quiz}/take', [StudentQuizController::class, 'take'])->name('student.quizzes.take');
     Route::post('/quizzes/{quiz}/submit', [StudentQuizController::class, 'submit'])->name('student.quizzes.submit');
     Route::get('/quizzes/{quiz}/result/{attempt}', [StudentQuizController::class, 'result'])->name('student.quizzes.result');
 
-    // Route học viên đánh giá & bình luận khóa học
+    // đánh giá khóa học
     Route::post('/courses/{course}/reviews', [StudentCourseController::class, 'review'])->name('student.courses.reviews.store');
     Route::delete('/courses/{course}/reviews/{review}', [StudentCourseController::class, 'destroyReview'])->name('student.courses.reviews.destroy');
 
-    // Route Ví tiền & Nạp tiền VietQR
+    // ví tiền và nạp tiền vietqr
     Route::get('/wallet', [WalletController::class, 'deposit'])->name('wallet.deposit');
     Route::post('/wallet/deposit', [WalletController::class, 'createDeposit'])->name('wallet.deposit.store');
     Route::post('/wallet/transactions/{transaction}/confirm', [WalletController::class, 'confirmDeposit'])->name('wallet.transactions.confirm');
     Route::post('/wallet/transactions/{transaction}/cancel', [WalletController::class, 'cancelDeposit'])->name('wallet.transactions.cancel');
 
-    // Route gửi báo cáo vi phạm (người dùng & bình luận)
+    // gửi báo cáo vi phạm
     Route::post('/users/{user}/report', [ReportController::class, 'storeUserReport'])->name('users.report');
     Route::post('/reviews/{review}/report', [ReportController::class, 'storeReviewReport'])->name('reviews.report');
 });
 
-// Route cho Giảng viên (GV Portal)
+// route cho giảng viên
 Route::middleware(['auth', 'role:teacher'])->prefix('instructor')->name('instructor.')->group(function () {
-    // Bảng điều khiển riêng của Giảng viên
+    // dashboard giảng viên
     Route::get('/', [TeacherDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [TeacherDashboardController::class, 'index']);
 
-    // Quản lý khóa học (Courses CRUD)
+    // quản lý khóa học
     Route::resource('courses', TeacherCourseController::class);
 
-    // Quản lý bài giảng (Lessons CRUD)
+    // quản lý bài giảng
     Route::get('courses/{course}/lessons/create', [TeacherLessonController::class, 'create'])->name('lessons.create');
     Route::post('courses/{course}/lessons', [TeacherLessonController::class, 'store'])->name('lessons.store');
     Route::get('lessons/{lesson}/edit', [TeacherLessonController::class, 'edit'])->name('lessons.edit');
@@ -105,7 +105,7 @@ Route::middleware(['auth', 'role:teacher'])->prefix('instructor')->name('instruc
     Route::get('quizzes/{quiz}/results', [TeacherQuizController::class, 'results'])->name('quizzes.results');
 });
 
-// Alias cho prefix 'teacher' để tương thích ngược với các liên kết cũ
+// alias tương thích prefix cũ
 Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/', [TeacherDashboardController::class, 'index'])->name('dashboard');
     Route::resource('courses', TeacherCourseController::class);
@@ -126,15 +126,16 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     Route::get('quizzes/{quiz}/results', [TeacherQuizController::class, 'results'])->name('quizzes.results');
 });
 
-// Route cho Quản trị viên (cần đăng nhập + role admin)
+// route cho admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Trang quản trị tổng quan
+    // dashboard admin
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::patch('users/{user}/role', [AdminDashboardController::class, 'updateUserRole'])->name('users.update-role');
     Route::patch('users/{user}/wallet', [AdminDashboardController::class, 'updateUserWallet'])->name('users.update-wallet');
+    Route::delete('users/{user}', [AdminDashboardController::class, 'destroyUser'])->name('users.destroy');
     Route::post('reports/{report}/action', [AdminDashboardController::class, 'updateReportStatus'])->name('reports.action');
 
-    // Quản lý & duyệt khóa học, bài giảng
+    // duyệt và quản lý khóa học bài giảng
     Route::resource('courses', AdminCourseController::class)->except(['show']);
     Route::post('courses/{id}/approve', [AdminCourseController::class, 'approve'])->name('courses.approve');
     Route::post('courses/{id}/reject', [AdminCourseController::class, 'reject'])->name('courses.reject');
@@ -145,7 +146,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('lessons/{id}', [AdminCourseController::class, 'updateLesson'])->name('lessons.update');
     Route::delete('lessons/{id}', [AdminCourseController::class, 'destroyLesson'])->name('lessons.destroy');
 
-    // Quản lý & duyệt bài kiểm tra (Quizzes)
+    // duyệt và quản lý quiz
     Route::post('quizzes/generate-ai-questions', [AdminQuizController::class, 'generateAiQuestions'])->name('quizzes.generate-ai-questions');
     Route::post('quizzes/fetch-ai-models', [AdminQuizController::class, 'fetchAiModels'])->name('quizzes.fetch-ai-models');
     Route::post('quizzes/ai-suggest-question', [AdminQuizController::class, 'suggestOrRefineAiQuestion'])->name('quizzes.ai-suggest-question');

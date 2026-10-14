@@ -1,6 +1,4 @@
-# ==========================================
-# GIAI ĐOẠN 1: Biên dịch Frontend Assets (Vite)
-# ==========================================
+# build assets vite
 FROM node:22-alpine AS frontend
 WORKDIR /app
 
@@ -10,21 +8,17 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# ==========================================
-# GIAI ĐOẠN 2: Cài đặt Composer Dependencies
-# ==========================================
+# cài package composer
 FROM composer:2 AS vendor
 WORKDIR /app
 
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
-# ==========================================
-# GIAI ĐOẠN 3: Runtime Image (PHP 8.3 FPM + Nginx)
-# ==========================================
+# môi trường chạy php fpm và nginx
 FROM php:8.3-fpm-alpine
 
-# Cài đặt Nginx và các thư viện hệ thống cần thiết cho extensions
+# cài nginx và thư viện hệ thống
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -37,7 +31,7 @@ RUN apk add --no-cache \
     curl \
     bash
 
-# Cấu hình và cài đặt đầy đủ PHP extensions: pdo_mysql, mbstring, bcmath, exif, gd, intl, zip, opcache
+# cài php extension
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
@@ -49,30 +43,30 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         zip \
         opcache
 
-# Thiết lập thư mục làm việc
+# thư mục làm việc
 WORKDIR /var/www/html
 
-# Copy mã nguồn dự án
+# copy source code
 COPY . /var/www/html
 
-# Copy vendor từ giai đoạn Composer
+# copy thư viện vendor
 COPY --from=vendor /app/vendor /var/www/html/vendor
 
-# Copy build assets từ giai đoạn Frontend
+# copy file build frontend
 COPY --from=frontend /app/public/build /var/www/html/public/build
 
-# Cấu hình Nginx
+# cấu hình nginx
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
-# Cấp quyền thực thi cho start script
+# cấp quyền chạy start.sh
 COPY docker/start.sh /var/www/html/docker/start.sh
 RUN chmod +x /var/www/html/docker/start.sh
 
-# Thiết lập quyền hạn cho www-data
+# phân quyền storage và cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Cổng mặc định
+# mở port web
 EXPOSE 80
 
-# Chạy script khởi động
+# chạy web khi bật container
 CMD ["/bin/sh", "/var/www/html/docker/start.sh"]

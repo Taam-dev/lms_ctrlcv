@@ -33,13 +33,27 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:'.User::class,
+                // không cho viết hoa chữ cái đầu
+                function ($attribute, $value, $fail) {
+                    if (preg_match('/^[A-Z\p{Lu}]/u', ltrim((string) $value))) {
+                        $fail('Email không hợp lệ');
+                    }
+                },
+                'lowercase',
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'name.required' => 'Vui lòng nhập họ và tên.',
             'email.required' => 'Vui lòng nhập email.',
             'email.email' => 'Địa chỉ email không đúng định dạng.',
             'email.unique' => 'Email đã được sử dụng',
+            'email.lowercase' => 'Email không hợp lệ',
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
         ]);
@@ -62,7 +76,18 @@ class RegisteredUserController extends Controller
      */
     public function checkEmail(Request $request): JsonResponse
     {
-        $email = strtolower(trim((string) $request->input('email')));
+        $rawEmail = trim((string) $request->input('email'));
+
+        // kiểm tra chữ cái đầu viết hoa
+        if (preg_match('/^[A-Z\p{Lu}]/u', $rawEmail)) {
+            return response()->json([
+                'exists' => false,
+                'invalid' => true,
+                'message' => 'Email không hợp lệ',
+            ]);
+        }
+
+        $email = strtolower($rawEmail);
         $exists = false;
 
         if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {

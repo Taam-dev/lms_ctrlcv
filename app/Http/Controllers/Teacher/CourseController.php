@@ -57,7 +57,7 @@ class CourseController extends Controller
             $thumbnail = $request->thumbnail_preset;
         }
 
-        // Tránh tạo khóa học trùng lặp khi bấm nút Tạo nhiều lần liên tục
+        // tránh bấm tạo nhiều lần bị trùng
         $lockKey = 'create_course_'.auth()->id();
         $lock = Cache::lock($lockKey, 5);
 

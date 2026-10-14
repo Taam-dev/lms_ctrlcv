@@ -719,6 +719,8 @@
                                 <input type="datetime-local" name="ends_at" id="ends_at" x-model="endsAt"
                                        class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2 bg-white">
                                 <p class="text-slate-400 text-xs mt-1">Sau thời gian này đề sẽ quá hạn, học viên không thể vào làm được nữa.</p>
+                                <p x-cloak x-show="startsAt && endsAt && new Date(endsAt) < new Date(startsAt)" class="text-rose-500 text-xs mt-1 font-medium">Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.</p>
+                                <p x-cloak x-show="startsAt && endsAt && new Date(endsAt) >= new Date(startsAt) && (new Date(endsAt) - new Date(startsAt)) < 3600000" class="text-rose-500 text-xs mt-1 font-medium">Thời hạn làm bài ít nhất là 1 tiếng.</p>
                                 @error('ends_at')
                                     <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
@@ -1212,6 +1214,20 @@
                         alert(`Số câu mỗi lượt thi (${this.questionLimit}) không thể lớn hơn tổng số câu hỏi đang có (${this.totalQuestions} câu)!`);
                         e.preventDefault();
                         return false;
+                    }
+
+                    if (this.startsAt && this.endsAt) {
+                        const diffMs = new Date(this.endsAt) - new Date(this.startsAt);
+                        if (diffMs < 0) {
+                            alert('Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.');
+                            e.preventDefault();
+                            return false;
+                        }
+                        if (diffMs < 3600000) {
+                            alert('Thời hạn làm bài ít nhất là 1 tiếng.');
+                            e.preventDefault();
+                            return false;
+                        }
                     }
 
                     if (this.mode === 'manual') {

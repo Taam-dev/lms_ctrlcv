@@ -991,4 +991,168 @@ class QuizTest extends TestCase
         $response->assertDontSee('Đối chiếu đáp án chi tiết');
         $response->assertDontSee('Giải thích bí mật');
     }
+
+    /**
+     * kiem tra bao loi tieng viet khi ngay ket thuc truoc ngay bat dau cho giang vien
+     */
+    public function test_teacher_quiz_creation_fails_with_vietnamese_error_when_ends_at_before_starts_at(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Test Ngày',
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($teacher)->from(route('teacher.quizzes.create'))->post(route('teacher.quizzes.store'), [
+            'course_id' => $course->id,
+            'type' => 'quiz',
+            'title' => 'Quiz kiem tra thoi gian',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'starts_at' => '2026-10-20T10:00',
+            'ends_at' => '2026-10-20T08:00',
+        ]);
+
+        $response->assertRedirect(route('teacher.quizzes.create'));
+        $response->assertSessionHasErrors([
+            'ends_at' => 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.',
+        ]);
+    }
+
+    /**
+     * kiem tra bao loi tieng viet khi cap nhat ngay ket thuc truoc ngay bat dau cho admin
+     */
+    public function test_admin_quiz_update_fails_with_vietnamese_error_when_ends_at_before_starts_at(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'type' => 'quiz',
+            'title' => 'Quiz Admin test',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($admin)->from(route('admin.quizzes.edit', $quiz->id))->put(route('admin.quizzes.update', $quiz->id), [
+            'type' => 'quiz',
+            'title' => 'Quiz Admin test sua',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'starts_at' => '2026-10-25T14:00',
+            'ends_at' => '2026-10-25T12:00',
+        ]);
+
+        $response->assertRedirect(route('admin.quizzes.edit', $quiz->id));
+        $response->assertSessionHasErrors([
+            'ends_at' => 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.',
+        ]);
+    }
+
+    /**
+     * kiem tra bao loi khi thoi gian lam bai duoi 1 tieng hoac trung nhau cho giang vien
+     */
+    public function test_teacher_quiz_creation_fails_when_duration_is_less_than_one_hour_or_identical(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Test Thoi Gian 1',
+            'status' => 'approved',
+        ]);
+
+        // truong hop trung nhau 6:00 va 6:00
+        $responseSameTime = $this->actingAs($teacher)->from(route('teacher.quizzes.create'))->post(route('teacher.quizzes.store'), [
+            'course_id' => $course->id,
+            'type' => 'quiz',
+            'title' => 'Quiz test trung gio',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'starts_at' => '2026-10-20T06:00',
+            'ends_at' => '2026-10-20T06:00',
+        ]);
+
+        $responseSameTime->assertRedirect(route('teacher.quizzes.create'));
+        $responseSameTime->assertSessionHasErrors([
+            'ends_at' => 'Thời hạn làm bài ít nhất là 1 tiếng.',
+        ]);
+
+        // truong hop cach nhau it hon 1 tieng 6:00 va 6:30
+        $responseShort = $this->actingAs($teacher)->from(route('teacher.quizzes.create'))->post(route('teacher.quizzes.store'), [
+            'course_id' => $course->id,
+            'type' => 'quiz',
+            'title' => 'Quiz test duoi 1 tieng',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'starts_at' => '2026-10-20T06:00',
+            'ends_at' => '2026-10-20T06:30',
+        ]);
+
+        $responseShort->assertRedirect(route('teacher.quizzes.create'));
+        $responseShort->assertSessionHasErrors([
+            'ends_at' => 'Thời hạn làm bài ít nhất là 1 tiếng.',
+        ]);
+    }
+
+    /**
+     * kiem tra tao thanh cong khi thoi gian cach nhau tu 1 tieng tro len
+     */
+    public function test_teacher_quiz_creation_succeeds_when_duration_is_at_least_one_hour(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Test Thoi Gian 2',
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($teacher)->from(route('teacher.quizzes.create'))->post(route('teacher.quizzes.store'), [
+            'course_id' => $course->id,
+            'type' => 'quiz',
+            'title' => 'Quiz test dung 1 tieng',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'starts_at' => '2026-10-20T06:00',
+            'ends_at' => '2026-10-20T07:00',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('quizzes', [
+            'course_id' => $course->id,
+            'title' => 'Quiz test dung 1 tieng',
+        ]);
+    }
+
+    /**
+     * kiem tra bao loi khi admin cap nhat quiz co thoi gian duoi 1 tieng
+     */
+    public function test_admin_quiz_update_fails_when_duration_is_less_than_one_hour(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'type' => 'quiz',
+            'title' => 'Quiz Admin time',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($admin)->from(route('admin.quizzes.edit', $quiz->id))->put(route('admin.quizzes.update', $quiz->id), [
+            'type' => 'quiz',
+            'title' => 'Quiz Admin sua time',
+            'duration_minutes' => 30,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'starts_at' => '2026-10-25T06:00',
+            'ends_at' => '2026-10-25T06:45',
+        ]);
+
+        $response->assertRedirect(route('admin.quizzes.edit', $quiz->id));
+        $response->assertSessionHasErrors([
+            'ends_at' => 'Thời hạn làm bài ít nhất là 1 tiếng.',
+        ]);
+    }
 }
