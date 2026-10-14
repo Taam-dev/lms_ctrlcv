@@ -29,7 +29,7 @@ class QuizController extends Controller
             ->withCount('questions')
             ->where('status', 'approved');
 
-        if (! auth()->user()->isAdmin()) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeacher()) {
             $query->where(function ($query) use ($enrolledCourseIds) {
                 $query->whereIn('course_id', $enrolledCourseIds)
                     ->orWhereNull('course_id');
@@ -97,8 +97,8 @@ class QuizController extends Controller
                 ->with('error', 'Bài kiểm tra này đã quá hạn làm bài (Hạn chót: '.$quiz->ends_at->format('d/m/Y H:i').'). Bạn không thể vào làm được nữa.');
         }
 
-        // Kiểm tra bảo mật: Nếu gắn với khóa học thì học viên phải đăng ký khóa học mới được làm quiz
-        if ($quiz->course_id && ! auth()->user()->isAdmin()) {
+        // Kiểm tra bảo mật: Nếu gắn với khóa học thì học viên phải đăng ký khóa học (Giảng viên & Admin được quyền làm bài trực tiếp)
+        if ($quiz->course_id && ! auth()->user()->isAdmin() && ! auth()->user()->isTeacher()) {
             $isEnrolled = Enrollment::where('student_id', auth()->id())
                 ->where('course_id', $quiz->course_id)
                 ->exists();
@@ -109,8 +109,8 @@ class QuizController extends Controller
             }
         }
 
-        // Kiểm tra số lần làm lại bài kiểm tra tối đa
-        if (! auth()->user()->isAdmin() && $quiz->hasReachedMaxAttempts(auth()->id())) {
+        // Kiểm tra số lần làm lại bài kiểm tra tối đa (chỉ áp dụng cho học viên, không giới hạn Giảng viên & Admin)
+        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeacher() && $quiz->hasReachedMaxAttempts(auth()->id())) {
             $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
 
             return redirect($redirectRoute)
@@ -158,8 +158,8 @@ class QuizController extends Controller
             abort(403, 'Bài kiểm tra này đã quá hạn nộp bài.');
         }
 
-        // Kiểm tra điều kiện đăng ký nếu quiz thuộc về khóa học
-        if ($quiz->course_id && ! auth()->user()->isAdmin()) {
+        // Kiểm tra điều kiện đăng ký nếu quiz thuộc về khóa học (Giảng viên & Admin có quyền làm bài)
+        if ($quiz->course_id && ! auth()->user()->isAdmin() && ! auth()->user()->isTeacher()) {
             $isEnrolled = Enrollment::where('student_id', auth()->id())
                 ->where('course_id', $quiz->course_id)
                 ->exists();
@@ -169,8 +169,8 @@ class QuizController extends Controller
             }
         }
 
-        // Kiểm tra số lần làm lại bài kiểm tra tối đa
-        if (! auth()->user()->isAdmin() && $quiz->hasReachedMaxAttempts(auth()->id())) {
+        // Kiểm tra số lần làm lại bài kiểm tra tối đa (chỉ áp dụng cho học viên)
+        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeacher() && $quiz->hasReachedMaxAttempts(auth()->id())) {
             abort(403, 'Bạn đã sử dụng hết số lần làm bài kiểm tra này (tối đa '.$quiz->max_attempts.' lần).');
         }
 

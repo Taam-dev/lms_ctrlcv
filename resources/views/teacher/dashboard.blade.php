@@ -602,6 +602,15 @@
                                                 </td>
                                                 <td class="py-4 px-6 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#fff7fa] transition z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.08)]">
                                                     <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                                                        <!-- Làm bài kiểm tra -->
+                                                        @if($quiz->status === 'approved' && $quiz->questions_count > 0)
+                                                            <a href="{{ route('student.quizzes.take', $quiz->id) }}" 
+                                                               class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" 
+                                                               title="Vào làm bài kiểm tra này">
+                                                                Làm bài
+                                                            </a>
+                                                        @endif
+
                                                         <!-- Soạn câu hỏi -->
                                                         <a href="{{ route('instructor.quizzes.questions', $quiz->id) }}" 
                                                            class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0">

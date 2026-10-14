@@ -1605,4 +1605,77 @@ class QuizTest extends TestCase
         ]);
         $submitResponse->assertRedirect();
     }
+
+    /**
+     * Giảng viên cũng có thể làm bài kiểm tra và cũng có thể bị ghi nhận gian lận (chuyển tab)
+     */
+    public function test_teacher_can_take_quiz_and_be_recorded_for_cheat_tab_switch_warning(): void
+    {
+        $authorTeacher = User::factory()->create(['role' => 'teacher']);
+        $takingTeacher = User::factory()->create(['role' => 'teacher', 'name' => 'Thầy Giáo Test']);
+
+        $course = Course::create([
+            'teacher_id' => $authorTeacher->id,
+            'title' => 'Khóa Học Lập Trình Python',
+            'status' => 'approved',
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $authorTeacher->id,
+            'title' => 'Bài Kiểm Tra Python Căn Bản',
+            'status' => 'approved',
+            'duration_minutes' => 30,
+            'passing_score' => 6.0,
+            'max_attempts' => 2,
+        ]);
+
+        $question = $quiz->questions()->create([
+            'question_text' => 'Python là ngôn ngữ thông dịch hay biên dịch?',
+            'order_number' => 1,
+        ]);
+
+        $correctOpt = $question->options()->create([
+            'option_text' => 'Thông dịch',
+            'is_correct' => true,
+        ]);
+
+        $question->options()->create([
+            'option_text' => 'Chỉ biên dịch',
+            'is_correct' => false,
+        ]);
+
+        // 1. Giảng viên vào làm bài kiểm tra thành công (không bị bắt buộc đăng ký khóa học)
+        $takeResponse = $this->actingAs($takingTeacher)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertOk();
+        $takeResponse->assertSee('Bài Kiểm Tra Python Căn Bản');
+
+        // 2. Giảng viên nộp bài thi có kèm cảnh báo gian lận (chuyển tab 4 lần)
+        $submitResponse = $this->actingAs($takingTeacher)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [
+                $question->id => $correctOpt->id,
+            ],
+            'question_ids' => [$question->id],
+            'warning_count' => 4,
+        ]);
+        $submitResponse->assertRedirect();
+
+        // 3. Hệ thống lưu lại kết quả và ghi nhận đúng 4 lần gian lận cho giảng viên
+        $attempt = QuizAttempt::where('student_id', $takingTeacher->id)->where('quiz_id', $quiz->id)->first();
+        $this->assertNotNull($attempt);
+        $this->assertEquals(10.0, (float) $attempt->score);
+        $this->assertEquals(4, $attempt->warning_count);
+
+        // 4. Giảng viên xem trang kết quả chi tiết
+        $resultResponse = $this->actingAs($takingTeacher)->get(route('student.quizzes.result', [$quiz->id, $attempt->id]));
+        $resultResponse->assertOk();
+        $resultResponse->assertSee(':4');
+        $resultResponse->assertSee('Thầy Giáo Test');
+
+        // 5. Giảng viên tạo đề xem kết quả cũng thấy lượt thi của giảng viên này kèm cảnh báo gian lận
+        $instructorResultsResponse = $this->actingAs($authorTeacher)->get(route('instructor.quizzes.results', $quiz->id));
+        $instructorResultsResponse->assertOk();
+        $instructorResultsResponse->assertSee('Thầy Giáo Test');
+        $instructorResultsResponse->assertSee(':4');
+    }
 }

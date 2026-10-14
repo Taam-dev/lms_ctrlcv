@@ -33,6 +33,8 @@
                     <span>Nộp bài lúc: {{ $attempt->completed_at ? $attempt->completed_at->format('H:i d/m/Y') : $attempt->created_at->format('H:i d/m/Y') }}</span>
                     @php
                         $isStaff = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher() || auth()->user()->isInstructor());
+                        $studentAttemptsCount = auth()->check() ? $quiz->attempts()->where('student_id', auth()->id())->count() : 0;
+                        $hasReachedMax = $quiz->max_attempts !== null && $quiz->max_attempts > 0 && $studentAttemptsCount >= $quiz->max_attempts;
                     @endphp
                     @if($isStaff)
                         <span>&bull;</span>
@@ -44,15 +46,23 @@
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 @if($isStaff)
+                    @php
+                        $isOwnerTeacher = auth()->user()->isTeacher() && ($quiz->teacher_id === auth()->id() || ($quiz->course && $quiz->course->teacher_id === auth()->id()));
+                    @endphp
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
                            class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Bảng điểm học viên
                         </a>
-                    @else
+                    @elseif($isOwnerTeacher)
                         <a href="{{ route('instructor.quizzes.results', $quiz->id) }}" 
                            class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Bảng điểm học viên
+                        </a>
+                    @else
+                        <a href="{{ route('student.quizzes.index') }}" 
+                           class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
+                            &larr; Quizzes
                         </a>
                     @endif
                 @else
@@ -290,7 +300,12 @@
                                     GIÁM SÁT VI PHẠM (ADMIN &amp; GIẢNG VIÊN)
                                 </span>
                                 <span class="text-xs text-neutral-500 font-semibold">
-                                    Học viên: <strong class="text-neutral-900">{{ $attempt->student->name ?? 'N/A' }}</strong> ({{ $attempt->student->email ?? '' }})
+                                    Thí sinh: <strong class="text-neutral-900">{{ $attempt->student->name ?? 'N/A' }}</strong> ({{ $attempt->student->email ?? '' }})
+                                    @if($attempt->student && ($attempt->student->isTeacher() || $attempt->student->role === 'teacher'))
+                                        <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-100 text-pink-700">Giảng viên</span>
+                                    @elseif($attempt->student && ($attempt->student->isAdmin() || $attempt->student->role === 'admin'))
+                                        <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Admin</span>
+                                    @endif
                                 </span>
                             </div>
 
@@ -309,7 +324,7 @@
                                 </div>
 
                                 <div>
-                                    <span class="text-xs font-bold text-neutral-600 block">Số lần học viên bị cảnh cáo chuyển tab:</span>
+                                    <span class="text-xs font-bold text-neutral-600 block">Số lần thí sinh bị cảnh cáo chuyển tab (gian lận):</span>
                                     <div class="mt-0.5 flex items-baseline gap-1.5">
                                         <span x-show="!hideWarningCount" class="text-2xl sm:text-3xl font-black font-mono {{ ($attempt->warning_count ?? 0) > 0 ? 'text-amber-600' : 'text-neutral-900' }}">
                                             :{{ $attempt->warning_count ?? 0 }}
