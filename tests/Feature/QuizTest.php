@@ -1678,4 +1678,100 @@ class QuizTest extends TestCase
         $instructorResultsResponse->assertSee('Thầy Giáo Test');
         $instructorResultsResponse->assertSee(':4');
     }
+
+    /**
+     * Kiểm tra khi thí sinh (học viên hoặc giảng viên) làm bài:
+     * - Nếu show_result_after_completion = false: sau khi hoàn thành chỉ hiển thị điểm số, KHÔNG hiển thị đối chiếu kết quả/đáp án.
+     * - Nếu show_result_after_completion = true: sau khi hoàn thành hiển thị đầy đủ điểm và đối chiếu kết quả/đáp án chi tiết.
+     */
+    public function test_examinee_only_sees_score_without_review_when_show_result_after_completion_is_disabled_and_vice_versa(): void
+    {
+        $author = User::factory()->create(['role' => 'teacher']);
+        $takingUser = User::factory()->create(['role' => 'teacher', 'name' => 'Thí Sinh Khảo Sát']);
+
+        // 1. Tạo bài quiz với show_result_after_completion = false (Chọn "Không")
+        $quizHidden = Quiz::create([
+            'teacher_id' => $author->id,
+            'title' => 'Đề thi ẩn đối chiếu kết quả',
+            'type' => 'quiz',
+            'duration_minutes' => 20,
+            'passing_score' => 5.0,
+            'show_result_after_completion' => false,
+            'status' => 'approved',
+        ]);
+
+        $qHidden = QuizQuestion::create([
+            'quiz_id' => $quizHidden->id,
+            'question_text' => 'Nội dung câu hỏi ẩn kết quả 123?',
+            'explanation' => 'Giải thích bí mật không được lộ',
+            'order_number' => 1,
+        ]);
+
+        $optHiddenA = QuizOption::create([
+            'quiz_question_id' => $qHidden->id,
+            'option_text' => 'Phương án đúng ẩn',
+            'is_correct' => true,
+        ]);
+
+        // Thí sinh nộp bài quizHidden
+        $submitHiddenResponse = $this->actingAs($takingUser)->post(route('student.quizzes.submit', $quizHidden->id), [
+            'answers' => [$qHidden->id => $optHiddenA->id],
+        ]);
+        $attemptHidden = QuizAttempt::where('quiz_id', $quizHidden->id)->where('student_id', $takingUser->id)->first();
+        $this->assertNotNull($attemptHidden);
+        $submitHiddenResponse->assertRedirect(route('student.quizzes.result', [$quizHidden->id, $attemptHidden->id]));
+
+        // Kiểm tra trang kết quả: CHỈ hiển thị điểm, KHÔNG hiển thị đối chiếu kết quả
+        $resultHiddenResponse = $this->actingAs($takingUser)->get(route('student.quizzes.result', [$quizHidden->id, $attemptHidden->id]));
+        $resultHiddenResponse->assertOk();
+        $resultHiddenResponse->assertSee('10.0');
+        $resultHiddenResponse->assertSee('/ 10 điểm');
+        $resultHiddenResponse->assertSee('KẾT QUẢ: ĐẠT YÊU CẦU');
+        $resultHiddenResponse->assertSee('Câu hỏi &amp; đáp án chi tiết không hiển thị', false);
+        $resultHiddenResponse->assertDontSee('Đối chiếu đáp án chi tiết');
+        $resultHiddenResponse->assertDontSee('Nội dung câu hỏi ẩn kết quả 123?');
+        $resultHiddenResponse->assertDontSee('Giải thích bí mật không được lộ');
+
+        // 2. Ngược lại: Tạo bài quiz với show_result_after_completion = true (Chọn "Có")
+        $quizVisible = Quiz::create([
+            'teacher_id' => $author->id,
+            'title' => 'Đề thi hiển thị đối chiếu kết quả',
+            'type' => 'quiz',
+            'duration_minutes' => 20,
+            'passing_score' => 5.0,
+            'show_result_after_completion' => true,
+            'status' => 'approved',
+        ]);
+
+        $qVisible = QuizQuestion::create([
+            'quiz_id' => $quizVisible->id,
+            'question_text' => 'Nội dung câu hỏi công khai 456?',
+            'explanation' => 'Giải thích công khai cho thí sinh đối chiếu',
+            'order_number' => 1,
+        ]);
+
+        $optVisibleA = QuizOption::create([
+            'quiz_question_id' => $qVisible->id,
+            'option_text' => 'Phương án đúng công khai',
+            'is_correct' => true,
+        ]);
+
+        // Thí sinh nộp bài quizVisible
+        $submitVisibleResponse = $this->actingAs($takingUser)->post(route('student.quizzes.submit', $quizVisible->id), [
+            'answers' => [$qVisible->id => $optVisibleA->id],
+        ]);
+        $attemptVisible = QuizAttempt::where('quiz_id', $quizVisible->id)->where('student_id', $takingUser->id)->first();
+        $this->assertNotNull($attemptVisible);
+        $submitVisibleResponse->assertRedirect(route('student.quizzes.result', [$quizVisible->id, $attemptVisible->id]));
+
+        // Kiểm tra trang kết quả: Hiển thị điểm VÀ hiển thị đầy đủ đối chiếu kết quả
+        $resultVisibleResponse = $this->actingAs($takingUser)->get(route('student.quizzes.result', [$quizVisible->id, $attemptVisible->id]));
+        $resultVisibleResponse->assertOk();
+        $resultVisibleResponse->assertSee('10.0');
+        $resultVisibleResponse->assertSee('/ 10 điểm');
+        $resultVisibleResponse->assertSee('KẾT QUẢ: ĐẠT YÊU CẦU');
+        $resultVisibleResponse->assertSee('Đối chiếu đáp án chi tiết');
+        $resultVisibleResponse->assertSee('Nội dung câu hỏi công khai 456?');
+        $resultVisibleResponse->assertSee('Giải thích công khai cho thí sinh đối chiếu');
+    }
 }

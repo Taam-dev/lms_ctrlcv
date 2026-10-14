@@ -48,13 +48,14 @@
                 @if($isStaff)
                     @php
                         $isOwnerTeacher = auth()->user()->isTeacher() && ($quiz->teacher_id === auth()->id() || ($quiz->course && $quiz->course->teacher_id === auth()->id()));
+                        $isSelfAttempt = (int) $attempt->student_id === (int) auth()->id();
                     @endphp
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
                            class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Bảng điểm học viên
                         </a>
-                    @elseif($isOwnerTeacher)
+                    @elseif($isOwnerTeacher && !$isSelfAttempt)
                         <a href="{{ route('instructor.quizzes.results', $quiz->id) }}" 
                            class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Bảng điểm học viên
@@ -64,6 +65,14 @@
                            class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
                             &larr; Quizzes
                         </a>
+                    @endif
+
+                    @if($isSelfAttempt && ((!$quiz->isExpired() && !$quiz->isNotStarted()) || auth()->user()->isAdmin() || auth()->user()->isTeacher()))
+                        <button type="button" 
+                                @click="confirmModalOpen = true"
+                                class="px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-pink-600 hover:bg-pink-700 text-white transition cursor-pointer shadow-sm">
+                            Làm lại bài thi
+                        </button>
                     @endif
                 @else
                     <a href="{{ route('student.quizzes.index') }}" 
@@ -268,7 +277,10 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
             @php
-                $canViewResultDetails = $quiz->show_result_after_completion || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher() || auth()->user()->isInstructor()));
+                $isExaminee = auth()->check() && ((int) $attempt->student_id === (int) auth()->id());
+                $canViewResultDetails = $isExaminee 
+                    ? (bool) $quiz->show_result_after_completion 
+                    : ((bool) $quiz->show_result_after_completion || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher() || auth()->user()->isInstructor())));
             @endphp
 
             @if($isStaff)
@@ -507,7 +519,7 @@
                             Câu hỏi &amp; đáp án chi tiết không hiển thị
                         </h3>
                         <p class="text-xs text-slate-500 leading-relaxed">
-                            Theo cài đặt của bài kiểm tra này, học viên chỉ xem điểm số sau khi nộp bài mà không hiển thị lại nội dung câu hỏi và đáp án chi tiết.
+                            Theo cài đặt của bài kiểm tra này, bạn chỉ xem điểm số sau khi nộp bài mà không hiển thị lại nội dung câu hỏi và đối chiếu đáp án chi tiết.
                         </p>
                     </div>
                 </div>

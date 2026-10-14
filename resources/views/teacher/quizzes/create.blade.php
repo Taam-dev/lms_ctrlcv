@@ -1008,6 +1008,7 @@
                         passing_score: parseFloat(this.passingScore) || 5.0,
                         question_limit: this.questionLimit ? parseInt(this.questionLimit, 10) : null,
                         randomize_questions: this.randomizeQuestions,
+                        show_result_after_completion: this.showResultAfterCompletion === '1',
                         questions: this.parsedQuestions
                     };
                     this.jsonText = JSON.stringify(payload, null, 2);

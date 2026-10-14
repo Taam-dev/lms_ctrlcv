@@ -217,8 +217,12 @@ class QuizController extends Controller
             'completed_at' => now(),
         ]);
 
+        $successMessage = $quiz->show_result_after_completion
+            ? 'Nộp bài kiểm tra thành công! Xem ngay kết quả chi tiết bên dưới.'
+            : 'Nộp bài kiểm tra thành công! Điểm số của bạn đã được ghi nhận.';
+
         return redirect()->route('student.quizzes.result', [$quiz->id, $attempt->id])
-            ->with('success', 'Nộp bài kiểm tra thành công! Xem ngay kết quả chi tiết bên dưới.');
+            ->with('success', $successMessage);
     }
 
     /**
