@@ -1758,12 +1758,26 @@
                                                     }
                                                 @endphp
 
-                                                <button type="button"
-                                                        @click="openAction({{ Js::from($report) }}, '{{ $report->type_label }}', '{{ addslashes($targetName) }}', '{{ addslashes($targetContent) }}', '{{ addslashes($report->reason_label) }}', '{{ addslashes($report->details ?? '') }}', '{{ $avatarUrl }}')"
-                                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold text-xs transition {{ $report->status === 'pending' ? 'bg-pink-600 hover:bg-pink-700 text-white shadow-xs cursor-pointer' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer' }}">
-                                                    <span>{{ $report->status === 'pending' ? 'Xử lý vi phạm' : 'Xem chi tiết' }}</span>
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                </button>
+                                                <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                                                    <button type="button"
+                                                            @click="openAction({{ Js::from($report) }}, '{{ $report->type_label }}', '{{ addslashes($targetName) }}', '{{ addslashes($targetContent) }}', '{{ addslashes($report->reason_label) }}', '{{ addslashes($report->details ?? '') }}', '{{ $avatarUrl }}')"
+                                                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold text-xs transition {{ $report->status === 'pending' ? 'bg-pink-600 hover:bg-pink-700 text-white shadow-xs cursor-pointer' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer' }}">
+                                                        <span>{{ $report->status === 'pending' ? 'Xử lý vi phạm' : 'Xem chi tiết' }}</span>
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                                    </button>
+
+                                                    <form method="POST" action="{{ route('admin.reports.destroy', $report->id) }}" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi báo cáo #{{ $report->id }} này?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                                class="inline-flex items-center justify-center p-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition cursor-pointer"
+                                                                title="Xóa báo cáo này">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -1901,16 +1915,33 @@
                                 </div>
 
                                 <!-- Action Buttons -->
-                                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                                    <button type="button" @click="actionModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer">
-                                        Hủy bỏ
-                                    </button>
+                                <div class="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
                                     <button type="submit"
-                                            :class="actionType === 'resolve' ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20' : 'bg-slate-800 hover:bg-slate-900 text-white shadow-slate-800/20'"
-                                            class="px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 cursor-pointer">
-                                        <span x-text="actionType === 'resolve' ? 'Lưu & Giải quyết vi phạm' : 'Lưu & Bác bỏ báo cáo'"></span>
+                                            form="delete-report-modal-form"
+                                            class="px-3.5 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 font-bold text-xs hover:bg-rose-100 hover:text-rose-800 transition cursor-pointer flex items-center gap-1.5 shadow-2xs">
+                                        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        <span>Xóa báo cáo</span>
                                     </button>
+
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="actionModal = false" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer">
+                                            Hủy bỏ
+                                        </button>
+                                        <button type="submit"
+                                                :class="actionType === 'resolve' ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20' : 'bg-slate-800 hover:bg-slate-900 text-white shadow-slate-800/20'"
+                                                class="px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition active:scale-95 cursor-pointer">
+                                            <span x-text="actionType === 'resolve' ? 'Lưu & Giải quyết vi phạm' : 'Lưu & Bác bỏ báo cáo'"></span>
+                                        </button>
+                                    </div>
                                 </div>
+                            </form>
+
+                            <!-- Form xóa báo cáo độc lập từ modal -->
+                            <form id="delete-report-modal-form" method="POST" :action="'{{ url('/admin/reports') }}/' + reportId" class="hidden" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi báo cáo này?')">
+                                @csrf
+                                @method('DELETE')
                             </form>
 
                         </div>

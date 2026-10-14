@@ -285,4 +285,77 @@ class ReportTest extends TestCase
         $this->assertEquals('dismissed', $report->status);
         $this->assertEquals($admin->id, $report->resolved_by);
     }
+
+    /**
+     * Admin có thể xóa bản ghi báo cáo vi phạm
+     */
+    public function test_admin_can_delete_report(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $reporter = User::factory()->create(['role' => 'student']);
+        $targetUser = User::factory()->create(['role' => 'student']);
+
+        $report = Report::create([
+            'reporter_id' => $reporter->id,
+            'reportable_type' => User::class,
+            'reportable_id' => $targetUser->id,
+            'reason' => 'spam',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(route('admin.reports.destroy', $report));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('reports', [
+            'id' => $report->id,
+        ]);
+    }
+
+    /**
+     * Người dùng không phải admin không thể xóa báo cáo
+     */
+    public function test_non_admin_cannot_delete_report(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $targetUser = User::factory()->create(['role' => 'student']);
+
+        $report = Report::create([
+            'reporter_id' => $student->id,
+            'reportable_type' => User::class,
+            'reportable_id' => $targetUser->id,
+            'reason' => 'spam',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($student)->delete(route('admin.reports.destroy', $report));
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('reports', [
+            'id' => $report->id,
+        ]);
+    }
+
+    /**
+     * Tab báo cáo trong Admin dashboard hiển thị nút xóa báo cáo
+     */
+    public function test_admin_reports_tab_shows_delete_button(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $targetUser = User::factory()->create(['role' => 'student']);
+
+        $report = Report::create([
+            'reporter_id' => $admin->id,
+            'reportable_type' => User::class,
+            'reportable_id' => $targetUser->id,
+            'reason' => 'harassment',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['tab' => 'reports']));
+        $response->assertOk();
+        $response->assertSee(route('admin.reports.destroy', $report->id));
+        $response->assertSee('delete-report-modal-form');
+        $response->assertSee('Xóa báo cáo');
+    }
 }

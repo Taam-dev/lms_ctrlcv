@@ -423,4 +423,15 @@ class DashboardController extends Controller
 
         return back()->with('success', 'Đã bác bỏ báo cáo vi phạm!');
     }
+
+    /**
+     * Xóa bản ghi báo cáo vi phạm
+     */
+    public function destroyReport(Report $report): RedirectResponse
+    {
+        $reportId = $report->id;
+        $report->delete();
+
+        return back()->with('success', "Đã xóa bản ghi báo cáo #{$reportId} thành công!");
+    }
 }
