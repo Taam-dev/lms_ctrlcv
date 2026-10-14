@@ -137,21 +137,11 @@
                 x-init="checkOverflow(); window.addEventListener('resize', () => checkOverflow())"
                 class="relative">
                     
-                    <!-- Thanh thông báo & cuộn ngang tiện lợi ở đỉnh bảng khi màn hình hẹp -->
-                    <div x-show="isOverflowing" x-cloak class="px-4 py-2 bg-gradient-to-r from-pink-50/80 via-white to-pink-50/80 border-b border-pink-100 flex items-center justify-between text-xs text-slate-600 transition">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-bold">&harr;</span>
-                            <span class="text-slate-700 font-medium">Bảng thông tin có thể cuộn ngang:</span>
-                            <span class="text-slate-400 text-[11px]">(Cột <strong class="text-pink-600">Hành động</strong> luôn được ghim cố định bên phải)</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            <button type="button" @click="scrollTable(-300)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-700 font-bold text-xs shadow-2xs transition flex items-center gap-1">
-                                &larr; Cuộn trái
-                            </button>
-                            <button type="button" @click="scrollTable(300)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-700 font-bold text-xs shadow-2xs transition flex items-center gap-1">
-                                Cuộn phải &rarr;
-                            </button>
-                        </div>
+                    <!-- thong bao cuon ngang khi man hinh hep -->
+                    <div x-show="isOverflowing" x-cloak class="px-4 py-2 bg-gradient-to-r from-pink-50/80 via-white to-pink-50/80 border-b border-pink-100 flex items-center gap-2 text-xs text-slate-600 transition">
+                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-bold">&harr;</span>
+                        <span class="text-slate-700 font-medium">Bảng thông tin có thể cuộn ngang:</span>
+                        <span class="text-slate-400 text-[11px]">(Cột <strong class="text-pink-600">Hành động</strong> luôn được ghim cố định bên phải)</span>
                     </div>
 
                     <!-- Thanh scrollbar đồng bộ ở đỉnh (Top Scrollbar) -->

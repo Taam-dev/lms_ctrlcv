@@ -20,6 +20,17 @@
     <script src="{{ asset('vendor/cropperjs/cropper.min.js') }}"></script>
 
     @stack('styles')
+    <style>
+        .sidebar-scroll {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+    </style>
 </head>
 <body class="font-sans antialiased bg-[#fdf2f8] text-slate-800 min-h-full" x-data="{ sidebarOpen: false }">
     <div class="min-h-screen flex w-full">
@@ -51,7 +62,7 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-7">
+            <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-7 sidebar-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 @foreach($navGroups as $group)
                     <div>
                         <div class="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-neutral-500">
@@ -116,11 +127,22 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    @if(($topPending ?? 0) > 0)
+                <div class="flex items-center gap-2.5 sm:gap-3">
+                    @if(!empty($topPendingBadges))
+                        <div class="flex items-center gap-2 flex-wrap">
+                            @foreach($topPendingBadges as $pBadge)
+                                <a href="{{ $pBadge['url'] }}"
+                                   class="px-2.5 py-1.5 {{ $pBadge['class'] ?? 'bg-pink-600' }} text-white text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5 shadow-2xs">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                    <span>{{ $pBadge['label'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @elseif(($topPending ?? 0) > 0)
                         <a href="{{ $topPendingUrl ?? '#' }}"
-                           class="px-3 py-1.5 bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 transition">
-                            {{ $topPending }} mục chờ duyệt
+                           class="px-3 py-1.5 bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 transition flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                            <span>{{ $topPending }} mục chờ duyệt</span>
                         </a>
                     @endif
                     <a href="{{ route('home') }}" class="hidden sm:inline text-xs font-bold uppercase tracking-wider text-neutral-500 hover:text-pink-600 transition">

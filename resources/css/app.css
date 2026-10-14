@@ -21,3 +21,15 @@
     outline: 2px solid #ec4899 !important;
     outline-color: rgba(236, 72, 153, 0.85) !important;
 }
+
+/* an thanh scroll */
+.sidebar-scroll {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+.sidebar-scroll::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+

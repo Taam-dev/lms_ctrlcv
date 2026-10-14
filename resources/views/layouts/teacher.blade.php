@@ -6,7 +6,29 @@
     $panelLabel = 'Giảng viên';
     $panelHome = route($routeBase . '.dashboard');
     $topPending = ($pendingCoursesCount ?? 0) + ($pendingQuizzesCount ?? 0);
-    $topPendingUrl = route($routeBase . '.dashboard', ['tab' => 'courses', 'status' => 'pending']);
+
+    // tao badge cho duyet cu the cho giang vien
+    $topPendingBadges = [];
+    if (($pendingQuizzesCount ?? 0) > 0) {
+        $topPendingBadges[] = [
+            'label' => $pendingQuizzesCount . ' quiz chờ duyệt',
+            'url' => route($routeBase . '.dashboard', ['tab' => 'quizzes', 'status' => 'pending']),
+            'class' => 'bg-pink-600 hover:bg-pink-700',
+        ];
+    }
+    if (($pendingCoursesCount ?? 0) > 0) {
+        $topPendingBadges[] = [
+            'label' => $pendingCoursesCount . ' khóa học chờ duyệt',
+            'url' => route($routeBase . '.dashboard', ['tab' => 'courses', 'status' => 'pending']),
+            'class' => 'bg-amber-600 hover:bg-amber-700',
+        ];
+    }
+
+    if (($pendingQuizzesCount ?? 0) > 0 && ($pendingCoursesCount ?? 0) === 0) {
+        $topPendingUrl = route($routeBase . '.dashboard', ['tab' => 'quizzes', 'status' => 'pending']);
+    } else {
+        $topPendingUrl = route($routeBase . '.dashboard', ['tab' => 'courses', 'status' => 'pending']);
+    }
 
     $navGroups = [
         [
@@ -23,16 +45,11 @@
             'title' => 'Nội dung giảng dạy',
             'items' => [
                 [
-                    'label' => 'Khóa học của tôi',
+                    'label' => 'Quản lý Khóa học / Bài học',
                     'href' => route($routeBase . '.dashboard', ['tab' => 'courses']),
-                    'active' => ($onDashboard && $tab === 'courses') || (request()->routeIs($routeBase . '.courses.*') && !request()->routeIs($routeBase . '.courses.create')),
+                    'active' => ($onDashboard && in_array($tab, ['courses', 'lessons'])) || request()->routeIs($routeBase . '.courses.*') || request()->routeIs($routeBase . '.lessons.*'),
                     'badge' => ($pendingCoursesCount ?? 0) > 0 ? ($pendingCoursesCount . ' chờ') : ($totalCoursesCount ?? null),
                     'badgeWarn' => ($pendingCoursesCount ?? 0) > 0,
-                ],
-                [
-                    'label' => 'Danh sách bài giảng',
-                    'href' => route($routeBase . '.dashboard', ['tab' => 'lessons']),
-                    'active' => ($onDashboard && $tab === 'lessons') || request()->routeIs($routeBase . '.lessons.*'),
                 ],
                 [
                     'label' => 'Bài kiểm tra (Quizzes)',

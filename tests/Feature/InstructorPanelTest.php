@@ -36,7 +36,7 @@ class InstructorPanelTest extends TestCase
         $response = $this->actingAs($instructor)->get(route('instructor.dashboard'));
         $response->assertStatus(200);
         $response->assertSee('Bảng Điều Khiển Giảng Viên');
-        $response->assertSee('Khóa học của tôi');
+        $response->assertSee('Quản lý Khóa học / Bài học');
     }
 
     /**
@@ -368,11 +368,15 @@ class InstructorPanelTest extends TestCase
             'order_number' => 1,
         ]);
 
-        $response = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'lessons']));
+        // Khi truy cập tab courses đã gộp bài giảng theo dạng accordion
+        $response = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'courses']));
         $response->assertStatus(200);
-        $response->assertSee('Giáo trình Bài giảng theo Khóa học');
         $response->assertSee('Khóa học Thiết kế Web');
         $response->assertSee('Bài học số 1: HTML cơ bản');
+
+        // Khi truy cập tab lessons cũ, tự động chuyển hướng về tab courses
+        $redirectResponse = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'lessons']));
+        $redirectResponse->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
     }
 
     /**
@@ -407,14 +411,15 @@ class InstructorPanelTest extends TestCase
     {
         $instructor = User::factory()->instructor()->create();
 
-        // 1. Khi truy cập tab courses, menu Khóa học của tôi phải được đánh dấu active, Bảng điều khiển không active
+        // 1. Khi truy cập tab courses, menu Quản lý Khóa học / Bài học phải được đánh dấu active
         $responseCourses = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'courses']));
         $responseCourses->assertStatus(200);
         $responseCourses->assertSee('border-pink-500 bg-white/[0.07] text-white');
+        $responseCourses->assertSee('Quản lý Khóa học / Bài học');
 
-        // 2. Khi truy cập tab lessons, menu Danh sách bài giảng được active
+        // 2. Khi truy cập tab lessons cũ, tự động redirect về tab courses
         $responseLessons = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'lessons']));
-        $responseLessons->assertStatus(200);
+        $responseLessons->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
 
         // 3. Khi truy cập tab quizzes, menu Bài kiểm tra được active
         $responseQuizzes = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'quizzes']));

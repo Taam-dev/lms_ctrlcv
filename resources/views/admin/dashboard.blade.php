@@ -165,7 +165,7 @@
                 </a>
 
                 <!-- 2. Quizzes Stats -->
-                <a href="{{ route('admin.dashboard', ['tab' => 'quizzes']) }}" 
+                <a href="{{ $stats['pending_quizzes'] > 0 ? route('admin.dashboard', ['tab' => 'quizzes', 'status' => 'pending']) : route('admin.dashboard', ['tab' => 'quizzes']) }}" 
                    class="block bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:border-pink-300 hover:shadow-md transition group relative overflow-hidden">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-pink-600 transition">Bài kiểm tra</span>
@@ -349,7 +349,7 @@
                                 <p class="text-[11px] text-slate-400">Các đề thi trắc nghiệm chờ kiểm duyệt nội dung</p>
                             </div>
                         </div>
-                        <a href="{{ route('admin.dashboard', ['tab' => 'quizzes']) }}" class="text-xs font-bold text-pink-600 hover:text-pink-800 transition">
+                        <a href="{{ route('admin.dashboard', ['tab' => 'quizzes', 'status' => 'pending']) }}" class="text-xs font-bold text-pink-600 hover:text-pink-800 transition">
                             Xem tất cả &rarr;
                         </a>
                     </div>
@@ -573,21 +573,11 @@
                     x-init="checkOverflow(); window.addEventListener('resize', () => checkOverflow())"
                     class="relative">
                         
-                        <!-- Thanh thông báo & cuộn ngang tiện lợi ở đỉnh bảng khi màn hình hẹp -->
-                        <div x-show="isOverflowing" x-cloak class="px-4 py-2 bg-gradient-to-r from-pink-50/80 via-white to-pink-50/80 border-b border-pink-100 flex items-center justify-between text-xs text-slate-600 transition">
-                            <div class="flex items-center gap-2">
-                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-bold">&harr;</span>
-                                <span class="text-slate-700 font-medium">Bảng thông tin có thể cuộn ngang:</span>
-                                <span class="text-slate-400 text-[11px]">(Cột <strong class="text-pink-600">Hành động</strong> luôn được ghim cố định bên phải)</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <button type="button" @click="scrollTable(-300)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-700 font-bold text-xs shadow-2xs transition flex items-center gap-1">
-                                    &larr; Cuộn trái
-                                </button>
-                                <button type="button" @click="scrollTable(300)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-pink-300 hover:bg-pink-50/50 text-slate-700 font-bold text-xs shadow-2xs transition flex items-center gap-1">
-                                    Cuộn phải &rarr;
-                                </button>
-                            </div>
+                        <!-- thong bao cuon ngang khi man hinh hep -->
+                        <div x-show="isOverflowing" x-cloak class="px-4 py-2 bg-gradient-to-r from-pink-50/80 via-white to-pink-50/80 border-b border-pink-100 flex items-center gap-2 text-xs text-slate-600 transition">
+                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-bold">&harr;</span>
+                            <span class="text-slate-700 font-medium">Bảng thông tin có thể cuộn ngang:</span>
+                            <span class="text-slate-400 text-[11px]">(Cột <strong class="text-pink-600">Hành động</strong> luôn được ghim cố định bên phải)</span>
                         </div>
 
                         <!-- Thanh scrollbar đồng bộ ở đỉnh (Top Scrollbar) -->
@@ -846,114 +836,204 @@
                         <p class="text-xs text-slate-500">Chưa có đề thi trắc nghiệm nào phù hợp với bộ lọc hiện tại.</p>
                     </div>
                 @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[1020px]">
-                            <thead>
-                                <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                                    <th class="py-4 px-6 whitespace-nowrap">Bài kiểm tra</th>
-                                    <th class="py-4 px-4 whitespace-nowrap">Khóa học & Giảng viên</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Số câu</th>
-                                    <th class="py-4 px-4 text-center whitespace-nowrap">Trạng thái</th>
-                                    <th class="py-4 px-6 text-right whitespace-nowrap">Hành động của Admin</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 text-sm">
-                                @foreach($quizzes as $quiz)
-                                    <tr class="hover:bg-pink-50/20 transition">
-                                        <td class="py-4 px-6 min-w-[240px]">
-                                            <div class="font-bold text-slate-900 text-base mb-0.5">{{ $quiz->title }}</div>
-                                            <div class="text-[11px] text-slate-400">
-                                                {{ $quiz->duration_minutes }} phút | Điểm chuẩn &ge; {{ $quiz->passing_score }}/10
-                                            </div>
-                                        </td>
-                                        <td class="py-4 px-4 whitespace-nowrap">
-                                            <div class="font-semibold text-slate-800 text-xs">{{ $quiz->course->title ?? 'N/A' }}</div>
-                                            <div class="text-[11px] text-slate-400">GV: {{ $quiz->teacher->name ?? 'N/A' }}</div>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
-                                                {{ $quiz->questions_count }} câu
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-4 text-center whitespace-nowrap">
-                                            @if($quiz->status === 'pending')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                    Chờ duyệt
-                                                </span>
-                                            @elseif($quiz->status === 'approved')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                    Đã duyệt
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                    Đã loại bỏ
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-6 text-right whitespace-nowrap">
-                                            <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
-                                                <a href="{{ route('admin.quizzes.preview', $quiz->id) }}" 
-                                                   class="px-2.5 py-1.5 rounded-lg border border-pink-200 text-pink-700 hover:bg-pink-50 text-xs font-bold transition whitespace-nowrap shrink-0">
-                                                    Xem đề
-                                                </a>
-                                                <a href="{{ route('admin.quizzes.questions', $quiz->id) }}" 
-                                                   class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0">
-                                                    Câu hỏi
-                                                </a>
-                                                <a href="{{ route('admin.quizzes.edit', $quiz->id) }}" 
-                                                   class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0">
-                                                    Sửa
-                                                </a>
-                                                <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
-                                                   class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem kết quả học viên">
-                                                    Kết quả
-                                                </a>
+                    <div x-data="{
+                        isOverflowing: false,
+                        checkOverflow() {
+                            const el = this.$refs.tableWrapper;
+                            if (el) {
+                                this.isOverflowing = el.scrollWidth > el.clientWidth + 5;
+                            }
+                        }
+                    }"
+                    x-init="checkOverflow(); window.addEventListener('resize', () => checkOverflow())"
+                    class="relative">
 
-                                                @if($quiz->status === 'pending')
-                                                    <form action="{{ route('admin.quizzes.approve', $quiz->id) }}" method="POST" class="inline shrink-0">
-                                                        @csrf
-                                                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0">
-                                                            Duyệt
-                                                        </button>
-                                                    </form>
-                                                    <form action="{{ route('admin.quizzes.reject', $quiz->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc muốn từ chối đề thi này?')">
-                                                        @csrf
-                                                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0">
-                                                            Từ chối
-                                                        </button>
-                                                    </form>
-                                                @elseif($quiz->status === 'approved')
-                                                    <form action="{{ route('admin.quizzes.remove', $quiz->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc muốn loại bỏ bài kiểm tra này?')">
-                                                        @csrf
-                                                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0">
-                                                            Loại bỏ
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <form action="{{ route('admin.quizzes.approve', $quiz->id) }}" method="POST" class="inline shrink-0">
-                                                        @csrf
-                                                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Duyệt lại">
-                                                            Duyệt lại
-                                                        </button>
-                                                    </form>
+                        <!-- thong bao cuon ngang khi man hinh hep -->
+                        <div x-show="isOverflowing" x-cloak class="px-4 py-2 bg-gradient-to-r from-pink-50/80 via-white to-pink-50/80 border-b border-pink-100 flex items-center gap-2 text-xs text-slate-600 transition">
+                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-100 text-pink-700 text-[10px] font-bold">&harr;</span>
+                            <span class="text-slate-700 font-medium">Bảng thông tin có thể cuộn ngang:</span>
+                            <span class="text-slate-400 text-[11px]">(Cột <strong class="text-pink-600">Hành động</strong> luôn được ghim cố định bên phải)</span>
+                        </div>
 
-                                                    <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn bài kiểm tra này khỏi database?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="inline-flex items-center gap-1 p-1.5 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Xóa vĩnh viễn khỏi Database">
-                                                            <span>✕</span>
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        </td>
+                        <!-- thanh scrollbar dong bo o dinh -->
+                        <div x-show="isOverflowing" x-cloak
+                             x-ref="topScroll"
+                             @scroll="if ($refs.tableWrapper) $refs.tableWrapper.scrollLeft = $event.target.scrollLeft"
+                             class="overflow-x-auto overflow-y-hidden border-b border-slate-100 bg-slate-50/80 [scrollbar-width:thin] h-2.5">
+                            <div :style="`width: ${$refs.tableEl ? $refs.tableEl.offsetWidth : 1080}px; height: 1px;`"></div>
+                        </div>
+
+                        <div x-ref="tableWrapper" 
+                             @scroll="if ($refs.topScroll) $refs.topScroll.scrollLeft = $event.target.scrollLeft; checkOverflow()"
+                             class="overflow-x-auto">
+                            <table x-ref="tableEl" class="w-full text-left border-collapse min-w-[1080px]">
+                                <thead>
+                                    <tr class="border-b border-slate-100 bg-slate-50/70 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                                        <th class="py-3.5 px-4 min-w-[220px]">Bài kiểm tra</th>
+                                        <th class="py-3.5 px-3 whitespace-nowrap">Khóa học</th>
+                                        <th class="py-3.5 px-3 whitespace-nowrap">Giảng viên</th>
+                                        <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Số câu hỏi</th>
+                                        <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Thời gian & Điểm</th>
+                                        <th class="py-3.5 px-3 text-center whitespace-nowrap">Trạng thái</th>
+                                        <th class="py-3.5 px-2.5 text-center whitespace-nowrap">Ngày tạo</th>
+                                        <th class="py-3.5 px-4 text-right whitespace-nowrap sticky right-0 bg-slate-50/95 backdrop-blur-xs z-20 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.08)]">
+                                            Hành động của Admin
+                                        </th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    @foreach($quizzes as $quiz)
+                                        <tr class="hover:bg-pink-50/20 group transition">
+                                            <td class="py-3.5 px-4">
+                                                <div class="font-bold text-slate-900 text-sm mb-1 group-hover:text-pink-600 transition">
+                                                    {{ $quiz->title }}
+                                                </div>
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border {{ $quiz->type_badge_class }} whitespace-nowrap shrink-0">
+                                                        {{ $quiz->type_name }}
+                                                    </span>
+                                                    @if($quiz->isExpired())
+                                                        <span class="inline-flex items-center text-rose-700 font-bold bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap">
+                                                            Hết hạn: {{ $quiz->ends_at?->format('d/m/Y H:i') }}
+                                                        </span>
+                                                    @elseif($quiz->isNotStarted())
+                                                        <span class="inline-flex items-center text-amber-700 font-bold bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap">
+                                                            Mở từ: {{ $quiz->starts_at?->format('d/m/Y H:i') }}
+                                                        </span>
+                                                    @elseif($quiz->ends_at)
+                                                        <span class="inline-flex items-center text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap">
+                                                            Hạn: {{ $quiz->ends_at->format('d/m/Y H:i') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="py-3.5 px-3 whitespace-nowrap">
+                                                @if($quiz->course)
+                                                    <span class="inline-flex items-center font-semibold text-pink-700 bg-pink-50 px-2.5 py-1 rounded-lg border border-pink-100 text-xs max-w-[150px] truncate" title="{{ $quiz->course->title }}">
+                                                        {{ $quiz->course->title }}
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs">
+                                                        Tự do
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-3 whitespace-nowrap">
+                                                <div class="flex items-center gap-2">
+                                                    @if($quiz->teacher && $quiz->teacher->avatar_url)
+                                                        <img src="{{ $quiz->teacher->avatar_url }}" alt="{{ $quiz->teacher->name }}" class="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0">
+                                                    @else
+                                                        <div class="w-7 h-7 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                                            {{ strtoupper(mb_substr($quiz->teacher->name ?? 'G', 0, 1, 'UTF-8')) }}
+                                                        </div>
+                                                    @endif
+                                                    <div class="min-w-0">
+                                                        <div class="font-semibold text-slate-800 text-xs">{{ $quiz->teacher->name ?? 'Không rõ' }}</div>
+                                                        <div class="text-[11px] text-slate-400 max-w-[130px] truncate">{{ $quiz->teacher->email ?? '' }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-3.5 px-2.5 text-center whitespace-nowrap">
+                                                @if($quiz->question_limit)
+                                                    <div class="inline-flex flex-col items-center">
+                                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 shadow-2xs whitespace-nowrap shrink-0" title="Đề thi lấy ngẫu nhiên {{ $quiz->question_limit }} trong {{ $quiz->questions_count }} câu">
+                                                            {{ $quiz->question_limit }}/{{ $quiz->questions_count }} câu
+                                                        </span>
+                                                        <span class="text-[10px] text-pink-600 font-medium">Ngẫu nhiên</span>
+                                                    </div>
+                                                @else
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 shadow-2xs whitespace-nowrap shrink-0">
+                                                        {{ $quiz->questions_count }} câu
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-2.5 text-center whitespace-nowrap">
+                                                <div class="text-xs font-bold text-slate-800">{{ $quiz->duration_minutes }} phút</div>
+                                                <div class="text-[11px] text-slate-500 font-medium mt-0.5">Đạt &ge; {{ $quiz->passing_score }}/10</div>
+                                            </td>
+                                            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                                                @if($quiz->status === 'pending')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                                        Chờ duyệt
+                                                    </span>
+                                                @elseif($quiz->status === 'approved')
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                                        Đã duyệt
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                                                        Đã loại bỏ
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-2.5 text-center text-xs text-slate-500 whitespace-nowrap">
+                                                {{ $quiz->created_at ? $quiz->created_at->format('d/m/Y') : 'N/A' }}
+                                            </td>
+                                            <td class="py-3.5 px-4 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#fff7fa] transition z-10 shadow-[-6px_0_12px_-4px_rgba(0,0,0,0.08)]">
+                                                <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap shrink-0">
+                                                    <a href="{{ route('admin.quizzes.preview', $quiz->id) }}" 
+                                                       class="px-2.5 py-1.5 rounded-lg border border-pink-200 text-pink-700 hover:bg-pink-50 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem trước nội dung đề thi">
+                                                        Xem đề
+                                                    </a>
+                                                    <a href="{{ route('admin.quizzes.questions', $quiz->id) }}" 
+                                                       class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Quản lý câu hỏi trắc nghiệm">
+                                                        Câu hỏi
+                                                    </a>
+                                                    <a href="{{ route('admin.quizzes.edit', $quiz->id) }}" 
+                                                       class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Chỉnh sửa cấu hình Quiz">
+                                                        Sửa
+                                                    </a>
+                                                    <a href="{{ route('admin.quizzes.results', $quiz->id) }}" 
+                                                       class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem kết quả học viên">
+                                                        Kết quả
+                                                    </a>
+
+                                                    @if($quiz->status === 'pending')
+                                                        <form action="{{ route('admin.quizzes.approve', $quiz->id) }}" method="POST" class="inline shrink-0">
+                                                            @csrf
+                                                            <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Duyệt bài kiểm tra">
+                                                                Duyệt
+                                                            </button>
+                                                        </form>
+                                                        <form action="{{ route('admin.quizzes.reject', $quiz->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc muốn từ chối đề thi này?')">
+                                                            @csrf
+                                                            <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Từ chối đề thi">
+                                                                Từ chối
+                                                            </button>
+                                                        </form>
+                                                    @elseif($quiz->status === 'approved')
+                                                        <form action="{{ route('admin.quizzes.remove', $quiz->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc muốn loại bỏ bài kiểm tra này?')">
+                                                            @csrf
+                                                            <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Loại bỏ đề thi đã duyệt">
+                                                                Loại bỏ
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <form action="{{ route('admin.quizzes.approve', $quiz->id) }}" method="POST" class="inline shrink-0">
+                                                            @csrf
+                                                            <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Duyệt lại">
+                                                                Duyệt lại
+                                                            </button>
+                                                        </form>
+
+                                                        <form action="{{ route('admin.quizzes.destroy', $quiz->id) }}" method="POST" class="inline shrink-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn bài kiểm tra này khỏi database?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="inline-flex items-center gap-1 p-1.5 px-2.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold shadow-xs transition whitespace-nowrap shrink-0" title="Xóa vĩnh viễn khỏi Database">
+                                                                <span>✕</span>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 @endif
             </div>

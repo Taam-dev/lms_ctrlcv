@@ -6,9 +6,47 @@
     $breadcrumb = $breadcrumb ?? 'Bảng Điều Khiển Quản Trị';
     $panelHome = route('admin.dashboard');
     $topPending = ($pendingCoursesCount ?? 0) + ($pendingQuizzesCount ?? 0) + ($pendingReportsCount ?? 0);
-    $topPendingUrl = ($pendingReportsCount ?? 0) > 0 && ($pendingCoursesCount ?? 0) === 0 && ($pendingQuizzesCount ?? 0) === 0
-        ? route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending'])
-        : route('admin.dashboard', ['tab' => 'courses', 'status' => 'pending']);
+
+    // tao danh sach badge cho duyet cu the tung muc
+    $topPendingBadges = [];
+    if (($pendingQuizzesCount ?? 0) > 0) {
+        $topPendingBadges[] = [
+            'label' => $pendingQuizzesCount . ' bài kiểm tra chờ duyệt',
+            'url' => route('admin.quizzes.index', ['status' => 'pending']),
+            'class' => 'bg-pink-600 hover:bg-pink-700',
+        ];
+    }
+    if (($pendingCoursesCount ?? 0) > 0) {
+        $topPendingBadges[] = [
+            'label' => $pendingCoursesCount . ' khóa học chờ duyệt',
+            'url' => route('admin.courses.index', ['status' => 'pending']),
+            'class' => 'bg-amber-600 hover:bg-amber-700',
+        ];
+    }
+    if (($pendingReportsCount ?? 0) > 0) {
+        $topPendingBadges[] = [
+            'label' => $pendingReportsCount . ' báo cáo chờ xử lý',
+            'url' => route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending']),
+            'class' => 'bg-rose-600 hover:bg-rose-700',
+        ];
+    }
+
+    // fallback url chuyen dung muc cho duyet thay vi mac dinh khoa hoc
+    if (($pendingQuizzesCount ?? 0) > 0 && ($pendingCoursesCount ?? 0) === 0 && ($pendingReportsCount ?? 0) === 0) {
+        $topPendingUrl = route('admin.quizzes.index', ['status' => 'pending']);
+    } elseif (($pendingCoursesCount ?? 0) > 0 && ($pendingQuizzesCount ?? 0) === 0 && ($pendingReportsCount ?? 0) === 0) {
+        $topPendingUrl = route('admin.courses.index', ['status' => 'pending']);
+    } elseif (($pendingReportsCount ?? 0) > 0 && ($pendingCoursesCount ?? 0) === 0 && ($pendingQuizzesCount ?? 0) === 0) {
+        $topPendingUrl = route('admin.dashboard', ['tab' => 'reports', 'status' => 'pending']);
+    } elseif (($pendingQuizzesCount ?? 0) > 0 && (request()->routeIs('admin.quizzes.*') || ($onDashboard && $tab === 'quizzes'))) {
+        $topPendingUrl = route('admin.quizzes.index', ['status' => 'pending']);
+    } elseif (($pendingCoursesCount ?? 0) > 0) {
+        $topPendingUrl = route('admin.courses.index', ['status' => 'pending']);
+    } elseif (($pendingQuizzesCount ?? 0) > 0) {
+        $topPendingUrl = route('admin.quizzes.index', ['status' => 'pending']);
+    } else {
+        $topPendingUrl = route('admin.dashboard');
+    }
 
     $navGroups = [
         [

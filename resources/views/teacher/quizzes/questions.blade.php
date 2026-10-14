@@ -57,10 +57,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <!-- Cột trái (lg:col-span-5): Form thêm câu hỏi mới / Tạo bằng AI / Nhập từ JSON -->
                 <div class="lg:col-span-5 space-y-6">
-                    <div class="bg-white rounded-3xl border border-pink-100 shadow-xs p-6 sm:p-7 sticky top-24 space-y-5">
+                    <div class="bg-white rounded-3xl border border-pink-100 shadow-xs p-5 sm:p-6 sticky top-20 max-h-[calc(100vh-5.5rem)] flex flex-col space-y-4">
                         
                         <!-- Thanh chuyển Tab -->
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
                             <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-bold">
                                 <button type="button" @click="tab = 'manual'"
                                         :class="tab === 'manual' ? 'bg-white text-pink-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
@@ -68,9 +68,10 @@
                                     Thêm 1 câu
                                 </button>
                                 <button type="button" @click="tab = 'ai'"
-                                        :class="tab === 'ai' ? 'bg-pink-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-                                        class="px-3 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-                                    <span>✨ Tạo bằng AI</span>
+                                        :class="tab === 'ai' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                                        class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+                                    <svg class="w-3.5 h-3.5 text-current shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    <span>Tạo bằng AI</span>
                                 </button>
                                 <button type="button" @click="tab = 'json'"
                                         :class="tab === 'json' ? 'bg-white text-pink-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
@@ -84,92 +85,99 @@
                         </div>
 
                         <!-- TAB 1: THỦ CÔNG (KÈM NÚT TRỢ LÝ AI GỢI Ý ĐÁP ÁN) -->
-                        <div x-show="tab === 'manual'" x-transition>
-                            <form action="{{ route('teacher.quizzes.questions.store', $quiz->id) }}" method="POST" class="space-y-4">
+                        <div x-show="tab === 'manual'" x-transition class="flex-1 flex flex-col min-h-0">
+                            <form action="{{ route('teacher.quizzes.questions.store', $quiz->id) }}" method="POST" class="flex-1 flex flex-col min-h-0">
                                 @csrf
 
-                                <!-- Nội dung câu hỏi -->
-                                <div>
-                                    <div class="flex items-center justify-between mb-1">
-                                        <label for="question_text" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                            Nội dung câu hỏi <span class="text-rose-500">*</span>
+                                <div class="space-y-3.5 overflow-y-auto pr-1 flex-1 sidebar-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <!-- Nội dung câu hỏi -->
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label for="question_text" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                                Nội dung câu hỏi <span class="text-rose-500">*</span>
+                                            </label>
+                                            <button type="button" @click="aiSuggestForManual()"
+                                                    :disabled="isSuggestingOptions"
+                                                    class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 shadow-2xs"
+                                                    title="AI tự động đọc câu hỏi để sinh 4 đáp án, chọn đáp án đúng và điền giải thích">
+                                                <span x-show="!isSuggestingOptions" class="inline-flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                    <span>AI gợi ý 4 đáp án & giải thích</span>
+                                                </span>
+                                                <span x-show="isSuggestingOptions" class="flex items-center gap-1" style="display: none;">
+                                                    <svg class="w-3.5 h-3.5 animate-spin text-slate-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                                    <span>Đang suy nghĩ...</span>
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <textarea name="question_text" id="question_text" rows="3" required x-model="manualQuestionText"
+                                                  placeholder="Nhập nội dung câu hỏi trắc nghiệm ở đây..."
+                                                  class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm"></textarea>
+                                        @error('question_text')
+                                            <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- 4 Đáp án A, B, C, D -->
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                                Các phương án trả lời <span class="text-rose-500">*</span>
+                                            </label>
+                                            <span class="text-[11px] text-pink-600 font-medium">Tích chọn đáp án ĐÚNG</span>
+                                        </div>
+
+                                        <div class="space-y-2.5">
+                                            <template x-for="(letter, index) in ['A', 'B', 'C', 'D']" :key="index">
+                                                <div class="flex items-center gap-2">
+                                                    <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Chọn làm đáp án đúng">
+                                                        <input type="radio" name="correct_option" :value="index"
+                                                               :checked="manualCorrectOption == index"
+                                                               @change="manualCorrectOption = index"
+                                                               class="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                                        <span class="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700"
+                                                              x-text="letter"></span>
+                                                    </label>
+                                                    <input type="text" name="options[]" required 
+                                                           x-model="manualOptions[index]"
+                                                           :placeholder="'Nội dung phương án ' + letter + '...'"
+                                                           class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                                                </div>
+                                            </template>
+                                        </div>
+                                        @error('options')
+                                            <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                        @error('correct_option')
+                                            <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Lời giải thích -->
+                                    <div>
+                                        <label for="explanation" class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                                            Lời giải thích đáp án (Tùy chọn)
                                         </label>
-                                        <button type="button" @click="aiSuggestForManual()"
-                                                :disabled="isSuggestingOptions"
-                                                class="text-xs font-bold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 shadow-2xs"
-                                                title="AI tự động đọc câu hỏi để sinh 4 đáp án, chọn đáp án đúng và điền giải thích">
-                                            <span x-show="!isSuggestingOptions">✨ AI gợi ý 4 đáp án & giải thích</span>
-                                            <span x-show="isSuggestingOptions" class="flex items-center gap-1" style="display: none;">
-                                                <svg class="w-3.5 h-3.5 animate-spin text-pink-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                                                <span>Đang suy nghĩ...</span>
-                                            </span>
-                                        </button>
+                                        <textarea name="explanation" id="explanation" rows="2" x-model="manualExplanation"
+                                                  placeholder="Giải thích lý do vì sao đáp án này đúng để học viên học hỏi sau khi làm bài..."
+                                                  class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-xs"></textarea>
+                                        @error('explanation')
+                                            <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
                                     </div>
-                                    <textarea name="question_text" id="question_text" rows="3" required x-model="manualQuestionText"
-                                              placeholder="Nhập nội dung câu hỏi trắc nghiệm ở đây..."
-                                              class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm"></textarea>
-                                    @error('question_text')
-                                        <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
                                 </div>
 
-                                <!-- 4 Đáp án A, B, C, D -->
-                                <div>
-                                    <div class="flex items-center justify-between mb-2">
-                                        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                            Các phương án trả lời <span class="text-rose-500">*</span>
-                                        </label>
-                                        <span class="text-[11px] text-pink-600 font-medium">Tích chọn đáp án ĐÚNG</span>
-                                    </div>
-
-                                    <div class="space-y-2.5">
-                                        <template x-for="(letter, index) in ['A', 'B', 'C', 'D']" :key="index">
-                                            <div class="flex items-center gap-2">
-                                                <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Chọn làm đáp án đúng">
-                                                    <input type="radio" name="correct_option" :value="index"
-                                                           :checked="manualCorrectOption == index"
-                                                           @change="manualCorrectOption = index"
-                                                           class="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                                                    <span class="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700"
-                                                          x-text="letter"></span>
-                                                </label>
-                                                <input type="text" name="options[]" required 
-                                                       x-model="manualOptions[index]"
-                                                       :placeholder="'Nội dung phương án ' + letter + '...'"
-                                                       class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
-                                            </div>
-                                        </template>
-                                    </div>
-                                    @error('options')
-                                        <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                    @error('correct_option')
-                                        <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
+                                <div class="pt-3 border-t border-slate-100 shrink-0 mt-2">
+                                    <button type="submit" class="w-full py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 transition">
+                                        + Lưu câu hỏi vào đề thi
+                                    </button>
                                 </div>
-
-                                <!-- Lời giải thích -->
-                                <div>
-                                    <label for="explanation" class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
-                                        Lời giải thích đáp án (Tùy chọn)
-                                    </label>
-                                    <textarea name="explanation" id="explanation" rows="2" x-model="manualExplanation"
-                                              placeholder="Giải thích lý do vì sao đáp án này đúng để học viên học hỏi sau khi làm bài..."
-                                              class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-xs"></textarea>
-                                    @error('explanation')
-                                        <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <button type="submit" class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 transition">
-                                    + Lưu câu hỏi vào đề thi
-                                </button>
                             </form>
                         </div>
 
                         <!-- TAB 2: TẠO BẰNG AI (BATCH GENERATOR & IMPORT NGAY) -->
-                        <div x-show="tab === 'ai'" x-transition class="space-y-4" style="display: none;">
-                            <div class="space-y-4">
+                        <div x-show="tab === 'ai'" x-transition class="flex-1 flex flex-col min-h-0" style="display: none;">
+                            <div class="space-y-4 overflow-y-auto pr-1 flex-1 sidebar-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 <!-- Thông báo lỗi / thành công của AI -->
                                 <div x-show="aiError" class="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl" x-text="aiError" style="display: none;"></div>
                                 <div x-show="aiSuccess" class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl" x-text="aiSuccess" style="display: none;"></div>
@@ -285,17 +293,6 @@
                                     <span class="text-[10px] text-pink-700 font-bold bg-pink-100/70 px-2 py-0.5 rounded">Khuyên dùng</span>
                                 </div>
 
-                                <!-- Nút Submit AI -->
-                                <button type="button" @click="generateBatchAiQuestions()"
-                                        :disabled="isGeneratingAi"
-                                        class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 transition flex items-center justify-center gap-2">
-                                    <span x-show="!isGeneratingAi">✨ Tạo câu hỏi bằng AI</span>
-                                    <span x-show="isGeneratingAi" class="flex items-center gap-2" style="display: none;">
-                                        <svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                                        <span>AI đang xử lý & biên soạn...</span>
-                                    </span>
-                                </button>
-
                                 <!-- Preview các câu hỏi sinh ra nếu không auto import -->
                                 <div x-show="!aiAutoImport && aiQuestionsPreview.length > 0" class="pt-3 border-t border-slate-100 space-y-3" style="display: none;">
                                     <div class="flex items-center justify-between">
@@ -315,35 +312,52 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Nút Submit AI ghim dưới cùng -->
+                            <div class="pt-3 border-t border-slate-100 shrink-0 mt-2">
+                                <button type="button" @click="generateBatchAiQuestions()"
+                                        :disabled="isGeneratingAi"
+                                        class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-sm shadow-md shadow-slate-900/25 transition flex items-center justify-center gap-2">
+                                    <span x-show="!isGeneratingAi" class="inline-flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <span>Tạo câu hỏi bằng AI</span>
+                                    </span>
+                                    <span x-show="isGeneratingAi" class="flex items-center gap-2" style="display: none;">
+                                        <svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                        <span>AI đang xử lý & biên soạn...</span>
+                                    </span>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- TAB 3: NHẬP TỪ JSON -->
-                        <div x-show="tab === 'json'" x-transition class="space-y-4" style="display: none;">
-                            <form action="{{ route('teacher.quizzes.questions.import', $quiz->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                        <div x-show="tab === 'json'" x-transition class="flex-1 flex flex-col min-h-0" style="display: none;">
+                            <form action="{{ route('teacher.quizzes.questions.import', $quiz->id) }}" method="POST" enctype="multipart/form-data" class="flex-1 flex flex-col min-h-0">
                                 @csrf
 
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                                        <button type="button" @click="jsonSubMode = 'paste'"
-                                                :class="jsonSubMode === 'paste' ? 'text-pink-700 underline font-black' : 'text-slate-500'"
-                                                class="hover:text-pink-600">
-                                            Dán chuỗi JSON
-                                        </button>
-                                        <span class="text-slate-300">|</span>
-                                        <button type="button" @click="jsonSubMode = 'file'"
-                                                :class="jsonSubMode === 'file' ? 'text-pink-700 underline font-black' : 'text-slate-500'"
-                                                class="hover:text-pink-600">
-                                            Tải file .json
+                                <div class="space-y-4 overflow-y-auto pr-1 flex-1 sidebar-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                                            <button type="button" @click="jsonSubMode = 'paste'"
+                                                    :class="jsonSubMode === 'paste' ? 'text-pink-700 underline font-black' : 'text-slate-500'"
+                                                    class="hover:text-pink-600">
+                                                Dán chuỗi JSON
+                                            </button>
+                                            <span class="text-slate-300">|</span>
+                                            <button type="button" @click="jsonSubMode = 'file'"
+                                                    :class="jsonSubMode === 'file' ? 'text-pink-700 underline font-black' : 'text-slate-500'"
+                                                    class="hover:text-pink-600">
+                                                Tải file .json
+                                            </button>
+                                        </div>
+                                        <button type="button" @click="loadSample()" class="text-[11px] font-bold text-pink-600 hover:underline">
+                                            + Mẫu JSON
                                         </button>
                                     </div>
-                                    <button type="button" @click="loadSample()" class="text-[11px] font-bold text-pink-600 hover:underline">
-                                        + Mẫu JSON
-                                    </button>
-                                </div>
 
-                                <div x-show="jsonSubMode === 'paste'">
-                                    <textarea name="json_content" id="json_content" rows="8" x-model="jsonText"
-                                              placeholder='[
+                                    <div x-show="jsonSubMode === 'paste'">
+                                        <textarea name="json_content" id="json_content" rows="8" x-model="jsonText"
+                                                  placeholder='[
   {
     "question_text": "Câu hỏi trắc nghiệm?",
     "options": ["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"],
@@ -351,21 +365,24 @@
     "explanation": "Giải thích..."
   }
 ]'
-                                              class="w-full font-mono text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 p-3 bg-slate-900 text-emerald-400"></textarea>
-                                </div>
+                                                  class="w-full font-mono text-xs rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 p-3 bg-slate-900 text-emerald-400"></textarea>
+                                    </div>
 
-                                <div x-show="jsonSubMode === 'file'" style="display: none;">
-                                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center bg-slate-50 hover:bg-pink-50/40 cursor-pointer relative">
-                                        <input type="file" name="json_file" id="json_file" accept=".json,application/json,text/plain"
-                                               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                        <div class="text-xs font-bold text-slate-700 mb-1">Bấm để chọn tệp .json từ máy tính</div>
-                                        <p class="text-[11px] text-slate-400">File chứa mảng câu hỏi trắc nghiệm</p>
+                                    <div x-show="jsonSubMode === 'file'" style="display: none;">
+                                        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center bg-slate-50 hover:bg-pink-50/40 cursor-pointer relative">
+                                            <input type="file" name="json_file" id="json_file" accept=".json,application/json,text/plain"
+                                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                            <div class="text-xs font-bold text-slate-700 mb-1">Bấm để chọn tệp .json từ máy tính</div>
+                                            <p class="text-[11px] text-slate-400">File chứa mảng câu hỏi trắc nghiệm</p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <button type="submit" class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 transition flex items-center justify-center gap-2">
-                                    <span>Nhập các câu hỏi vào đề</span>
-                                </button>
+                                <div class="pt-3 border-t border-slate-100 shrink-0 mt-2">
+                                    <button type="submit" class="w-full py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 transition flex items-center justify-center gap-2">
+                                        <span>Nhập các câu hỏi vào đề</span>
+                                    </button>
+                                </div>
                             </form>
                         </div>
 
@@ -387,12 +404,12 @@
 
                     @if($quiz->questions->isEmpty())
                         <div class="bg-white rounded-3xl border border-pink-100 p-12 text-center shadow-xs">
-                            <div class="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 mx-auto flex items-center justify-center mb-3">
-                                <span class="text-xl">✨</span>
+                            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-3">
+                                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             </div>
                             <h4 class="font-bold text-slate-800 text-sm mb-1">Chưa có câu hỏi nào</h4>
                             <p class="text-slate-500 text-xs max-w-sm mx-auto">
-                                Bạn có thể tự soạn từng câu hỏi, dùng tab <strong>"✨ Tạo bằng AI"</strong> để sinh tự động, hoặc nhập từ file JSON.
+                                Bạn có thể tự soạn từng câu hỏi, dùng tab <strong>"Tạo bằng AI"</strong> để sinh tự động, hoặc nhập từ file JSON.
                             </p>
                         </div>
                     @else
@@ -490,12 +507,14 @@
                 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" @click="closeEditModal()"></div>
 
                 <!-- Modal Dialog -->
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-7 relative z-10 space-y-5"
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-7 relative z-10 max-h-[92vh] flex flex-col space-y-4"
                      @click.stop="">
                     
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
                         <div class="flex items-center gap-2">
-                            <span class="w-8 h-8 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center text-sm font-bold">✏️</span>
+                            <span class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-bold">
+                                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </span>
                             <h3 class="font-black text-lg text-slate-900">Chỉnh sửa câu hỏi trắc nghiệm</h3>
                         </div>
                         <button type="button" @click="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center font-bold">
@@ -504,20 +523,23 @@
                     </div>
 
                     <!-- AI Tools bên trong Modal sửa câu hỏi -->
-                    <div class="p-3.5 bg-pink-50/70 border border-pink-200/80 rounded-2xl space-y-2">
+                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 shrink-0">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                <span class="text-pink-600">✨</span>
+                                <svg class="w-3.5 h-3.5 text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                 <span>Trợ lý AI hỗ trợ sửa câu hỏi:</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button type="button" @click="refineEditQuestion('refine')"
                                         :disabled="isRefiningEdit"
-                                        class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1">
-                                    <span x-show="!isRefiningEdit">✨ AI tối ưu câu chữ</span>
+                                        class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5">
+                                    <span x-show="!isRefiningEdit" class="inline-flex items-center gap-1.5">
+                                        <svg class="w-3 h-3 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <span>AI tối ưu câu chữ</span>
+                                    </span>
                                     <span x-show="isRefiningEdit" class="flex items-center gap-1" style="display: none;">
                                         <svg class="w-3 h-3 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                                        Đang sửa...
+                                        <span>Đang sửa...</span>
                                     </span>
                                 </button>
                                 <button type="button" @click="refineEditQuestion('suggest_options')"
@@ -531,59 +553,61 @@
                         <div x-show="editAiError" class="text-[11px] text-rose-600 font-semibold" x-text="editAiError" style="display: none;"></div>
                     </div>
 
-                    <form :action="editForm.update_url" method="POST" class="space-y-4">
+                    <form :action="editForm.update_url" method="POST" class="flex-1 flex flex-col min-h-0 space-y-4">
                         @csrf
                         @method('PUT')
 
-                        <!-- Nội dung câu hỏi -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
-                                Nội dung câu hỏi <span class="text-rose-500">*</span>
-                            </label>
-                            <textarea name="question_text" rows="3" required x-model="editForm.question_text"
-                                      class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm"></textarea>
-                        </div>
-
-                        <!-- 4 Đáp án A, B, C, D -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                    Các phương án trả lời <span class="text-rose-500">*</span>
+                        <div class="space-y-4 overflow-y-auto pr-1 flex-1 sidebar-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            <!-- Nội dung câu hỏi -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                                    Nội dung câu hỏi <span class="text-rose-500">*</span>
                                 </label>
-                                <span class="text-[11px] text-pink-600 font-semibold">Tích chọn đáp án ĐÚNG</span>
+                                <textarea name="question_text" rows="3" required x-model="editForm.question_text"
+                                          class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm"></textarea>
                             </div>
 
-                            <div class="space-y-2">
-                                <template x-for="(letter, idx) in ['A', 'B', 'C', 'D']" :key="idx">
-                                    <div class="flex items-center gap-2">
-                                        <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Chọn làm đáp án đúng">
-                                            <input type="radio" name="correct_option" :value="idx"
-                                                   :checked="editForm.correct_option == idx"
-                                                   @change="editForm.correct_option = idx"
-                                                   class="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500">
-                                            <span class="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700"
-                                                  x-text="letter"></span>
-                                        </label>
-                                        <input type="text" name="options[]" required 
-                                               x-model="editForm.options[idx]"
-                                               :placeholder="'Nội dung phương án ' + letter + '...'"
-                                               class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
-                                    </div>
-                                </template>
+                            <!-- 4 Đáp án A, B, C, D -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                        Các phương án trả lời <span class="text-rose-500">*</span>
+                                    </label>
+                                    <span class="text-[11px] text-pink-600 font-semibold">Tích chọn đáp án ĐÚNG</span>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <template x-for="(letter, idx) in ['A', 'B', 'C', 'D']" :key="idx">
+                                        <div class="flex items-center gap-2">
+                                            <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Chọn làm đáp án đúng">
+                                                <input type="radio" name="correct_option" :value="idx"
+                                                       :checked="editForm.correct_option == idx"
+                                                       @change="editForm.correct_option = idx"
+                                                       class="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500">
+                                                <span class="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700"
+                                                      x-text="letter"></span>
+                                            </label>
+                                            <input type="text" name="options[]" required 
+                                                   x-model="editForm.options[idx]"
+                                                   :placeholder="'Nội dung phương án ' + letter + '...'"
+                                                   class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-sm py-2">
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Lời giải thích -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                                    Lời giải thích đáp án (Tùy chọn)
+                                </label>
+                                <textarea name="explanation" rows="2" x-model="editForm.explanation"
+                                          placeholder="Giải thích lý do vì sao đáp án này đúng..."
+                                          class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-xs"></textarea>
                             </div>
                         </div>
 
-                        <!-- Lời giải thích -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
-                                Lời giải thích đáp án (Tùy chọn)
-                            </label>
-                            <textarea name="explanation" rows="2" x-model="editForm.explanation"
-                                      placeholder="Giải thích lý do vì sao đáp án này đúng..."
-                                      class="w-full rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 text-xs"></textarea>
-                        </div>
-
-                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 shrink-0 mt-2">
                             <button type="button" @click="closeEditModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold transition">
                                 Hủy
                             </button>

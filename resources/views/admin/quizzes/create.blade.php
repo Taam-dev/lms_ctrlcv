@@ -139,7 +139,7 @@
                                 <button type="button" @click="setMode('ai')"
                                         :class="mode === 'ai' ? 'border-pink-600 bg-pink-50/60 ring-2 ring-pink-500/20 text-pink-900' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'"
                                         class="p-3.5 rounded-2xl border text-left transition flex items-start gap-2.5">
-                                    <div :class="mode === 'ai' ? 'bg-pink-600 text-white' : 'bg-slate-200 text-slate-600'" 
+                                    <div :class="mode === 'ai' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'" 
                                          class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                     </div>
@@ -558,8 +558,8 @@
                                     Mẹo: Bạn có thể tạo nhiều đợt câu hỏi từ các tài liệu khác nhau để tạo ngân hàng đề phong phú.
                                 </span>
                                 <button type="button" @click="generateWithAi()" :disabled="isGeneratingAi"
-                                        :class="isGeneratingAi ? 'opacity-70 cursor-not-allowed' : 'hover:bg-pink-700 active:scale-[0.99]'"
-                                        class="px-6 py-2.5 rounded-xl bg-pink-600 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition flex items-center justify-center">
+                                        :class="isGeneratingAi ? 'opacity-70 cursor-not-allowed' : 'hover:bg-black active:scale-[0.99]'"
+                                        class="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition flex items-center justify-center gap-2">
                                     <template x-if="isGeneratingAi">
                                         <span class="inline-flex items-center gap-2">
                                             <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
@@ -570,7 +570,10 @@
                                         </span>
                                     </template>
                                     <template x-if="!isGeneratingAi">
-                                        <span>Tạo câu hỏi với AI</span>
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            <span>Tạo câu hỏi với AI</span>
+                                        </span>
                                     </template>
                                 </button>
                             </div>
@@ -795,20 +798,30 @@
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex items-center justify-end gap-3 pt-2">
-                        <a href="{{ route('admin.quizzes.index') }}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">
-                            Hủy bỏ
-                        </a>
-                        <button type="submit" id="submit-admin-quiz-btn" :disabled="isSubmitting" :class="isSubmitting ? 'opacity-75 cursor-not-allowed pointer-events-none' : ''" class="px-7 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 hover:shadow-pink-500/40 transition flex items-center gap-2">
-                            <span x-show="!isSubmitting">Lưu đề thi (Admin)</span>
-                            <span x-show="isSubmitting" class="inline-flex items-center gap-2">
-                                
-                                <span>Đang xử lý tạo bài thi...</span>
+                    <!-- Action Buttons (Sticky ghim nổi dưới cùng để không phải cuộn hết câu hỏi mới thấy) -->
+                    <div class="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-pink-200 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="text-xs text-slate-600 font-medium">
+                            <span x-show="totalQuestions > 0" class="inline-flex items-center gap-1.5 font-bold text-slate-800">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Đã có <span class="text-pink-600 font-black" x-text="totalQuestions"></span> câu hỏi sẵn sàng lưu
                             </span>
-                            <span x-show="!isSubmitting && parsedQuestions.length > 0" class="bg-pink-500 px-2 py-0.5 rounded-full text-xs" x-text="'+ ' + parsedQuestions.length + ' câu hỏi'"></span>
-                            <span x-show="!isSubmitting">&rarr;</span>
-                        </button>
+                            <span x-show="totalQuestions === 0" class="text-slate-400">
+                                Chưa thêm câu hỏi (có thể thêm sau khi tạo đề thi)
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('admin.quizzes.index') }}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">
+                                Hủy bỏ
+                            </a>
+                            <button type="submit" id="submit-admin-quiz-btn" :disabled="isSubmitting" :class="isSubmitting ? 'opacity-75 cursor-not-allowed pointer-events-none' : ''" class="px-7 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 hover:shadow-pink-500/40 transition flex items-center gap-2">
+                                <span x-show="!isSubmitting">Lưu đề thi (Admin)</span>
+                                <span x-show="isSubmitting" class="inline-flex items-center gap-2">
+                                    <span>Đang xử lý tạo bài thi...</span>
+                                </span>
+                                <span x-show="!isSubmitting && parsedQuestions.length > 0" class="bg-pink-500 px-2 py-0.5 rounded-full text-xs" x-text="'+ ' + parsedQuestions.length + ' câu hỏi'"></span>
+                                <span x-show="!isSubmitting">&rarr;</span>
+                            </button>
+                        </div>
                     </div>
                 </form>
         </div>

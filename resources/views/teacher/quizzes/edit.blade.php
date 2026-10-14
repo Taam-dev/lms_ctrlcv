@@ -5,8 +5,9 @@
                 Chỉnh sửa Bài kiểm tra: {{ $quiz->title }}
             </h2>
             <div class="flex items-center gap-2.5">
-                <a href="{{ route('teacher.quizzes.questions', ['quiz' => $quiz->id, 'tab' => 'ai']) }}" class="px-3.5 py-2 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold transition flex items-center gap-1.5 border border-pink-200 shadow-xs">
-                    <span class="text-pink-600">✨</span> Soạn câu hỏi AI
+                <a href="{{ route('teacher.quizzes.questions', ['quiz' => $quiz->id, 'tab' => 'ai']) }}" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span>Soạn câu hỏi AI</span>
                 </a>
                 <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes']) }}" class="text-sm font-semibold text-slate-600 hover:text-pink-600 transition">
                     &larr; Quay lại danh sách
@@ -213,8 +214,9 @@
                             <a href="{{ route('teacher.quizzes.questions', $quiz->id) }}" class="text-sm font-bold text-pink-600 hover:underline">
                                 Quản lý câu hỏi ({{ $quiz->questions()->count() }} câu) &rarr;
                             </a>
-                            <a href="{{ route('teacher.quizzes.questions', ['quiz' => $quiz->id, 'tab' => 'ai']) }}" class="text-xs font-bold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1">
-                                <span>✨</span> Soạn với AI
+                            <a href="{{ route('teacher.quizzes.questions', ['quiz' => $quiz->id, 'tab' => 'ai']) }}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                <span>Soạn với AI</span>
                             </a>
                         </div>
                         <div class="flex items-center gap-3">

@@ -20,6 +20,10 @@ class DashboardController extends Controller
     {
         $teacherId = auth()->id();
         $currentTab = $request->query('tab', 'courses');
+        // gop bai hoc vao khoa hoc giong admin, chuyen tab lessons ve courses
+        if ($currentTab === 'lessons') {
+            return redirect()->route('instructor.dashboard', array_merge(['tab' => 'courses'], $request->except('tab')));
+        }
         $statusFilter = $request->query('status');
         $selectedCourseId = $request->query('course_id');
         $search = trim((string) $request->query('search', ''));

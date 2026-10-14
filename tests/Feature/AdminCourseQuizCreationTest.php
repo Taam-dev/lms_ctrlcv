@@ -521,7 +521,7 @@ class AdminCourseQuizCreationTest extends TestCase
         // Trang questions
         $questionsResponse = $this->actingAs($admin)->get(route('admin.quizzes.questions', $quiz->id));
         $questionsResponse->assertOk();
-        $questionsResponse->assertSee('✨ Tạo bằng AI');
+        $questionsResponse->assertSee('Tạo bằng AI');
         $questionsResponse->assertSee('AI gợi ý 4 đáp án');
         $questionsResponse->assertSee('Trợ lý AI hỗ trợ sửa câu hỏi');
     }
