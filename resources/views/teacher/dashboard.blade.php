@@ -116,14 +116,18 @@
                             <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_courses'] }}</div>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 text-xs pt-2">
-                            <span class="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 border border-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                            <a href="{{ route('instructor.dashboard', ['tab' => 'courses', 'status' => 'approved']) }}"
+                               class="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0 transition"
+                               title="Xem danh sách khóa học đã duyệt">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 {{ $stats['approved_courses'] }} đã duyệt
-                            </span>
-                            <span class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 border border-amber-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                            </a>
+                            <a href="{{ route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']) }}"
+                               class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 hover:bg-amber-100 border border-amber-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0 transition"
+                               title="Xem danh sách khóa học chờ duyệt">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                 {{ $stats['pending_courses'] }} chờ duyệt
-                            </span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -157,14 +161,18 @@
                             <div class="text-3xl font-black text-slate-900 tracking-tight mb-2">{{ $stats['total_quizzes'] }}</div>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 text-xs pt-2">
-                            <span class="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 border border-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                            <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes', 'status' => 'approved']) }}"
+                               class="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0 transition"
+                               title="Xem danh sách bài kiểm tra đã duyệt">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 {{ $stats['approved_quizzes'] }} đã duyệt
-                            </span>
-                            <span class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 border border-amber-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                            </a>
+                            <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes', 'status' => 'pending']) }}"
+                               class="inline-flex items-center gap-1 text-amber-700 font-bold bg-amber-50 hover:bg-amber-100 border border-amber-100/80 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0 transition"
+                               title="Xem danh sách bài kiểm tra chờ duyệt">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                 {{ $stats['pending_quizzes'] }} chờ duyệt
-                            </span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -198,7 +206,7 @@
                     <!-- Tab 1: Khóa học / Bài học gộp chung giống admin panel -->
                     <a href="{{ route('instructor.dashboard', array_filter(['tab' => 'courses', 'status' => $statusFilter, 'search' => $search])) }}"
                        class="pb-4 text-sm font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap shrink-0 {{ in_array($currentTab, ['courses', 'lessons']) ? 'border-pink-600 text-pink-700' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-                        Quản lý Khóa học / Bài học
+                        Khóa học / Bài học
                         <span class="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 {{ in_array($currentTab, ['courses', 'lessons']) ? 'bg-pink-100 text-pink-700' : 'bg-slate-200 text-slate-600' }}">
                             {{ $courses->count() }} khóa ({{ $stats['total_lessons'] }} bài)
                         </span>

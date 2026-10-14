@@ -112,7 +112,7 @@ class WalletAndCoursePaymentTest extends TestCase
             'price' => 199000,
         ]);
 
-        $response->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
+        $response->assertRedirect(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']));
 
         $this->assertDatabaseHas('courses', [
             'teacher_id' => $teacher->id,

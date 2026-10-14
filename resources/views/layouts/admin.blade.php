@@ -63,17 +63,17 @@
             'title' => 'Đào tạo & duyệt',
             'items' => [
                 [
-                    'label' => 'Quản lý Khóa học / Bài học',
-                    'href' => route('admin.courses.index'),
+                    'label' => 'Khóa học / Bài học',
+                    'href' => ($pendingCoursesCount ?? 0) > 0 ? route('admin.courses.index', ['status' => 'pending']) : route('admin.courses.index'),
                     'active' => request()->routeIs('admin.courses.*') || ($onDashboard && in_array($tab, ['courses', 'lessons'])),
-                    'badge' => ($pendingCoursesCount ?? 0) > 0 ? ($pendingCoursesCount . ' chờ') : ($totalCoursesCount ?? null),
+                    'badge' => ($pendingCoursesCount ?? 0) > 0 ? ($pendingCoursesCount . ' chờ duyệt') : ($totalCoursesCount ?? null),
                     'badgeWarn' => ($pendingCoursesCount ?? 0) > 0,
                 ],
                 [
                     'label' => 'Bài kiểm tra (Quizzes)',
-                    'href' => route('admin.quizzes.index'),
+                    'href' => ($pendingQuizzesCount ?? 0) > 0 ? route('admin.quizzes.index', ['status' => 'pending']) : route('admin.quizzes.index'),
                     'active' => request()->routeIs('admin.quizzes.*') || ($onDashboard && $tab === 'quizzes'),
-                    'badge' => ($pendingQuizzesCount ?? 0) > 0 ? ($pendingQuizzesCount . ' chờ') : ($totalQuizzesCount ?? null),
+                    'badge' => ($pendingQuizzesCount ?? 0) > 0 ? ($pendingQuizzesCount . ' chờ duyệt') : ($totalQuizzesCount ?? null),
                     'badgeWarn' => ($pendingQuizzesCount ?? 0) > 0,
                 ],
                 [

@@ -73,7 +73,7 @@ class CourseController extends Controller
                 ->first();
 
             if ($recentlyCreated) {
-                return redirect()->route('instructor.dashboard', ['tab' => 'courses'])
+                return redirect()->route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending'])
                     ->with('success', 'Đã tạo khóa học thành công! Vui lòng chờ quản trị viên phê duyệt.');
             }
 
@@ -89,7 +89,7 @@ class CourseController extends Controller
             optional($lock)->release();
         }
 
-        return redirect()->route('instructor.dashboard', ['tab' => 'courses'])
+        return redirect()->route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending'])
             ->with('success', 'Đã tạo khóa học thành công! Vui lòng chờ quản trị viên phê duyệt.');
     }
 

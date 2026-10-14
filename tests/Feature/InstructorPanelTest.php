@@ -36,7 +36,7 @@ class InstructorPanelTest extends TestCase
         $response = $this->actingAs($instructor)->get(route('instructor.dashboard'));
         $response->assertStatus(200);
         $response->assertSee('Bảng Điều Khiển Giảng Viên');
-        $response->assertSee('Quản lý Khóa học / Bài học');
+        $response->assertSee('Khóa học / Bài học');
     }
 
     /**
@@ -99,7 +99,7 @@ class InstructorPanelTest extends TestCase
             'description' => 'Mô tả chi tiết về khóa học',
         ]);
 
-        $response->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
+        $response->assertRedirect(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']));
         $this->assertDatabaseHas('courses', [
             'teacher_id' => $instructor->id,
             'title' => 'Khóa học Vue 3 Chuyên Sâu',
@@ -123,7 +123,7 @@ class InstructorPanelTest extends TestCase
             'thumbnail_cropped_data' => $fakeBase64,
         ]);
 
-        $response->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
+        $response->assertRedirect(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']));
         $course = Course::where('title', 'Khóa học React và NextJS')->first();
         $this->assertNotNull($course);
         $this->assertNotNull($course->thumbnail);
@@ -391,14 +391,14 @@ class InstructorPanelTest extends TestCase
             'title' => 'Khóa học VueJS Nâng Cao',
             'description' => 'Mô tả chi tiết',
         ]);
-        $response1->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
+        $response1->assertRedirect(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']));
 
         // Lần 2: Gửi lại ngay lập tức (mô phỏng double click)
         $response2 = $this->actingAs($instructor)->post(route('instructor.courses.store'), [
             'title' => 'Khóa học VueJS Nâng Cao',
             'description' => 'Mô tả chi tiết',
         ]);
-        $response2->assertRedirect(route('instructor.dashboard', ['tab' => 'courses']));
+        $response2->assertRedirect(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']));
 
         // Kiểm tra database chỉ có đúng 1 bản ghi duy nhất
         $this->assertEquals(1, Course::where('teacher_id', $instructor->id)->where('title', 'Khóa học VueJS Nâng Cao')->count());
@@ -411,11 +411,11 @@ class InstructorPanelTest extends TestCase
     {
         $instructor = User::factory()->instructor()->create();
 
-        // 1. Khi truy cập tab courses, menu Quản lý Khóa học / Bài học phải được đánh dấu active
+        // 1. Khi truy cập tab courses, menu Khóa học / Bài học phải được đánh dấu active
         $responseCourses = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'courses']));
         $responseCourses->assertStatus(200);
         $responseCourses->assertSee('border-pink-500 bg-white/[0.07] text-white');
-        $responseCourses->assertSee('Quản lý Khóa học / Bài học');
+        $responseCourses->assertSee('Khóa học / Bài học');
 
         // 2. Khi truy cập tab lessons cũ, tự động redirect về tab courses
         $responseLessons = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'lessons']));
@@ -624,5 +624,50 @@ class InstructorPanelTest extends TestCase
         $resEmpty = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts', 'search' => 'KhongTonTai']));
         $resEmpty->assertOk();
         $resEmpty->assertSee('Không tìm thấy kết quả làm bài nào khớp với');
+    }
+
+    /**
+     * Khi có khóa học và quiz chờ duyệt, các mục chờ duyệt và badge chuyển hướng chính xác đến tab chờ duyệt
+     */
+    public function test_instructor_panel_pending_badges_and_links_navigate_to_correct_pending_filters(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+
+        // Tạo 1 khóa học pending và 1 quiz pending
+        $course = Course::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'Khóa Học Chờ Duyệt Đặc Biệt',
+            'status' => 'pending',
+        ]);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $instructor->id,
+            'course_id' => $course->id,
+            'title' => 'Bài Kiểm Tra Chờ Duyệt Đặc Biệt',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($instructor)->get(route('instructor.dashboard'));
+        $response->assertOk();
+
+        // 1. Kiểm tra top bar có link tới chính xác danh sách chờ duyệt
+        $response->assertSee(e(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending'])), false);
+        $response->assertSee(e(route('instructor.dashboard', ['tab' => 'quizzes', 'status' => 'pending'])), false);
+        $response->assertSee('1 khóa học chờ duyệt');
+        $response->assertSee('1 quiz chờ duyệt');
+
+        // 2. Kiểm tra menu sidebar chuyển thẳng tới status=pending khi có mục chờ duyệt
+        $response->assertSee('Khóa học / Bài học');
+        $response->assertSee('1 chờ duyệt');
+
+        // 3. Truy cập tab courses với status=pending thấy khóa học chờ duyệt
+        $resCourses = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'courses', 'status' => 'pending']));
+        $resCourses->assertOk();
+        $resCourses->assertSee('Khóa Học Chờ Duyệt Đặc Biệt');
+
+        // 4. Truy cập tab quizzes với status=pending thấy quiz chờ duyệt
+        $resQuizzes = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'quizzes', 'status' => 'pending']));
+        $resQuizzes->assertOk();
+        $resQuizzes->assertSee('Bài Kiểm Tra Chờ Duyệt Đặc Biệt');
     }
 }

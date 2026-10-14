@@ -72,10 +72,10 @@
                             @foreach($group['items'] as $item)
                                 @php $isActive = $item['active'] ?? false; @endphp
                                 <a href="{{ $item['href'] }}"
-                                   class="flex items-center justify-between px-3 py-2.5 text-[13px] font-semibold border-l-2 transition-colors duration-150 {{ $isActive ? 'border-pink-500 bg-white/[0.07] text-white' : 'border-transparent text-neutral-400 hover:text-white hover:bg-white/[0.04] hover:border-pink-500/50' }}">
-                                    <span>{{ $item['label'] }}</span>
+                                   class="flex items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold border-l-2 transition-colors duration-150 {{ $isActive ? 'border-pink-500 bg-white/[0.07] text-white' : 'border-transparent text-neutral-400 hover:text-white hover:bg-white/[0.04] hover:border-pink-500/50' }}">
+                                    <span class="truncate min-w-0 flex-1">{{ $item['label'] }}</span>
                                     @if(isset($item['badge']) && $item['badge'] !== null)
-                                        <span class="min-w-[1.5rem] text-center px-1.5 py-0.5 text-[10px] font-black {{ ($item['badgeWarn'] ?? false) ? 'bg-pink-600 text-white' : 'bg-white/10 text-neutral-400' }}">
+                                        <span class="shrink-0 whitespace-nowrap min-w-[1.5rem] text-center px-1.5 py-0.5 text-[10px] font-black {{ ($item['badgeWarn'] ?? false) ? 'bg-pink-600 text-white' : 'bg-white/10 text-neutral-400' }}">
                                             {{ $item['badge'] }}
                                         </span>
                                     @endif
@@ -132,17 +132,17 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             @foreach($topPendingBadges as $pBadge)
                                 <a href="{{ $pBadge['url'] }}"
-                                   class="px-2.5 py-1.5 {{ $pBadge['class'] ?? 'bg-pink-600' }} text-white text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5 shadow-2xs">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                                    <span>{{ $pBadge['label'] }}</span>
+                                   class="px-2.5 py-1.5 {{ $pBadge['class'] ?? 'bg-pink-600' }} text-white text-xs font-bold hover:opacity-90 transition flex items-center gap-1.5 shadow-2xs shrink-0 whitespace-nowrap">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
+                                    <span class="whitespace-nowrap">{{ $pBadge['label'] }}</span>
                                 </a>
                             @endforeach
                         </div>
                     @elseif(($topPending ?? 0) > 0)
                         <a href="{{ $topPendingUrl ?? '#' }}"
-                           class="px-3 py-1.5 bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 transition flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                            <span>{{ $topPending }} mục chờ duyệt</span>
+                           class="px-3 py-1.5 bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 transition flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
+                            <span class="whitespace-nowrap">{{ $topPending }} mục chờ duyệt</span>
                         </a>
                     @endif
                     <a href="{{ route('home') }}" class="hidden sm:inline text-xs font-bold uppercase tracking-wider text-neutral-500 hover:text-pink-600 transition">

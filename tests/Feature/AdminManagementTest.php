@@ -35,7 +35,7 @@ class AdminManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
         $response->assertStatus(200);
         $response->assertSee('Bảng Điều Khiển Quản Trị');
-        $response->assertSee('Quản lý Khóa học');
+        $response->assertSee('Khóa học / Bài học');
     }
 
     /**
@@ -684,5 +684,26 @@ class AdminManagementTest extends TestCase
         $response = $this->actingAs($student)->delete(route('admin.users.destroy', $otherUser));
         $response->assertForbidden();
         $this->assertDatabaseHas('users', ['id' => $otherUser->id]);
+    }
+
+    /**
+     * Admin có thể truy cập giao diện quản lý câu hỏi bài kiểm tra với bố cục grid chuẩn
+     */
+    public function test_admin_can_access_quiz_questions_page_with_proper_grid_layout(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Đề thi trắc nghiệm mẫu cho Admin',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.quizzes.questions', $quiz->id));
+        $response->assertOk();
+        $response->assertSee('grid grid-cols-1 lg:grid-cols-12 gap-8');
+        $response->assertSee('lg:col-span-5 space-y-6');
+        $response->assertSee('lg:col-span-7 space-y-4');
+        $response->assertSee('Thêm 1 câu');
+        $response->assertSee('Tạo bằng AI');
     }
 }

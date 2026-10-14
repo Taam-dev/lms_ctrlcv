@@ -58,7 +58,9 @@
             @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Cột trái (lg:col-span-5): Form thêm câu hỏi mới / Tạo bằng AI / Nhập từ JSO                    <div class="bg-white rounded-3xl border border-pink-100 shadow-xs p-5 sm:p-6 sticky top-20 max-h-[calc(100vh-5.5rem)] flex flex-col space-y-3">
+                <!-- Cột trái (lg:col-span-5): Form thêm câu hỏi mới / Tạo bằng AI / Nhập từ JSON -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white rounded-3xl border border-pink-100 shadow-xs p-5 sm:p-6 sticky top-20 max-h-[calc(100vh-5.5rem)] flex flex-col space-y-3">
                         
                         <!-- Thanh chuyển Tab -->
                         <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
