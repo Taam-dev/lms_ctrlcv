@@ -24,13 +24,17 @@ class QuizController extends Controller
         $enrolledCourseIds = Enrollment::where('student_id', $studentId)->pluck('course_id');
 
         // Các bài quiz đã duyệt: thuộc khóa học học viên đã đăng ký HOẶC bài quiz tự do (course_id IS NULL)
+        // Riêng Quản trị viên (Admin) có quyền xem toàn bộ bài kiểm tra đã duyệt trong hệ thống
         $query = Quiz::with(['course.teacher', 'teacher'])
             ->withCount('questions')
-            ->where('status', 'approved')
-            ->where(function ($query) use ($enrolledCourseIds) {
+            ->where('status', 'approved');
+
+        if (! auth()->user()->isAdmin()) {
+            $query->where(function ($query) use ($enrolledCourseIds) {
                 $query->whereIn('course_id', $enrolledCourseIds)
                     ->orWhereNull('course_id');
             });
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -94,7 +98,7 @@ class QuizController extends Controller
         }
 
         // Kiểm tra bảo mật: Nếu gắn với khóa học thì học viên phải đăng ký khóa học mới được làm quiz
-        if ($quiz->course_id) {
+        if ($quiz->course_id && ! auth()->user()->isAdmin()) {
             $isEnrolled = Enrollment::where('student_id', auth()->id())
                 ->where('course_id', $quiz->course_id)
                 ->exists();
@@ -106,7 +110,7 @@ class QuizController extends Controller
         }
 
         // Kiểm tra số lần làm lại bài kiểm tra tối đa
-        if ($quiz->hasReachedMaxAttempts(auth()->id())) {
+        if (! auth()->user()->isAdmin() && $quiz->hasReachedMaxAttempts(auth()->id())) {
             $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
 
             return redirect($redirectRoute)
@@ -155,7 +159,7 @@ class QuizController extends Controller
         }
 
         // Kiểm tra điều kiện đăng ký nếu quiz thuộc về khóa học
-        if ($quiz->course_id) {
+        if ($quiz->course_id && ! auth()->user()->isAdmin()) {
             $isEnrolled = Enrollment::where('student_id', auth()->id())
                 ->where('course_id', $quiz->course_id)
                 ->exists();
@@ -166,7 +170,7 @@ class QuizController extends Controller
         }
 
         // Kiểm tra số lần làm lại bài kiểm tra tối đa
-        if ($quiz->hasReachedMaxAttempts(auth()->id())) {
+        if (! auth()->user()->isAdmin() && $quiz->hasReachedMaxAttempts(auth()->id())) {
             abort(403, 'Bạn đã sử dụng hết số lần làm bài kiểm tra này (tối đa '.$quiz->max_attempts.' lần).');
         }
 

@@ -248,7 +248,7 @@
                                     <span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed">
                                         Chưa mở
                                     </span>
-                                @elseif($hasReachedMax)
+                                @elseif($hasReachedMax && !auth()->user()->isAdmin())
                                     @if($lastAttempt)
                                         <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 
                                             class="text-xs font-bold text-slate-600 hover:text-pink-600 underline">
@@ -538,6 +538,7 @@
                             teacherAvatar: item.teacherAvatar,
                             teacherInitial: item.teacherInitial
                         };
+                        this.confirmModalOpen = true;
                     }
                 }
             };

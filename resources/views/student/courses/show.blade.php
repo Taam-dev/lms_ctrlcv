@@ -505,7 +505,7 @@
                                             <span class="text-xs text-slate-400">Chưa tham gia làm bài</span>
                                         @endif
 
-                                        @if($isEnrolled)
+                                        @if($isEnrolled || auth()->user()?->isAdmin())
                                             @if($quiz->isExpired())
                                                 <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed">
                                                     Đã hết hạn
@@ -514,7 +514,7 @@
                                                 <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 font-bold text-xs border border-amber-200 cursor-not-allowed">
                                                     Chưa mở
                                                 </span>
-                                            @elseif($hasReachedMax)
+                                            @elseif($hasReachedMax && !auth()->user()?->isAdmin())
                                                 <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200"
                                                       title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
                                                     Hết lượt ({{ $completedAttemptsCount }}/{{ $quiz->max_attempts }})

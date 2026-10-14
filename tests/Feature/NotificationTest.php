@@ -252,4 +252,105 @@ class NotificationTest extends TestCase
 
         $this->assertEquals(0, $user->unreadNotificationsCount());
     }
+
+    /**
+     * Admin nhận được thông báo khi giảng viên tạo khóa học mới chờ duyệt
+     */
+    public function test_admins_receive_notification_when_teacher_creates_pending_course(): void
+    {
+        $admin1 = User::factory()->create(['role' => 'admin']);
+        $admin2 = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher', 'name' => 'Thầy Giáo Ba']);
+
+        $response = $this->actingAs($teacher)->post(route('instructor.courses.store'), [
+            'title' => 'Khóa học Lập trình Flutter & Dart',
+            'description' => 'Mô tả khóa học lập trình mobile',
+        ]);
+        $response->assertRedirect();
+
+        // Cả 2 admin đều nhận được thông báo về khóa học chờ duyệt
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $admin1->id,
+            'type' => 'course_pending',
+            'title' => 'Khóa học mới chờ duyệt',
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $admin2->id,
+            'type' => 'course_pending',
+            'title' => 'Khóa học mới chờ duyệt',
+        ]);
+
+        $notif = Notification::where('user_id', $admin1->id)->where('type', 'course_pending')->first();
+        $this->assertStringContainsString('Thầy Giáo Ba', $notif->message);
+        $this->assertStringContainsString('Flutter & Dart', $notif->message);
+    }
+
+    /**
+     * Người dùng có thể xóa một thông báo bằng nút X
+     */
+    public function test_user_can_delete_notification_via_x_button(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'quiz_created',
+            'title' => 'Thông báo cần xóa',
+            'message' => 'Nội dung thông báo',
+            'target_url' => '/target',
+            'read_at' => null,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('notifications.destroy', $notification->id));
+        $response->assertRedirect();
+
+        $this->assertDatabaseMissing('notifications', [
+            'id' => $notification->id,
+        ]);
+    }
+
+    /**
+     * Người dùng không thể xóa thông báo của người khác
+     */
+    public function test_user_cannot_delete_other_user_notification(): void
+    {
+        $user1 = User::factory()->create(['role' => 'student']);
+        $user2 = User::factory()->create(['role' => 'student']);
+
+        $notification = Notification::create([
+            'user_id' => $user1->id,
+            'type' => 'quiz_created',
+            'title' => 'Thông báo của user 1',
+            'message' => 'Nội dung',
+            'target_url' => '/target',
+        ]);
+
+        $response = $this->actingAs($user2)->delete(route('notifications.destroy', $notification->id));
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('notifications', [
+            'id' => $notification->id,
+        ]);
+    }
+
+    /**
+     * Trang xem tất cả thông báo hiển thị đầy đủ nút X xóa cho từng thông báo
+     */
+    public function test_notifications_page_renders_x_delete_button_for_notifications(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'quiz_created',
+            'title' => 'Thông báo bài thi Toán',
+            'message' => 'Nội dung thông báo bài thi',
+            'target_url' => '/target-math',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('notifications.index'));
+        $response->assertOk();
+        $response->assertSee('Thông báo bài thi Toán');
+        $response->assertSee(route('notifications.destroy', $notification->id));
+    }
 }

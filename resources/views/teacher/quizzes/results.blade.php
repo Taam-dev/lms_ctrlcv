@@ -1,4 +1,4 @@
-<x-teacher-layout>
+<x-teacher-layout breadcrumb="Kết quả làm bài">
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -10,13 +10,18 @@
                         {{ $quiz->course ? 'Khóa học: ' . $quiz->course->title : 'Bài kiểm tra Tự do' }}
                     </span>
                 </div>
-                <h2 class="font-black text-2xl text-slate-900 tracking-tight">
-                    Kết quả làm bài: {{ $quiz->title }}
-                </h2>
+                <h1 class="font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">
+                    Kết Quả Làm Bài: {{ $quiz->title }}
+                </h1>
             </div>
-            <a href="{{ route('instructor.dashboard', ['tab' => 'attempts']) }}" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold transition whitespace-nowrap shrink-0">
-                &larr; Quay lại danh sách Quizzes
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('instructor.dashboard', ['tab' => 'attempts']) }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs transition">
+                    &larr; Tất cả kết quả
+                </a>
+                <a href="{{ route('instructor.dashboard', ['tab' => 'quizzes']) }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-2xs transition">
+                    Danh sách Quizzes
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -73,8 +78,19 @@
                                 @foreach($attempts as $attempt)
                                     <tr class="hover:bg-pink-50/30 transition">
                                         <td class="py-4 px-6 whitespace-nowrap">
-                                            <div class="font-bold text-slate-900">{{ $attempt->student->name ?? 'N/A' }}</div>
-                                            <div class="text-xs text-slate-500">{{ $attempt->student->email ?? '' }}</div>
+                                            <div class="flex items-center gap-3">
+                                                @if($attempt->student && $attempt->student->avatar_url)
+                                                    <img src="{{ $attempt->student->avatar_url }}" alt="{{ $attempt->student->name }}" class="w-8 h-8 rounded-xl object-cover border border-slate-200 shrink-0">
+                                                @else
+                                                    <div class="w-8 h-8 rounded-xl bg-pink-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                                        {{ strtoupper(substr($attempt->student->name ?? 'H', 0, 1)) }}
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <div class="font-bold text-slate-900">{{ $attempt->student->name ?? 'N/A' }}</div>
+                                                    <div class="text-[10px] text-slate-400">{{ $attempt->student->email ?? '' }}</div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td class="py-4 px-4 text-center font-medium whitespace-nowrap">
                                             {{ $attempt->correct_answers }} / {{ $attempt->total_questions }} câu

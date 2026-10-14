@@ -420,7 +420,8 @@ class QuizController extends Controller
      */
     public function results(Quiz $quiz)
     {
-        abort_if($quiz->teacher_id !== auth()->id(), 403);
+        $teacherId = auth()->id();
+        abort_if($quiz->teacher_id !== $teacherId && (! $quiz->course || $quiz->course->teacher_id !== $teacherId), 403);
 
         $quiz->load(['course', 'questions.options']);
         $attempts = QuizAttempt::with('student')

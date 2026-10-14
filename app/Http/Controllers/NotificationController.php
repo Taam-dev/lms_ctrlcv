@@ -55,4 +55,42 @@ class NotificationController extends Controller
 
         return back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc.');
     }
+
+    /**
+     * Xóa một thông báo của người dùng
+     */
+    public function destroy(Request $request, Notification $notification): JsonResponse|RedirectResponse
+    {
+        if ($notification->user_id !== auth()->id()) {
+            abort(403, 'Bạn không có quyền xóa thông báo này.');
+        }
+
+        $notification->delete();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa thông báo thành công.',
+            ]);
+        }
+
+        return back()->with('success', 'Đã xóa thông báo thành công.');
+    }
+
+    /**
+     * Xóa tất cả thông báo của người dùng
+     */
+    public function clearAll(Request $request): JsonResponse|RedirectResponse
+    {
+        Notification::where('user_id', auth()->id())->delete();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa tất cả thông báo.',
+            ]);
+        }
+
+        return back()->with('success', 'Đã xóa tất cả thông báo thành công.');
+    }
 }

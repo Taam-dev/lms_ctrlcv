@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -77,7 +79,7 @@ class CourseController extends Controller
                     ->with('success', 'Đã tạo khóa học thành công! Vui lòng chờ quản trị viên phê duyệt.');
             }
 
-            Course::create([
+            $course = Course::create([
                 'teacher_id' => auth()->id(),
                 'title' => $request->title,
                 'description' => $request->description,
@@ -85,6 +87,15 @@ class CourseController extends Controller
                 'thumbnail' => $thumbnail,
                 'status' => 'pending',
             ]);
+
+            $adminIds = User::where('role', 'admin')->pluck('id');
+            Notification::send(
+                $adminIds,
+                'Khóa học mới chờ duyệt',
+                'Giảng viên '.auth()->user()->name." vừa tạo khóa học \"{$course->title}\" cần phê duyệt.",
+                route('admin.courses.index', ['status' => 'pending']),
+                'course_pending'
+            );
         } finally {
             optional($lock)->release();
         }

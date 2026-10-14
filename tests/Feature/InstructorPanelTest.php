@@ -670,4 +670,58 @@ class InstructorPanelTest extends TestCase
         $resQuizzes->assertOk();
         $resQuizzes->assertSee('Bài Kiểm Tra Chờ Duyệt Đặc Biệt');
     }
+
+    /**
+     * Giảng viên có thể xem trang kết quả chi tiết của bài kiểm tra do mình tạo
+     */
+    public function test_instructor_can_view_quiz_results_page(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+        $otherInstructor = User::factory()->instructor()->create();
+        $student = User::factory()->create(['role' => 'student', 'name' => 'Nguyễn Văn Học Viên']);
+
+        $course = Course::create([
+            'teacher_id' => $instructor->id,
+            'title' => 'Khóa Học Master Laravel',
+            'status' => 'approved',
+        ]);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $instructor->id,
+            'course_id' => $course->id,
+            'title' => 'Quiz Eloquent & Relationships',
+            'duration_minutes' => 20,
+            'passing_score' => 7.0,
+            'status' => 'approved',
+        ]);
+
+        $attempt = QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'total_questions' => 10,
+            'correct_answers' => 8,
+            'score' => 8.0,
+            'is_passed' => true,
+            'warning_count' => 1,
+            'completed_at' => now(),
+        ]);
+
+        // 1. Giảng viên vào tab attempts thấy nút Xem bảng điểm
+        $dashboardResponse = $this->actingAs($instructor)->get(route('instructor.dashboard', ['tab' => 'attempts']));
+        $dashboardResponse->assertOk();
+        $dashboardResponse->assertSee('Xem bảng điểm');
+        $dashboardResponse->assertSee(route('instructor.quizzes.results', $quiz->id));
+
+        // 2. Giảng viên truy cập trang kết quả quiz
+        $resultsResponse = $this->actingAs($instructor)->get(route('instructor.quizzes.results', $quiz->id));
+        $resultsResponse->assertOk();
+        $resultsResponse->assertSee('Kết Quả Làm Bài: '.$quiz->title);
+        $resultsResponse->assertSee('Nguyễn Văn Học Viên');
+        $resultsResponse->assertSee('8.0');
+        $resultsResponse->assertSee('ĐẠT');
+
+        // 3. Giảng viên khác không có quyền xem kết quả quiz này (bị 403)
+        $unauthorizedResponse = $this->actingAs($otherInstructor)->get(route('instructor.quizzes.results', $quiz->id));
+        $unauthorizedResponse->assertForbidden();
+    }
 }

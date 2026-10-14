@@ -64,12 +64,12 @@
                         $studentAttemptsCount = $quiz->attempts()->where('student_id', auth()->id())->count();
                         $hasReachedMax = $quiz->max_attempts !== null && $quiz->max_attempts > 0 && $studentAttemptsCount >= $quiz->max_attempts;
                     @endphp
-                    @if($hasReachedMax)
+                    @if($hasReachedMax && !auth()->user()->isAdmin())
                         <span class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed"
                               title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
                             Hết lượt làm lại ({{ $studentAttemptsCount }}/{{ $quiz->max_attempts }})
                         </span>
-                    @elseif(!$quiz->isExpired() && !$quiz->isNotStarted())
+                    @elseif((!$quiz->isExpired() && !$quiz->isNotStarted()) || auth()->user()->isAdmin())
                         <button type="button" 
                                 @click="confirmModalOpen = true"
                                 class="px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-pink-600 hover:bg-pink-700 text-white transition cursor-pointer shadow-sm">

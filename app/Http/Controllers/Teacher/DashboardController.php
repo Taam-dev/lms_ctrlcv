@@ -28,9 +28,12 @@ class DashboardController extends Controller
         $selectedCourseId = $request->query('course_id');
         $search = trim((string) $request->query('search', ''));
 
-        // Lấy danh sách ID các khóa học của giảng viên
+        // Lấy danh sách ID các khóa học và bài kiểm tra của giảng viên
         $teacherCourseIds = Course::where('teacher_id', $teacherId)->pluck('id');
-        $teacherQuizIds = Quiz::where('teacher_id', $teacherId)->pluck('id');
+        $teacherQuizIds = Quiz::where(function ($q) use ($teacherId, $teacherCourseIds) {
+            $q->where('teacher_id', $teacherId)
+                ->orWhereIn('course_id', $teacherCourseIds);
+        })->pluck('id');
 
         // Thống kê số liệu riêng cho Giảng viên
         $coursesQuery = Course::where('teacher_id', $teacherId);

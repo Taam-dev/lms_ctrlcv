@@ -127,6 +127,19 @@ class CourseController extends Controller
                 'thumbnail' => $thumbnail,
                 'status' => $request->status,
             ]);
+
+            if ($request->status === 'pending') {
+                $adminIds = User::where('role', 'admin')->pluck('id');
+                $teacher = User::find($teacherId);
+                $teacherName = $teacher ? $teacher->name : auth()->user()->name;
+                Notification::send(
+                    $adminIds,
+                    'Khóa học mới chờ duyệt',
+                    "Khóa học \"{$course->title}\" ({$teacherName}) đang ở trạng thái chờ phê duyệt.",
+                    route('admin.courses.index', ['status' => 'pending']),
+                    'course_pending'
+                );
+            }
         } finally {
             optional($lock)->release();
         }

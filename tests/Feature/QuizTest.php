@@ -1495,4 +1495,114 @@ class QuizTest extends TestCase
         $takeResponse = $this->actingAs($student)->get(route('student.quizzes.take', $quiz->id));
         $takeResponse->assertOk();
     }
+
+    /**
+     * Admin có thể truy cập danh sách và làm bài quiz thuộc khóa học mà không cần đăng ký khóa học
+     */
+    public function test_admin_can_access_and_take_course_quiz_without_enrollment(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Node.js Nâng Cao',
+            'status' => 'approved',
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz Event Loop & Buffer',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Event Loop có mấy phase chính?',
+            'order_number' => 1,
+        ]);
+        QuizOption::create(['quiz_question_id' => $question->id, 'option_text' => '6 phases', 'is_correct' => true, 'order_number' => 1]);
+        QuizOption::create(['quiz_question_id' => $question->id, 'option_text' => '2 phases', 'is_correct' => false, 'order_number' => 2]);
+
+        // 1. Admin truy cập danh sách quizzes thấy bài kiểm tra của khóa học dù không enroll
+        $indexResponse = $this->actingAs($admin)->get(route('student.quizzes.index'));
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('Quiz Event Loop & Buffer');
+
+        // 2. Admin vào trang làm bài trực tiếp mà không bị redirect bắt đăng ký
+        $takeResponse = $this->actingAs($admin)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertOk();
+        $takeResponse->assertSee('Quiz Event Loop & Buffer');
+
+        // 3. Admin nộp bài thi thành công không bị 403
+        $submitResponse = $this->actingAs($admin)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [
+                $question->id => $question->options()->where('is_correct', true)->first()->id,
+            ],
+            'question_ids' => [$question->id],
+        ]);
+        $submitResponse->assertRedirect();
+    }
+
+    /**
+     * Admin có thể làm lại bài kiểm tra không giới hạn ngay cả khi đã vượt quá max_attempts
+     */
+    public function test_admin_can_retake_quiz_even_when_max_attempts_is_reached(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $quiz = Quiz::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz Test Limits Admin',
+            'duration_minutes' => 10,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+            'max_attempts' => 2,
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => '1 + 1 = ?',
+            'order_number' => 1,
+        ]);
+        QuizOption::create(['quiz_question_id' => $question->id, 'option_text' => '2', 'is_correct' => true, 'order_number' => 1]);
+        QuizOption::create(['quiz_question_id' => $question->id, 'option_text' => '3', 'is_correct' => false, 'order_number' => 2]);
+
+        // Tạo 2 lần làm bài đã hoàn thành cho Admin
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $admin->id,
+            'total_questions' => 1,
+            'correct_answers' => 1,
+            'score' => 10.0,
+            'is_passed' => true,
+            'completed_at' => now(),
+        ]);
+        QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $admin->id,
+            'total_questions' => 1,
+            'correct_answers' => 1,
+            'score' => 10.0,
+            'is_passed' => true,
+            'completed_at' => now(),
+        ]);
+
+        // Admin vào làm bài lần thứ 3 vẫn OK (không bị chặn max_attempts)
+        $takeResponse = $this->actingAs($admin)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponse->assertOk();
+
+        // Admin nộp bài thi lần 3 thành công
+        $submitResponse = $this->actingAs($admin)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [
+                $question->id => $question->options()->where('is_correct', true)->first()->id,
+            ],
+            'question_ids' => [$question->id],
+        ]);
+        $submitResponse->assertRedirect();
+    }
 }
