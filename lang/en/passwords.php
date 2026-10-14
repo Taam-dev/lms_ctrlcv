@@ -6,17 +6,12 @@ return [
     |--------------------------------------------------------------------------
     | Password Reset Language Lines
     |--------------------------------------------------------------------------
-    |
-    | The following language lines are the default lines which match reasons
-    | that are given by the password broker for a password update attempt
-    | outcome such as failure due to an invalid password / reset token.
-    |
     */
 
-    'reset' => 'Your password has been reset.',
-    'sent' => 'We have emailed your password reset link.',
-    'throttled' => 'Please wait before retrying.',
-    'token' => 'This password reset token is invalid.',
-    'user' => "We can't find a user with that email address.",
+    'reset' => 'Mật khẩu của bạn đã được đặt lại thành công.',
+    'sent' => 'Chúng tôi đã gửi liên kết đặt lại mật khẩu vào email của bạn.',
+    'throttled' => 'Vui lòng chờ ít phút trước khi thử lại.',
+    'token' => 'Mã xác thực đặt lại mật khẩu này không hợp lệ hoặc đã hết hạn.',
+    'user' => 'Không tìm thấy tài khoản người dùng với địa chỉ email này.',
 
 ];

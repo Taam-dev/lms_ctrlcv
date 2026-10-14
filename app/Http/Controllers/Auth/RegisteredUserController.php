@@ -50,11 +50,15 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'name.required' => 'Vui lòng nhập họ và tên.',
+            'name.string' => 'Họ và tên không hợp lệ.',
+            'name.max' => 'Họ và tên không được vượt quá 255 ký tự.',
             'email.required' => 'Vui lòng nhập email.',
             'email.email' => 'Địa chỉ email không đúng định dạng.',
             'email.unique' => 'Email đã được sử dụng',
             'email.lowercase' => 'Email không hợp lệ',
+            'email.max' => 'Địa chỉ email không được vượt quá 255 ký tự.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
+            'password.min' => 'Mật khẩu phải có tối thiểu 8 ký tự.',
             'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
         ]);
 

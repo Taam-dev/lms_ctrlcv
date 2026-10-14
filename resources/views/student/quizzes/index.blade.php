@@ -121,39 +121,39 @@
                                  class="bg-white rounded-2xl border border-slate-200/80 hover:border-pink-300 hover:shadow-xl hover:shadow-pink-100/50 transition-all duration-300 flex flex-col justify-between overflow-hidden group">
                             <!-- Card Header & Content -->
                             <div class="p-6">
-                                <div class="flex items-center justify-between gap-2 mb-4">
-                                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-slate-900 text-white shadow-2xs">
+                                <div class="flex items-center justify-between gap-2 mb-4 h-7 min-h-[28px]">
+                                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-slate-900 text-white shadow-2xs shrink-0">
                                         {{ $quiz->type_name }}
                                     </span>
 
                                     @if($attempts->isNotEmpty())
                                         @if($hasPassed)
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 shrink-0">
                                                 <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                                                 <span>Đạt ({{ $bestScore }}/10)</span>
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200/60">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200/60 shrink-0">
                                                 <span>Chưa đạt ({{ $bestScore }}/10)</span>
                                             </span>
                                         @endif
                                     @else
-                                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-600">
+                                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-600 shrink-0">
                                             Chưa thi
                                         </span>
                                     @endif
                                 </div>
 
-                                <div class="text-[11px] font-bold text-pink-600 uppercase tracking-wider mb-1 line-clamp-1">
+                                <div class="text-[11px] font-bold text-pink-600 uppercase tracking-wider mb-1 line-clamp-1 h-4 truncate">
                                     {{ $quiz->course ? $quiz->course->title : 'Bài kiểm tra Tự do' }}
                                 </div>
 
-                                <h3 class="text-lg font-extrabold text-slate-900 mb-2 line-clamp-2 group-hover:text-pink-600 transition">
+                                <h3 class="text-lg font-extrabold text-slate-900 mb-2 line-clamp-2 h-14 leading-7 group-hover:text-pink-600 transition" title="{{ $quiz->title }}">
                                     {{ $quiz->title }}
                                 </h3>
 
                                 <!-- Thông tin Giảng viên ra đề -->
-                                <div class="flex items-center gap-2.5 mb-3.5 pb-3 border-b border-slate-100">
+                                <div class="flex items-center gap-2.5 mb-3.5 pb-3 border-b border-slate-100 h-11 shrink-0">
                                     @if($quizTeacher && $quizTeacher->avatar_url)
                                         <img src="{{ $quizTeacher->avatar_url }}" alt="{{ $teacherName }}" class="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-pink-200">
                                     @else
@@ -167,15 +167,15 @@
                                     </div>
                                 </div>
 
-                                <p class="text-xs text-slate-500 mb-5 line-clamp-2 leading-relaxed">
+                                <p class="text-xs text-slate-500 mb-5 line-clamp-2 h-10 leading-relaxed" title="{{ $quiz->description ?? 'Bài kiểm tra trắc nghiệm đánh giá kiến thức lý thuyết và thực hành.' }}">
                                     {{ $quiz->description ?? 'Bài kiểm tra trắc nghiệm đánh giá kiến thức lý thuyết và thực hành.' }}
                                 </p>
 
                                 <!-- Meta Info Grid -->
                                 <dl class="grid grid-cols-3 gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-center text-xs">
-                                    <div class="bg-white rounded-lg p-2 border border-slate-100 shadow-2xs">
+                                    <div class="bg-white rounded-lg p-2 border border-slate-100 shadow-2xs flex flex-col justify-center min-h-[52px]">
                                         <dt class="text-[10px] uppercase font-bold text-slate-400">Số câu</dt>
-                                        <dd class="font-extrabold text-slate-900 mt-0.5">
+                                        <dd class="font-extrabold text-slate-900 mt-0.5 whitespace-nowrap">
                                             @if($quiz->question_limit && $quiz->question_limit < $quiz->questions_count)
                                                 {{ $quiz->question_limit }} <span class="text-[10px] text-slate-400 font-normal">/{{ $quiz->questions_count }}</span>
                                             @else
@@ -183,13 +183,13 @@
                                             @endif
                                         </dd>
                                     </div>
-                                    <div class="bg-white rounded-lg p-2 border border-slate-100 shadow-2xs">
+                                    <div class="bg-white rounded-lg p-2 border border-slate-100 shadow-2xs flex flex-col justify-center min-h-[52px]">
                                         <dt class="text-[10px] uppercase font-bold text-slate-400">Thời gian</dt>
-                                        <dd class="font-extrabold text-slate-900 mt-0.5">{{ $quiz->duration_minutes }}p</dd>
+                                        <dd class="font-extrabold text-slate-900 mt-0.5 whitespace-nowrap">{{ $quiz->duration_minutes }}p</dd>
                                     </div>
-                                    <div class="bg-white rounded-lg p-2 border border-slate-100 shadow-2xs">
+                                    <div class="bg-white rounded-lg p-2 border border-slate-100 shadow-2xs flex flex-col justify-center min-h-[52px]">
                                         <dt class="text-[10px] uppercase font-bold text-slate-400">Điểm đạt</dt>
-                                        <dd class="font-extrabold text-pink-600 mt-0.5">&ge; {{ $quiz->passing_score }}</dd>
+                                        <dd class="font-extrabold text-pink-600 mt-0.5 whitespace-nowrap">&ge; {{ $quiz->passing_score }}</dd>
                                     </div>
                                 </dl>
 
@@ -228,7 +228,7 @@
                             </div>
 
                             <!-- Card Action Footer -->
-                            <div class="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-3">
+                            <div class="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-3 min-h-[68px]">
                                 @if($quiz->isExpired())
                                     @if($lastAttempt)
                                         <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 

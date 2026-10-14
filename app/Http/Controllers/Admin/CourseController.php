@@ -75,6 +75,19 @@ class CourseController extends Controller
             'thumbnail_cropped_data' => 'nullable|string',
             'thumbnail_preset' => 'nullable|string|max:255',
             'thumbnail_url' => 'nullable|url|max:500',
+        ], [
+            'title.required' => 'Vui lòng nhập tiêu đề khóa học.',
+            'title.string' => 'Tiêu đề khóa học không hợp lệ.',
+            'title.max' => 'Tiêu đề khóa học không được vượt quá 255 ký tự.',
+            'price.integer' => 'Học phí phải là số nguyên hợp lệ.',
+            'price.min' => 'Học phí không được là số âm.',
+            'teacher_id.exists' => 'Giảng viên được chọn không tồn tại trên hệ thống.',
+            'status.required' => 'Vui lòng chọn trạng thái khóa học.',
+            'status.in' => 'Trạng thái khóa học không hợp lệ.',
+            'thumbnail_file.image' => 'Ảnh bìa khóa học phải là tệp hình ảnh.',
+            'thumbnail_file.mimes' => 'Ảnh bìa chỉ chấp nhận định dạng: jpeg, png, jpg, webp, gif.',
+            'thumbnail_file.max' => 'Dung lượng ảnh bìa tối đa là 5MB.',
+            'thumbnail_url.url' => 'Đường dẫn ảnh bìa không đúng định dạng URL.',
         ]);
 
         $thumbnail = null;
@@ -174,6 +187,19 @@ class CourseController extends Controller
             'remove_thumbnail' => 'nullable|boolean',
             'thumbnail_preset' => 'nullable|string|max:255',
             'thumbnail_url' => 'nullable|url|max:500',
+        ], [
+            'title.required' => 'Vui lòng nhập tiêu đề khóa học.',
+            'title.string' => 'Tiêu đề khóa học không hợp lệ.',
+            'title.max' => 'Tiêu đề khóa học không được vượt quá 255 ký tự.',
+            'price.integer' => 'Học phí phải là số nguyên hợp lệ.',
+            'price.min' => 'Học phí không được là số âm.',
+            'teacher_id.exists' => 'Giảng viên được chọn không tồn tại trên hệ thống.',
+            'status.required' => 'Vui lòng chọn trạng thái khóa học.',
+            'status.in' => 'Trạng thái khóa học không hợp lệ.',
+            'thumbnail_file.image' => 'Ảnh bìa khóa học phải là tệp hình ảnh.',
+            'thumbnail_file.mimes' => 'Ảnh bìa chỉ chấp nhận định dạng: jpeg, png, jpg, webp, gif.',
+            'thumbnail_file.max' => 'Dung lượng ảnh bìa tối đa là 5MB.',
+            'thumbnail_url.url' => 'Đường dẫn ảnh bìa không đúng định dạng URL.',
         ]);
 
         $thumbnail = $course->thumbnail;

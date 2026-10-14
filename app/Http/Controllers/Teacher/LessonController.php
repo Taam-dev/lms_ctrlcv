@@ -28,6 +28,16 @@ class LessonController extends Controller
             'content_type' => 'required|in:video,text',
             'content' => 'required|string',
             'order_number' => 'required|integer|min:1',
+        ], [
+            'title.required' => 'Vui lòng nhập tiêu đề bài giảng.',
+            'title.string' => 'Tiêu đề bài giảng không hợp lệ.',
+            'title.max' => 'Tiêu đề bài giảng không được vượt quá 255 ký tự.',
+            'content_type.required' => 'Vui lòng chọn loại bài giảng (Video hoặc Bài đọc).',
+            'content_type.in' => 'Loại bài giảng không hợp lệ.',
+            'content.required' => 'Vui lòng nhập nội dung bài giảng hoặc đường dẫn video.',
+            'order_number.required' => 'Vui lòng nhập số thứ tự bài học.',
+            'order_number.integer' => 'Số thứ tự phải là số nguyên.',
+            'order_number.min' => 'Số thứ tự phải bắt đầu từ 1.',
         ]);
 
         // tránh bấm lưu nhiều lần bị trùng
@@ -85,6 +95,16 @@ class LessonController extends Controller
             'content_type' => 'required|in:video,text',
             'content' => 'required|string',
             'order_number' => 'required|integer|min:1',
+        ], [
+            'title.required' => 'Vui lòng nhập tiêu đề bài giảng.',
+            'title.string' => 'Tiêu đề bài giảng không hợp lệ.',
+            'title.max' => 'Tiêu đề bài giảng không được vượt quá 255 ký tự.',
+            'content_type.required' => 'Vui lòng chọn loại bài giảng (Video hoặc Bài đọc).',
+            'content_type.in' => 'Loại bài giảng không hợp lệ.',
+            'content.required' => 'Vui lòng nhập nội dung bài giảng hoặc đường dẫn video.',
+            'order_number.required' => 'Vui lòng nhập số thứ tự bài học.',
+            'order_number.integer' => 'Số thứ tự phải là số nguyên.',
+            'order_number.min' => 'Số thứ tự phải bắt đầu từ 1.',
         ]);
 
         $lesson->update([

@@ -35,6 +35,12 @@ class NewPasswordController extends Controller
             'token' => ['required'],
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'token.required' => 'Mã xác thực đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.',
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Địa chỉ email không đúng định dạng.',
+            'password.required' => 'Vui lòng nhập mật khẩu mới.',
+            'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
