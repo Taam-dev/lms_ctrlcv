@@ -220,7 +220,7 @@
                             <p class="text-xs text-slate-400 max-w-sm mx-auto">Giảng viên đang trong quá trình biên soạn các nội dung mới hoặc khóa học đang chờ kiểm duyệt.</p>
                         </div>
                     @else
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                             @foreach($courses as $course)
                                 <x-course-card :course="$course" :index="$loop->iteration" />
                             @endforeach

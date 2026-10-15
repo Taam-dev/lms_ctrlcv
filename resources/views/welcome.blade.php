@@ -342,9 +342,9 @@
                     <p class="text-sm text-neutral-500">Các bài giảng và khóa học mới sẽ sớm được giảng viên tải lên và kiểm duyệt.</p>
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                     @foreach($courses as $course)
-                        <div x-show="matches({{ $course->id }})" class="transition-all duration-200">
+                        <div x-show="matches({{ $course->id }})" class="transition-all duration-200 h-full">
                             <x-course-card :course="$course" :index="$loop->iteration" />
                         </div>
                     @endforeach

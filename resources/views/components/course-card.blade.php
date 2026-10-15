@@ -10,7 +10,7 @@
     $dashoffset = $circumference - ($progressPercent / 100) * $circumference;
 @endphp
 
-<article class="group relative bg-white border border-pink-100 hover:border-pink-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-200/70 transition-all duration-300 flex flex-col overflow-hidden">
+<article {{ $attributes->merge(['class' => 'group relative bg-white border border-pink-100 hover:border-pink-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-200/70 transition-all duration-300 flex flex-col h-full overflow-hidden']) }}>
     <!-- Course Banner Image -->
     <div class="relative h-48 w-full overflow-hidden bg-neutral-950 shrink-0">
         <img src="{{ $course->banner_url }}" 
@@ -67,8 +67,8 @@
     <!-- Course Content -->
     <div class="p-6 flex-1 flex flex-col justify-between">
         <div>
-            <h3 class="font-black text-lg text-neutral-900 leading-snug line-clamp-2 mb-2 group-hover:text-pink-600 transition-colors">
-                <a href="{{ route('courses.show', $course->slug ?: $course->id) }}">
+            <h3 class="font-black text-lg text-neutral-900 leading-snug line-clamp-2 h-14 mb-2 group-hover:text-pink-600 transition-colors">
+                <a href="{{ route('courses.show', $course->slug ?: $course->id) }}" class="line-clamp-2" title="{{ $course->title }}">
                     {{ $course->title }}
                 </a>
             </h3>
@@ -77,7 +77,7 @@
                 $revCount = (int) ($course->reviews_count ?? $course->reviews()->count());
                 $avgRating = $course->average_rating;
             @endphp
-            <div class="flex items-center gap-1.5 mb-3 text-xs">
+            <div class="flex items-center gap-1.5 mb-3 text-xs h-5">
                 @if($revCount > 0)
                     <svg class="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                     <span class="font-bold text-slate-800">{{ number_format($avgRating, 1) }}</span>
@@ -88,25 +88,13 @@
                 @endif
             </div>
 
-            <p class="text-sm text-neutral-500 leading-relaxed line-clamp-2 mb-5">
+            <p class="text-sm text-neutral-500 leading-relaxed line-clamp-2 h-10 mb-5" title="{{ $course->description ?? 'Chưa có mô tả chi tiết cho khóa học này.' }}">
                 {{ $course->description ?? 'Chưa có mô tả chi tiết cho khóa học này.' }}
             </p>
         </div>
 
         <div class="mt-auto pt-4 border-t border-pink-50">
-            @if($isEnrolled && ($course->purchased_price ?? 0) > 0)
-                <div class="mb-3 px-3 py-1.5 bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                    <span class="text-slate-500 font-bold text-[11px] flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Đã mua với giá:</span>
-                    </span>
-                    <span class="font-black text-emerald-700 text-xs">
-                        {{ number_format($course->purchased_price, 0, ',', '.') }} <span class="text-[10px] font-bold text-slate-500">đ</span>
-                    </span>
-                </div>
-            @endif
-
-            <div class="flex items-center justify-between gap-3 mb-4">
+            <div class="flex items-center justify-between gap-3 mb-4 h-11">
                 <!-- Thông tin Giảng viên (luôn hiển thị cho cả đã đăng ký và chưa đăng ký) -->
                 <div class="flex items-center gap-2.5 min-w-0">
                     @if($course->teacher_id)
@@ -175,13 +163,13 @@
 
             @if($isEnrolled)
                 <a href="{{ route('courses.show', $course->slug ?: $course->id) }}"
-                   class="flex items-center justify-between w-full px-5 py-3 bg-pink-600 hover:bg-pink-700 text-white text-xs font-extrabold uppercase tracking-[0.14em] transition-colors duration-300 shadow-md shadow-pink-600/20">
+                   class="flex items-center justify-between w-full px-5 py-3 bg-pink-600 hover:bg-pink-700 text-white text-xs font-extrabold uppercase tracking-[0.14em] transition-colors duration-300 shadow-md shadow-pink-600/20 h-11">
                     <span>{{ $progressPercent >= 100 ? 'Xem lại khóa học' : 'Vào học ngay' }}</span>
                     <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                 </a>
             @else
                 <a href="{{ route('courses.show', $course->slug ?: $course->id) }}"
-                   class="flex items-center justify-between w-full px-5 py-3 bg-neutral-950 group-hover:bg-pink-600 text-white text-xs font-extrabold uppercase tracking-[0.14em] transition-colors duration-300">
+                   class="flex items-center justify-between w-full px-5 py-3 bg-neutral-950 group-hover:bg-pink-600 text-white text-xs font-extrabold uppercase tracking-[0.14em] transition-colors duration-300 h-11">
                     <span>Xem chi tiết &amp; đăng ký</span>
                     <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                 </a>
