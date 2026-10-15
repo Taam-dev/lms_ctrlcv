@@ -17,6 +17,7 @@ class QuizController extends Controller
     {
         $studentId = auth()->id();
         $search = trim((string) $request->query('search', ''));
+        $quizId = $request->query('quiz_id');
         $type = $request->query('type');
         $scope = $request->query('scope');
 
@@ -34,6 +35,11 @@ class QuizController extends Controller
                 $query->whereIn('course_id', $enrolledCourseIds)
                     ->orWhereNull('course_id');
             });
+        }
+
+        // Lọc chính xác bài kiểm tra theo ID nếu được chuyển hướng từ thông báo (tránh trùng tên bài giữa các khóa)
+        if (! empty($quizId) && is_numeric($quizId)) {
+            $query->where('id', (int) $quizId);
         }
 
         if ($search !== '') {
@@ -64,7 +70,7 @@ class QuizController extends Controller
             ->get()
             ->groupBy('quiz_id');
 
-        return view('student.quizzes.index', compact('enrolledQuizzes', 'userAttempts', 'search', 'type', 'scope'));
+        return view('student.quizzes.index', compact('enrolledQuizzes', 'userAttempts', 'search', 'type', 'scope', 'quizId'));
     }
 
     /**
@@ -109,8 +115,8 @@ class QuizController extends Controller
             }
         }
 
-        // Kiểm tra số lần làm lại bài kiểm tra tối đa (chỉ áp dụng cho học viên, không giới hạn Giảng viên & Admin)
-        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeacher() && $quiz->hasReachedMaxAttempts(auth()->id())) {
+        // Kiểm tra số lần làm lại bài kiểm tra tối đa (học viên bị chặn, Admin có quyền kiểm tra hệ thống)
+        if (! auth()->user()->isAdmin() && $quiz->hasReachedMaxAttempts(auth()->id())) {
             $redirectRoute = $quiz->course_id ? route('student.courses.show', $quiz->course_id) : route('student.quizzes.index');
 
             return redirect($redirectRoute)
@@ -169,8 +175,8 @@ class QuizController extends Controller
             }
         }
 
-        // Kiểm tra số lần làm lại bài kiểm tra tối đa (chỉ áp dụng cho học viên)
-        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeacher() && $quiz->hasReachedMaxAttempts(auth()->id())) {
+        // Kiểm tra số lần làm lại bài kiểm tra tối đa
+        if (! auth()->user()->isAdmin() && $quiz->hasReachedMaxAttempts(auth()->id())) {
             abort(403, 'Bạn đã sử dụng hết số lần làm bài kiểm tra này (tối đa '.$quiz->max_attempts.' lần).');
         }
 

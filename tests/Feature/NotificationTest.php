@@ -45,18 +45,20 @@ class NotificationTest extends TestCase
         ]);
         $response->assertRedirect();
 
-        // Cả 2 học viên đã đăng ký nhận được thông báo với link tìm kiếm khóa học
+        $createdQuiz = Quiz::where('title', 'Quiz Vue Router & Pinia')->first();
+
+        // Cả 2 học viên đã đăng ký nhận được thông báo với link trang bài kiểm tra kèm tên và quiz_id
         $this->assertDatabaseHas('notifications', [
             'user_id' => $student1->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
-            'target_url' => route('courses.index', ['search' => 'Khóa học VueJS Thực Chiến']),
+            'target_url' => route('student.quizzes.index', ['search' => 'Quiz Vue Router & Pinia', 'quiz_id' => $createdQuiz->id]),
         ]);
         $this->assertDatabaseHas('notifications', [
             'user_id' => $student2->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
-            'target_url' => route('courses.index', ['search' => 'Khóa học VueJS Thực Chiến']),
+            'target_url' => route('student.quizzes.index', ['search' => 'Quiz Vue Router & Pinia', 'quiz_id' => $createdQuiz->id]),
         ]);
 
         // Học viên chưa đăng ký không nhận được thông báo
@@ -128,12 +130,12 @@ class NotificationTest extends TestCase
             'title' => 'Bài kiểm tra đã được phê duyệt',
         ]);
 
-        // 2. Học viên của khóa học cũng nhận được thông báo có bài kiểm tra mới trỏ đến tìm kiếm khóa học
+        // 2. Học viên của khóa học cũng nhận được thông báo có bài kiểm tra mới trỏ đến trang quiz với search và quiz_id
         $this->assertDatabaseHas('notifications', [
             'user_id' => $student->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
-            'target_url' => route('courses.index', ['search' => 'Khóa học Golang']),
+            'target_url' => route('student.quizzes.index', ['search' => 'Quiz Golang Concurrency', 'quiz_id' => $quiz->id]),
         ]);
     }
 
@@ -358,9 +360,9 @@ class NotificationTest extends TestCase
     }
 
     /**
-     * Nhấp vào thông báo bài kiểm tra mới sẽ chuyển hướng đến trang khóa học và tìm kiếm tên khóa học đó
+     * Nhấp vào thông báo bài kiểm tra mới sẽ chuyển hướng đến trang bài kiểm tra và tìm kiếm tên bài kèm quiz_id
      */
-    public function test_clicking_quiz_created_notification_redirects_to_courses_index_with_search(): void
+    public function test_clicking_quiz_created_notification_redirects_to_quizzes_index_with_search_and_quiz_id(): void
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $student = User::factory()->create(['role' => 'student']);
@@ -369,27 +371,35 @@ class NotificationTest extends TestCase
             'title' => 'Khóa học AI Specialist',
             'status' => 'approved',
         ]);
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Bài thi cuối kỳ AI',
+            'status' => 'approved',
+            'duration_minutes' => 45,
+            'passing_score' => 8.0,
+        ]);
 
         $notification = Notification::create([
             'user_id' => $student->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
-            'message' => 'Khóa học có bài kiểm tra mới',
-            'target_url' => route('courses.index', ['search' => $course->title]),
+            'message' => 'Khóa học "Khóa học AI Specialist" vừa có bài kiểm tra mới: "Bài thi cuối kỳ AI". Hãy tham gia làm bài ngay!',
+            'target_url' => route('student.quizzes.index', ['search' => $quiz->title, 'quiz_id' => $quiz->id]),
             'read_at' => null,
         ]);
 
         $response = $this->actingAs($student)->get(route('notifications.go', $notification->id));
-        $response->assertRedirect(route('courses.index', ['search' => 'Khóa học AI Specialist']));
+        $response->assertRedirect(route('student.quizzes.index', ['search' => 'Bài thi cuối kỳ AI', 'quiz_id' => $quiz->id]));
 
         $notification->refresh();
         $this->assertTrue($notification->isRead());
     }
 
     /**
-     * Nhấp vào thông báo bài kiểm tra cũ có target_url trực tiếp vào bài làm vẫn được chuyển hướng đến trang khóa học
+     * Nhấp vào thông báo bài kiểm tra cũ có target_url trực tiếp vào bài làm vẫn được chuyển hướng đến trang quiz với search và quiz_id
      */
-    public function test_clicking_legacy_quiz_created_notification_redirects_to_courses_index_with_search(): void
+    public function test_clicking_legacy_quiz_created_notification_redirects_to_quizzes_index_with_search_and_quiz_id(): void
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $student = User::factory()->create(['role' => 'student']);
@@ -417,9 +427,60 @@ class NotificationTest extends TestCase
         ]);
 
         $response = $this->actingAs($student)->get(route('notifications.go', $notification->id));
-        $response->assertRedirect(route('courses.index', ['search' => 'Khóa học Laravel Master']));
+        $response->assertRedirect(route('student.quizzes.index', ['search' => 'Quiz Eloquent Advance', 'quiz_id' => $quiz->id]));
 
         $notification->refresh();
         $this->assertTrue($notification->isRead());
+    }
+
+    /**
+     * Khi có 2 bài kiểm tra trùng tên ở 2 khóa học khác nhau, trang quizzes với quiz_id chỉ hiển thị đúng bài đó
+     */
+    public function test_quizzes_index_with_search_and_quiz_id_isolates_quiz_when_titles_are_identical(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student']);
+
+        $courseA = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Node.js Cơ Bản',
+            'status' => 'approved',
+        ]);
+        $courseB = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Python Cơ Bản',
+            'status' => 'approved',
+        ]);
+
+        Enrollment::create(['student_id' => $student->id, 'course_id' => $courseA->id]);
+        Enrollment::create(['student_id' => $student->id, 'course_id' => $courseB->id]);
+
+        $quizA = Quiz::create([
+            'course_id' => $courseA->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Kiểm tra 15 phút',
+            'status' => 'approved',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+        ]);
+
+        $quizB = Quiz::create([
+            'course_id' => $courseB->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Kiểm tra 15 phút',
+            'status' => 'approved',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+        ]);
+
+        // Gửi request kèm search đúng tên bài và quiz_id của quizA
+        $response = $this->actingAs($student)->get(route('student.quizzes.index', [
+            'search' => 'Kiểm tra 15 phút',
+            'quiz_id' => $quizA->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Khóa học Node.js Cơ Bản');
+        $response->assertDontSee('Khóa học Python Cơ Bản');
     }
 }

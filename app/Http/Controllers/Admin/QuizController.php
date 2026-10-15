@@ -183,7 +183,7 @@ class QuizController extends Controller
                 $studentIds,
                 'Bài kiểm tra mới',
                 "Khóa học \"{$courseTitle}\" vừa có bài kiểm tra mới: \"{$quiz->title}\". Hãy tham gia làm bài ngay!",
-                route('courses.index', ['search' => $quiz->course?->title ?? '']),
+                route('student.quizzes.index', ['search' => $quiz->title, 'quiz_id' => $quiz->id]),
                 'quiz_created'
             );
         }
@@ -478,7 +478,7 @@ class QuizController extends Controller
                 $studentIds,
                 'Bài kiểm tra mới',
                 "Khóa học \"{$courseTitle}\" vừa có bài kiểm tra mới: \"{$quiz->title}\". Hãy tham gia làm bài ngay!",
-                route('courses.index', ['search' => $quiz->course?->title ?? '']),
+                route('student.quizzes.index', ['search' => $quiz->title, 'quiz_id' => $quiz->id]),
                 'quiz_created'
             );
         }

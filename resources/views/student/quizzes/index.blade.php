@@ -38,6 +38,9 @@
                 <!-- Thanh tìm kiếm & lọc bài kiểm tra -->
                 <div class="mb-8 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
                     <form method="GET" action="{{ route('student.quizzes.index') }}" class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                        @if(!empty($quizId))
+                            <input type="hidden" name="quiz_id" :value="quizId" :disabled="!quizId || search !== initialSearch">
+                        @endif
                         <!-- Ô tìm kiếm -->
                         <div class="relative flex-grow">
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -45,10 +48,11 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                             </div>
-                            <input type="text" name="search" x-model="search"
+                            <input type="text" name="search" x-model="search" value="{{ $search }}"
+                                   @input="if (search !== initialSearch) { quizId = null; }"
                                    placeholder="Tìm kiếm bài kiểm tra theo tên, khóa học, chủ đề..."
                                    class="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm border-slate-200 focus:border-pink-600 focus:ring-pink-500 rounded-xl bg-slate-50/50 focus:bg-white transition">
-                            <button type="button" x-show="search && search.length > 0" @click="search = ''" style="display: none;"
+                            <button type="button" x-show="search && search.length > 0" @click="search = ''; quizId = null;" style="display: none;"
                                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700" title="Xóa tìm kiếm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
@@ -75,7 +79,7 @@
                                 Tìm kiếm
                             </button>
 
-                            <button type="button" x-show="(search && search !== '') || type !== 'all' || scope !== 'all'" @click="resetFilters()" style="display: none;"
+                            <button type="button" x-show="(search && search !== '') || type !== 'all' || scope !== 'all' || quizId" @click="resetFilters()" style="display: none;"
                                     class="px-3 py-2.5 text-xs font-bold text-slate-500 hover:text-pink-600 transition underline whitespace-nowrap">
                                 Đặt lại
                             </button>
@@ -89,6 +93,20 @@
                             Lọc theo từ khóa: "<span class="text-slate-700 font-semibold" x-text="search"></span>"
                         </span>
                     </div>
+
+                    @if(!empty($quizId))
+                        <div x-show="quizId" class="mt-3 p-3 bg-pink-50/80 border border-pink-200/80 rounded-xl flex items-center justify-between gap-3 text-xs text-pink-800">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <svg class="w-4 h-4 text-pink-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                <span class="truncate">Đang hiển thị bài kiểm tra từ thông báo: <strong class="font-bold text-pink-900">{{ $search }}</strong></span>
+                            </div>
+                            <a href="{{ route('student.quizzes.index') }}" class="font-bold text-pink-700 hover:text-pink-900 underline whitespace-nowrap shrink-0">
+                                Xem tất cả &rarr;
+                            </a>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Empty state khi không khớp kết quả tìm kiếm -->
@@ -116,15 +134,23 @@
                             $hasPassed = $attempts->contains('is_passed', true);
                             $quizTeacher = $quiz->teacher ?? $quiz->course?->teacher;
                             $teacherName = $quizTeacher?->name ?? 'Ban Giảng Huấn';
+                            $isFromNotification = !empty($quizId) && (int)$quizId === (int)$quiz->id;
                         @endphp
                         <article x-show="matches({{ $quiz->id }})"
-                                 class="bg-white rounded-2xl border border-slate-200/80 hover:border-pink-300 hover:shadow-xl hover:shadow-pink-100/50 transition-all duration-300 flex flex-col justify-between overflow-hidden group">
+                                 class="bg-white rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group {{ $isFromNotification ? 'border-pink-400 ring-2 ring-pink-500/40 shadow-lg shadow-pink-100' : 'border-slate-200/80 hover:border-pink-300 hover:shadow-xl hover:shadow-pink-100/50' }}">
                             <!-- Card Header & Content -->
                             <div class="p-6">
                                 <div class="flex items-center justify-between gap-2 mb-4 h-7 min-h-[28px]">
-                                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-slate-900 text-white shadow-2xs shrink-0">
-                                        {{ $quiz->type_name }}
-                                    </span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-slate-900 text-white shadow-2xs">
+                                            {{ $quiz->type_name }}
+                                        </span>
+                                        @if($isFromNotification)
+                                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-pink-600 text-white shadow-2xs flex items-center gap-1">
+                                                <span>Từ thông báo</span>
+                                            </span>
+                                        @endif
+                                    </div>
 
                                     @if($attempts->isNotEmpty())
                                         @if($hasPassed)
@@ -248,7 +274,7 @@
                                     <span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed">
                                         Chưa mở
                                     </span>
-                                @elseif($hasReachedMax && !auth()->user()->isAdmin() && !auth()->user()->isTeacher())
+                                @elseif($hasReachedMax)
                                     @if($lastAttempt)
                                         <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 
                                             class="text-xs font-bold text-slate-600 hover:text-pink-600 underline">
@@ -448,8 +474,10 @@
         function studentQuizzesIndexHandler() {
             return {
                 search: @json($search ?? ''),
+                initialSearch: @json($search ?? ''),
                 type: @json($type ?? 'all'),
                 scope: @json($scope ?? 'all'),
+                quizId: @json(!empty($quizId) && is_numeric($quizId) ? (int)$quizId : null),
                 quizzes: [
                     @foreach($enrolledQuizzes as $q)
                     @php
@@ -489,6 +517,7 @@
                 matches(id) {
                     const item = this.quizzes.find(x => x.id === id);
                     if (!item) return true;
+                    if (this.quizId && item.id !== this.quizId) return false;
                     if (this.type !== 'all' && item.type !== this.type) return false;
                     if (this.scope !== 'all' && item.scope !== this.scope) return false;
                     if (!this.search || !this.search.trim()) return true;
@@ -497,6 +526,7 @@
                 },
                 countVisible() {
                     return this.quizzes.filter(item => {
+                        if (this.quizId && item.id !== this.quizId) return false;
                         if (this.type !== 'all' && item.type !== this.type) return false;
                         if (this.scope !== 'all' && item.scope !== this.scope) return false;
                         if (!this.search || !this.search.trim()) return true;
@@ -505,9 +535,14 @@
                     }).length;
                 },
                 resetFilters() {
+                    if (@json(!empty($search) || !empty($quizId) || !empty($type) || !empty($scope))) {
+                        window.location.href = @json(route('student.quizzes.index'));
+                        return;
+                    }
                     this.search = '';
                     this.type = 'all';
                     this.scope = 'all';
+                    this.quizId = null;
                 },
                 confirmModalOpen: false,
                 pendingQuiz: {

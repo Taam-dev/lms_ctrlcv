@@ -1443,11 +1443,13 @@ class QuizTest extends TestCase
         $quizzesIndexPage = $this->actingAs($student)->get(route('student.quizzes.index'));
         $quizzesIndexPage->assertOk();
         $quizzesIndexPage->assertSee('Đã hết lượt');
+        $quizzesIndexPage->assertDontSee('Làm lại đề');
 
         $lastAttempt = $quiz->attempts()->where('student_id', $student->id)->latest()->first();
         $resultPage = $this->actingAs($student)->get(route('student.quizzes.result', [$quiz->id, $lastAttempt->id]));
         $resultPage->assertOk();
         $resultPage->assertSee('Đã hết lượt');
+        $resultPage->assertDontSee('Làm lại bài thi');
     }
 
     /**

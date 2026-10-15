@@ -35,13 +35,72 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        // Nếu là thông báo tạo bài kiểm tra, chuyển hướng tới danh sách khóa học và tìm kiếm đúng tên khóa học
+        // Nếu là thông báo tạo bài kiểm tra, chuyển hướng tới danh sách bài kiểm tra và tìm kiếm đúng tên bài kiểm tra đó
         if ($notification->type === 'quiz_created') {
             // Xử lý các thông báo cũ còn lưu target_url trỏ trực tiếp đến bài thi (/quizzes/{id}/take)
             if (preg_match('#/quizzes/(\d+)/take#', $notification->target_url, $matches)) {
                 $quiz = Quiz::with('course')->find($matches[1]);
-                if ($quiz && $quiz->course) {
-                    return redirect()->route('courses.index', ['search' => $quiz->course->title]);
+                if ($quiz) {
+                    return redirect()->route('student.quizzes.index', [
+                        'search' => $quiz->title,
+                        'quiz_id' => $quiz->id,
+                    ]);
+                }
+            }
+
+            // Xử lý thông báo cũ lưu link trỏ đến courses.index (/courses?search=...)
+            if (str_contains($notification->target_url, '/courses')) {
+                if (preg_match('/vừa có bài kiểm tra mới:\s*"([^"]+)"/u', $notification->message, $m)) {
+                    $quizTitle = $m[1];
+                    $courseTitle = null;
+                    if (preg_match('/Khóa học\s*"([^"]+)"/u', $notification->message, $cm)) {
+                        $courseTitle = $cm[1];
+                    }
+
+                    $quiz = Quiz::where('title', $quizTitle)
+                        ->when($courseTitle, function ($q) use ($courseTitle) {
+                            $q->whereHas('course', function ($cq) use ($courseTitle) {
+                                $cq->where('title', $courseTitle);
+                            });
+                        })
+                        ->latest()
+                        ->first();
+
+                    if ($quiz) {
+                        return redirect()->route('student.quizzes.index', [
+                            'search' => $quiz->title,
+                            'quiz_id' => $quiz->id,
+                        ]);
+                    }
+
+                    return redirect()->route('student.quizzes.index', ['search' => $quizTitle]);
+                }
+            }
+
+            // Xử lý nếu target_url đã trỏ đến quizzes nhưng chưa có quiz_id
+            if (str_contains($notification->target_url, '/quizzes') && ! str_contains($notification->target_url, 'quiz_id=')) {
+                if (preg_match('/vừa có bài kiểm tra mới:\s*"([^"]+)"/u', $notification->message, $m)) {
+                    $quizTitle = $m[1];
+                    $courseTitle = null;
+                    if (preg_match('/Khóa học\s*"([^"]+)"/u', $notification->message, $cm)) {
+                        $courseTitle = $cm[1];
+                    }
+
+                    $quiz = Quiz::where('title', $quizTitle)
+                        ->when($courseTitle, function ($q) use ($courseTitle) {
+                            $q->whereHas('course', function ($cq) use ($courseTitle) {
+                                $cq->where('title', $courseTitle);
+                            });
+                        })
+                        ->latest()
+                        ->first();
+
+                    if ($quiz) {
+                        return redirect()->route('student.quizzes.index', [
+                            'search' => $quiz->title,
+                            'quiz_id' => $quiz->id,
+                        ]);
+                    }
                 }
             }
         }

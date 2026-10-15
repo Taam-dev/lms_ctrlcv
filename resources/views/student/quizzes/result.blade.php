@@ -67,12 +67,24 @@
                         </a>
                     @endif
 
-                    @if($isSelfAttempt && ((!$quiz->isExpired() && !$quiz->isNotStarted()) || auth()->user()->isAdmin() || auth()->user()->isTeacher()))
-                        <button type="button" 
-                                @click="confirmModalOpen = true"
-                                class="px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-pink-600 hover:bg-pink-700 text-white transition cursor-pointer shadow-sm">
-                            Làm lại bài thi
-                        </button>
+                    @php
+                        $selfAttemptsCount = $quiz->attempts()->where('student_id', auth()->id())->count();
+                        $selfHasReachedMax = $quiz->max_attempts !== null && $quiz->max_attempts > 0 && $selfAttemptsCount >= $quiz->max_attempts;
+                    @endphp
+                    @if($isSelfAttempt)
+                        @if($selfHasReachedMax)
+                            <button type="button" disabled
+                                  class="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 text-neutral-400 border border-white/20 cursor-not-allowed"
+                                  title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
+                                Đã hết lượt
+                            </button>
+                        @elseif((!$quiz->isExpired() && !$quiz->isNotStarted()) || auth()->user()->isAdmin() || auth()->user()->isTeacher())
+                            <button type="button" 
+                                    @click="confirmModalOpen = true"
+                                    class="px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-pink-600 hover:bg-pink-700 text-white transition cursor-pointer shadow-sm">
+                                Làm lại bài thi
+                            </button>
+                        @endif
                     @endif
                 @else
                     <a href="{{ route('student.quizzes.index') }}" 
@@ -83,7 +95,7 @@
                         $studentAttemptsCount = $quiz->attempts()->where('student_id', auth()->id())->count();
                         $hasReachedMax = $quiz->max_attempts !== null && $quiz->max_attempts > 0 && $studentAttemptsCount >= $quiz->max_attempts;
                     @endphp
-                    @if($hasReachedMax && !auth()->user()->isAdmin())
+                    @if($hasReachedMax)
                         <button type="button" disabled
                               class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed"
                               title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
