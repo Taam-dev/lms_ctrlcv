@@ -413,11 +413,20 @@
                         this.confirmModalOpen = true;
                     }
                 }">
+                    @php
+                        $canAccessQuizzes = (bool) $isEnrolled || (auth()->check() && (auth()->id() === $course->teacher_id));
+                    @endphp
+
                     <div class="flex items-center justify-between">
                         <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            
                             Bài kiểm tra Quizzes ({{ $course->approvedQuizzes->count() }})
                         </h3>
+                        @if(! $canAccessQuizzes)
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                <span>Chưa mở khóa</span>
+                            </span>
+                        @endif
                     </div>
 
                     @if($course->approvedQuizzes->isEmpty())
@@ -425,7 +434,9 @@
                             Khóa học này chưa có bài kiểm tra trắc nghiệm nào được mở.
                         </div>
                     @else
-                        <div class="space-y-4">
+                        <div class="relative rounded-3xl overflow-hidden min-h-[260px]">
+                            <!-- Danh sách card bài kiểm tra (bị làm mờ và vô hiệu hóa tương tác khi chưa đăng ký) -->
+                            <div class="space-y-4 {{ ! $canAccessQuizzes ? 'filter blur-[3.5px] opacity-60 select-none pointer-events-none' : '' }}">
                             @foreach($course->approvedQuizzes as $quiz)
                                 @php
                                     $attempts = $studentAttempts->get($quiz->id, collect());
@@ -497,15 +508,17 @@
                                     @endif
 
                                     <div class="flex items-center justify-between">
-                                        @if($lastAttempt)
+                                        @if($lastAttempt && $canAccessQuizzes)
                                             <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" class="text-xs font-semibold text-pink-600 hover:underline">
                                                 Xem kết quả gần nhất &rarr;
                                             </a>
                                         @else
-                                            <span class="text-xs text-slate-400">Chưa tham gia làm bài</span>
+                                            <span class="text-xs text-slate-400">
+                                                {{ $canAccessQuizzes ? 'Chưa tham gia làm bài' : 'Chưa mở khóa' }}
+                                            </span>
                                         @endif
 
-                                        @if($isEnrolled || auth()->user()?->isAdmin() || auth()->user()?->isTeacher())
+                                        @if($canAccessQuizzes)
                                             @if($quiz->isExpired())
                                                 <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed">
                                                     Đã hết hạn
@@ -531,13 +544,74 @@
                                                 </button>
                                             @endif
                                         @else
-                                            <span class="text-xs text-slate-400 italic">Đăng ký khóa học để làm</span>
+                                            <button type="button" disabled
+                                                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200 pointer-events-none"
+                                                    title="Vui lòng đăng ký khóa học để mở khóa bài kiểm tra">
+                                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                                <span>Chưa mở khóa</span>
+                                            </button>
                                         @endif
                                     </div>
                                 </div>
                             @endforeach
                         </div>
-                    @endif
+
+                        @if(! $canAccessQuizzes)
+                            <!-- Overlay làm mờ & Khóa bài kiểm tra -->
+                            <div class="absolute inset-0 z-10 flex items-start justify-center pt-8 sm:pt-12 p-4 pointer-events-none">
+                                <div class="pointer-events-auto w-full max-w-sm bg-white/95 backdrop-blur-md border border-pink-200/90 shadow-2xl rounded-3xl p-6 sm:p-7 flex flex-col items-center text-center space-y-4">
+                                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white flex items-center justify-center shadow-lg shadow-pink-500/30">
+                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <h4 class="font-black text-slate-900 text-base sm:text-lg">Bài kiểm tra đang bị khóa</h4>
+                                        <p class="text-xs text-slate-500 leading-relaxed">
+                                            Vui lòng đăng ký {{ ($course->price ?? 0) > 0 ? 'mua' : '' }} khóa học để mở khóa toàn bộ {{ $course->approvedQuizzes->count() }} bài kiểm tra trắc nghiệm.
+                                        </p>
+                                    </div>
+                                    <div class="w-full pt-1">
+                                        @auth
+                                            @if(($course->price ?? 0) > 0)
+                                                @php
+                                                    $userBalance = (int) (Auth::user()->balance ?? 0);
+                                                    $coursePrice = (int) ($course->price ?? 0);
+                                                    $hasEnough = $userBalance >= $coursePrice;
+                                                @endphp
+                                                @if($hasEnough)
+                                                    <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-extrabold text-xs uppercase tracking-wider py-3 px-4 rounded-xl shadow-md shadow-pink-600/30 transition duration-200 cursor-pointer">
+                                                            <span>Mua khóa học ({{ number_format($coursePrice, 0, ',', '.') }} đ)</span>
+                                                            <span>&rarr;</span>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <a href="{{ route('wallet.deposit', ['amount' => $coursePrice - $userBalance]) }}" class="w-full inline-flex items-center justify-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-xs uppercase tracking-wider py-3 px-4 rounded-xl shadow-md transition duration-200">
+                                                        <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                                        <span>Nạp ví để mở khóa</span>
+                                                    </a>
+                                                @endif
+                                            @else
+                                                <form action="{{ route('student.courses.enroll', $course->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider py-3 px-4 rounded-xl shadow-md shadow-emerald-600/30 transition duration-200 cursor-pointer">
+                                                        <span>Đăng ký học ngay (Miễn phí)</span>
+                                                        <span>&rarr;</span>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @else
+                                            <a href="{{ route('login') }}" class="w-full inline-flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-extrabold text-xs uppercase tracking-wider py-3 px-4 rounded-xl shadow-md shadow-pink-600/30 transition duration-200">
+                                                <span>Đăng nhập để mở khóa</span>
+                                                <span>&rarr;</span>
+                                            </a>
+                                        @endauth
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
 
                     <!-- Modal Xác nhận Bắt đầu Làm bài Kiểm tra (Modern Clean Light Card) -->
                     <div x-show="confirmModalOpen" 

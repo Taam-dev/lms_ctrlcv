@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\CourseReview;
 use App\Models\Enrollment;
+use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -297,5 +298,68 @@ class CoursePagesTest extends TestCase
         $resPaid->assertOk();
         $resPaid->assertSee('Khoa Paid');
         $resPaid->assertDontSee('Khoa Free');
+    }
+
+    public function test_quizzes_are_blurred_and_locked_when_user_is_not_enrolled(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học bí mật',
+            'status' => 'approved',
+            'price' => 50000,
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz Cơ Bản 1',
+            'duration_minutes' => 15,
+            'passing_score' => 7.0,
+            'status' => 'approved',
+        ]);
+
+        $student = User::factory()->create(['role' => 'student']);
+
+        $response = $this->actingAs($student)->get(route('courses.show', $course->id));
+
+        $response->assertOk();
+        $response->assertSee('Bài kiểm tra đang bị khóa');
+        $response->assertSee('Chưa mở khóa');
+        $response->assertDontSee('Làm bài thi');
+    }
+
+    public function test_quizzes_are_unlocked_when_user_is_enrolled(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học đã đăng ký',
+            'status' => 'approved',
+            'price' => 0,
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz Cơ Bản 2',
+            'duration_minutes' => 15,
+            'passing_score' => 7.0,
+            'status' => 'approved',
+        ]);
+
+        $student = User::factory()->create(['role' => 'student']);
+
+        Enrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'price_paid' => 0,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('courses.show', $course->id));
+
+        $response->assertOk();
+        $response->assertDontSee('Bài kiểm tra đang bị khóa');
+        $response->assertSee('Làm bài thi');
     }
 }
