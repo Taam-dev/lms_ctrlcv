@@ -84,10 +84,11 @@
                         $hasReachedMax = $quiz->max_attempts !== null && $quiz->max_attempts > 0 && $studentAttemptsCount >= $quiz->max_attempts;
                     @endphp
                     @if($hasReachedMax && !auth()->user()->isAdmin())
-                        <span class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed"
+                        <button type="button" disabled
+                              class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed"
                               title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
-                            Hết lượt làm lại ({{ $studentAttemptsCount }}/{{ $quiz->max_attempts }})
-                        </span>
+                            Không thể làm tiếp
+                        </button>
                     @elseif((!$quiz->isExpired() && !$quiz->isNotStarted()) || auth()->user()->isAdmin())
                         <button type="button" 
                                 @click="confirmModalOpen = true"

@@ -515,10 +515,11 @@
                                                     Chưa mở
                                                 </span>
                                             @elseif($hasReachedMax && !auth()->user()?->isAdmin() && !auth()->user()?->isTeacher())
-                                                <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200"
-                                                      title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
-                                                    Hết lượt ({{ $completedAttemptsCount }}/{{ $quiz->max_attempts }})
-                                                </span>
+                                                <button type="button" disabled
+                                                        class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200"
+                                                        title="Bạn đã đạt số lần làm bài tối đa ({{ $completedAttemptsCount }}/{{ $quiz->max_attempts }} lần).">
+                                                    <span>Không thể làm tiếp</span>
+                                                </button>
                                             @else
                                                 @php
                                                     $qLimit = $quiz->question_limit && $quiz->question_limit < $quiz->questions_count ? $quiz->question_limit : $quiz->questions_count;

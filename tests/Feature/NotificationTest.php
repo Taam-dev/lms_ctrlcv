@@ -45,16 +45,18 @@ class NotificationTest extends TestCase
         ]);
         $response->assertRedirect();
 
-        // Cả 2 học viên đã đăng ký nhận được thông báo
+        // Cả 2 học viên đã đăng ký nhận được thông báo với link tìm kiếm khóa học
         $this->assertDatabaseHas('notifications', [
             'user_id' => $student1->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
+            'target_url' => route('courses.index', ['search' => 'Khóa học VueJS Thực Chiến']),
         ]);
         $this->assertDatabaseHas('notifications', [
             'user_id' => $student2->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
+            'target_url' => route('courses.index', ['search' => 'Khóa học VueJS Thực Chiến']),
         ]);
 
         // Học viên chưa đăng ký không nhận được thông báo
@@ -126,11 +128,12 @@ class NotificationTest extends TestCase
             'title' => 'Bài kiểm tra đã được phê duyệt',
         ]);
 
-        // 2. Học viên của khóa học cũng nhận được thông báo có bài kiểm tra mới
+        // 2. Học viên của khóa học cũng nhận được thông báo có bài kiểm tra mới trỏ đến tìm kiếm khóa học
         $this->assertDatabaseHas('notifications', [
             'user_id' => $student->id,
             'type' => 'quiz_created',
             'title' => 'Bài kiểm tra mới',
+            'target_url' => route('courses.index', ['search' => 'Khóa học Golang']),
         ]);
     }
 
@@ -352,5 +355,71 @@ class NotificationTest extends TestCase
         $response->assertOk();
         $response->assertSee('Thông báo bài thi Toán');
         $response->assertSee(route('notifications.destroy', $notification->id));
+    }
+
+    /**
+     * Nhấp vào thông báo bài kiểm tra mới sẽ chuyển hướng đến trang khóa học và tìm kiếm tên khóa học đó
+     */
+    public function test_clicking_quiz_created_notification_redirects_to_courses_index_with_search(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học AI Specialist',
+            'status' => 'approved',
+        ]);
+
+        $notification = Notification::create([
+            'user_id' => $student->id,
+            'type' => 'quiz_created',
+            'title' => 'Bài kiểm tra mới',
+            'message' => 'Khóa học có bài kiểm tra mới',
+            'target_url' => route('courses.index', ['search' => $course->title]),
+            'read_at' => null,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('notifications.go', $notification->id));
+        $response->assertRedirect(route('courses.index', ['search' => 'Khóa học AI Specialist']));
+
+        $notification->refresh();
+        $this->assertTrue($notification->isRead());
+    }
+
+    /**
+     * Nhấp vào thông báo bài kiểm tra cũ có target_url trực tiếp vào bài làm vẫn được chuyển hướng đến trang khóa học
+     */
+    public function test_clicking_legacy_quiz_created_notification_redirects_to_courses_index_with_search(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student']);
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Laravel Master',
+            'status' => 'approved',
+        ]);
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz Eloquent Advance',
+            'status' => 'approved',
+            'duration_minutes' => 30,
+            'passing_score' => 7.0,
+        ]);
+
+        $notification = Notification::create([
+            'user_id' => $student->id,
+            'type' => 'quiz_created',
+            'title' => 'Bài kiểm tra mới',
+            'message' => 'Nội dung',
+            'target_url' => route('student.quizzes.take', $quiz->id),
+            'read_at' => null,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('notifications.go', $notification->id));
+        $response->assertRedirect(route('courses.index', ['search' => 'Khóa học Laravel Master']));
+
+        $notification->refresh();
+        $this->assertTrue($notification->isRead());
     }
 }

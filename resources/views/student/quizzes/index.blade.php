@@ -257,10 +257,11 @@
                                     @else
                                         <span class="text-xs text-rose-600 font-semibold">Hết lượt làm</span>
                                     @endif
-                                    <span class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed"
+                                    <button type="button" disabled
+                                          class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed"
                                           title="Bạn đã làm {{ $attemptsCount }}/{{ $quiz->max_attempts }} lần tối đa.">
-                                        Hết lượt ({{ $attemptsCount }}/{{ $quiz->max_attempts }})
-                                    </span>
+                                        Không thể làm tiếp
+                                    </button>
                                 @elseif($lastAttempt)
                                     <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 
                                         class="text-xs font-bold text-slate-600 hover:text-pink-600 underline">

@@ -1434,6 +1434,20 @@ class QuizTest extends TestCase
             'answers' => [$question->id => 0],
         ]);
         $submit3->assertStatus(403);
+
+        // Giao diện chuyển button sang "Không thể làm tiếp" và bị disabled
+        $coursePage = $this->actingAs($student)->get(route('student.courses.show', $course->id));
+        $coursePage->assertOk();
+        $coursePage->assertSee('Không thể làm tiếp');
+
+        $quizzesIndexPage = $this->actingAs($student)->get(route('student.quizzes.index'));
+        $quizzesIndexPage->assertOk();
+        $quizzesIndexPage->assertSee('Không thể làm tiếp');
+
+        $lastAttempt = $quiz->attempts()->where('student_id', $student->id)->latest()->first();
+        $resultPage = $this->actingAs($student)->get(route('student.quizzes.result', [$quiz->id, $lastAttempt->id]));
+        $resultPage->assertOk();
+        $resultPage->assertSee('Không thể làm tiếp');
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Models\Quiz;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,17 @@ class NotificationController extends Controller
         }
 
         $notification->markAsRead();
+
+        // Nếu là thông báo tạo bài kiểm tra, chuyển hướng tới danh sách khóa học và tìm kiếm đúng tên khóa học
+        if ($notification->type === 'quiz_created') {
+            // Xử lý các thông báo cũ còn lưu target_url trỏ trực tiếp đến bài thi (/quizzes/{id}/take)
+            if (preg_match('#/quizzes/(\d+)/take#', $notification->target_url, $matches)) {
+                $quiz = Quiz::with('course')->find($matches[1]);
+                if ($quiz && $quiz->course) {
+                    return redirect()->route('courses.index', ['search' => $quiz->course->title]);
+                }
+            }
+        }
 
         return redirect()->to($notification->target_url);
     }

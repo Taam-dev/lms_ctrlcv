@@ -175,13 +175,14 @@ class QuizController extends Controller
         ], $extracted['questions']);
 
         if ($quiz->course_id && $quiz->status === 'approved') {
+            $quiz->loadMissing('course');
             $studentIds = Enrollment::where('course_id', $quiz->course_id)->pluck('student_id');
             $courseTitle = $quiz->course ? $quiz->course->title : 'khóa học';
             Notification::send(
                 $studentIds,
                 'Bài kiểm tra mới',
                 "Khóa học \"{$courseTitle}\" vừa có bài kiểm tra mới: \"{$quiz->title}\". Hãy tham gia làm bài ngay!",
-                route('student.quizzes.take', $quiz->id),
+                route('courses.index', ['search' => $quiz->course?->title ?? '']),
                 'quiz_created'
             );
         }
@@ -454,13 +455,14 @@ class QuizController extends Controller
 
         // Gửi thông báo đến học viên tham gia khóa học
         if ($quiz->course_id) {
+            $quiz->loadMissing('course');
             $studentIds = Enrollment::where('course_id', $quiz->course_id)->pluck('student_id');
             $courseTitle = $quiz->course ? $quiz->course->title : 'khóa học';
             Notification::send(
                 $studentIds,
                 'Bài kiểm tra mới',
                 "Khóa học \"{$courseTitle}\" vừa có bài kiểm tra mới: \"{$quiz->title}\". Hãy tham gia làm bài ngay!",
-                route('student.quizzes.take', $quiz->id),
+                route('courses.index', ['search' => $quiz->course?->title ?? '']),
                 'quiz_created'
             );
         }
