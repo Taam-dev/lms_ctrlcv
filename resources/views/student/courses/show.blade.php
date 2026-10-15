@@ -518,7 +518,7 @@
                                                 <button type="button" disabled
                                                         class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200"
                                                         title="Bạn đã đạt số lần làm bài tối đa ({{ $completedAttemptsCount }}/{{ $quiz->max_attempts }} lần).">
-                                                    <span>Không thể làm tiếp</span>
+                                                    <span>Đã hết lượt</span>
                                                 </button>
                                             @else
                                                 @php
@@ -658,7 +658,7 @@
                                             <template x-if="pendingQuiz.maxAttempts > 0">
                                                 <li class="flex items-start gap-2">
                                                     <span class="text-amber-600 font-bold leading-tight">•</span>
-                                                    <span>Bài thi giới hạn tối đa <strong x-text="pendingQuiz.maxAttempts + ' lần làm bài'"></strong> (bạn đã hoàn thành <span x-text="pendingQuiz.completedAttempts"></span> lần, còn <strong x-text="Math.max(0, pendingQuiz.maxAttempts - pendingQuiz.completedAttempts) + ' lượt'"></strong>).</span>
+                                                    <span>Bài thi giới hạn tối đa <strong class="whitespace-nowrap" x-text="pendingQuiz.maxAttempts + ' lần làm bài'"></strong> (đã làm <span class="whitespace-nowrap"><span x-text="pendingQuiz.completedAttempts"></span> lần</span>, còn lại <strong class="whitespace-nowrap" x-text="Math.max(0, pendingQuiz.maxAttempts - pendingQuiz.completedAttempts) + ' lượt'"></strong>).</span>
                                                 </li>
                                             </template>
                                             <li class="flex items-start gap-2">

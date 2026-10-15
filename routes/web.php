@@ -170,6 +170,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('quizzes/{quiz}/questions/import', [AdminQuizController::class, 'importQuestions'])->name('quizzes.questions.import');
     Route::delete('quizzes/{quiz}/questions/{question}', [AdminQuizController::class, 'destroyQuestion'])->name('quizzes.questions.destroy');
     Route::get('quizzes/{quiz}/results', [AdminQuizController::class, 'results'])->name('quizzes.results');
+    Route::delete('quizzes/{quiz}/attempts/{attempt}', [AdminQuizController::class, 'destroyAttempt'])->name('quizzes.attempts.destroy');
 });
 
 require __DIR__.'/auth.php';

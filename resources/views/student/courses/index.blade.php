@@ -40,8 +40,8 @@
             </p>
 
             <!-- Thanh tìm kiếm khóa học -->
-            <form method="GET" action="{{ route('courses.index') }}" class="mt-8 max-w-xl">
-                <div class="relative flex items-center">
+            <form method="GET" action="{{ route('courses.index') }}" class="mt-8 flex flex-col md:flex-row gap-3 items-stretch md:items-center max-w-3xl">
+                <div class="relative flex-grow">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-400">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -51,20 +51,47 @@
                            name="search"
                            value="{{ $search ?? '' }}"
                            placeholder="Tìm kiếm theo tên khóa học, mô tả, giảng viên..."
-                           class="w-full pl-12 {{ !empty($search) ? 'pr-36' : 'pr-28' }} py-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-inner">
-                    <div class="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                        @if(!empty($search))
-                            <a href="{{ route('courses.index') }}"
-                               class="px-2.5 py-1.5 text-xs text-neutral-400 hover:text-white transition font-semibold rounded-lg hover:bg-neutral-800"
-                               title="Xóa tìm kiếm">
-                                &times; Xóa
-                            </a>
-                        @endif
-                        <button type="submit"
-                                class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-xl shadow-xs transition shrink-0">
-                            Tìm kiếm
-                        </button>
-                    </div>
+                           class="w-full pl-12 pr-10 py-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition shadow-inner">
+                    @if(!empty($search))
+                        <a href="{{ route('courses.index', ['price' => $price ?? 'all', 'sort' => $sort ?? 'latest']) }}"
+                           class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-white"
+                           title="Xóa từ khóa">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </a>
+                    @endif
+                </div>
+
+                <div class="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
+                    <select name="price"
+                            class="text-xs font-semibold rounded-2xl border-neutral-700 focus:border-pink-500 focus:ring-pink-500 py-3.5 px-4 bg-neutral-900 text-white cursor-pointer">
+                        <option value="all" {{ ($price ?? 'all') === 'all' ? 'selected' : '' }}>Tất cả mức giá</option>
+                        <option value="free" {{ ($price ?? '') === 'free' ? 'selected' : '' }}>Miễn phí</option>
+                        <option value="paid" {{ ($price ?? '') === 'paid' ? 'selected' : '' }}>Có phí</option>
+                        <option value="under_200k" {{ ($price ?? '') === 'under_200k' ? 'selected' : '' }}>Dưới 200.000 đ</option>
+                        <option value="200k_500k" {{ ($price ?? '') === '200k_500k' ? 'selected' : '' }}>200.000 - 500.000 đ</option>
+                        <option value="over_500k" {{ ($price ?? '') === 'over_500k' ? 'selected' : '' }}>Trên 500.000 đ</option>
+                    </select>
+
+                    <select name="sort"
+                            class="text-xs font-semibold rounded-2xl border-neutral-700 focus:border-pink-500 focus:ring-pink-500 py-3.5 px-4 bg-neutral-900 text-white cursor-pointer">
+                        <option value="latest" {{ ($sort ?? 'latest') === 'latest' ? 'selected' : '' }}>Mới nhất</option>
+                        <option value="popular" {{ ($sort ?? '') === 'popular' ? 'selected' : '' }}>Nổi bật nhất</option>
+                        <option value="price_asc" {{ ($sort ?? '') === 'price_asc' ? 'selected' : '' }}>Giá: Thấp đến cao</option>
+                        <option value="price_desc" {{ ($sort ?? '') === 'price_desc' ? 'selected' : '' }}>Giá: Cao đến thấp</option>
+                        <option value="rating" {{ ($sort ?? '') === 'rating' ? 'selected' : '' }}>Đánh giá cao nhất</option>
+                    </select>
+
+                    <button type="submit"
+                            class="px-5 py-3.5 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-2xl shadow-xs transition shrink-0 cursor-pointer">
+                        Tìm kiếm
+                    </button>
+
+                    @if(!empty($search) || ($price ?? 'all') !== 'all' || ($sort ?? 'latest') !== 'latest')
+                        <a href="{{ route('courses.index') }}"
+                           class="px-3 py-3.5 text-xs text-neutral-400 hover:text-white transition font-semibold rounded-2xl hover:bg-neutral-800 shrink-0">
+                            Đặt lại
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>

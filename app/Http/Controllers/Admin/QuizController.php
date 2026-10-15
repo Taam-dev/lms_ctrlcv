@@ -12,6 +12,7 @@ use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Services\AiQuizGeneratorService;
 use App\Services\QuizJsonService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -443,6 +444,21 @@ class QuizController extends Controller
             ->get();
 
         return view('admin.quizzes.results', compact('quiz', 'attempts'));
+    }
+
+    /**
+     * Xóa điểm / lượt làm bài của học viên (Admin)
+     */
+    public function destroyAttempt(Quiz $quiz, QuizAttempt $attempt): RedirectResponse
+    {
+        if ((int) $attempt->quiz_id !== (int) $quiz->id) {
+            abort(404);
+        }
+
+        $studentName = $attempt->student?->name ?? 'học viên';
+        $attempt->delete();
+
+        return back()->with('success', "Đã xóa kết quả làm bài của học viên {$studentName} thành công.");
     }
 
     /**

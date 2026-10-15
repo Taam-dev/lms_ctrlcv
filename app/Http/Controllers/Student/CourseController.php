@@ -68,13 +68,15 @@ class CourseController extends Controller
         }
     }
 
-    // trang chủ chỉ hiển thị hero banner và 3 khóa học nổi bật được nhiều lượt đánh giá nhất
-    public function index()
+    // trang chủ: hiển thị hero banner và các khóa học nổi bật / tìm kiếm khóa học
+    public function index(Request $request)
     {
         $approvedCourses = Course::where('status', 'approved');
 
         $totalCourses = (clone $approvedCourses)->count();
-        $courses = (clone $approvedCourses)->with('teacher')
+
+        // 3 khóa học nổi bật dành riêng cho Hero Gallery
+        $heroCourses = (clone $approvedCourses)->with('teacher')
             ->withCount(['lessons', 'reviews'])
             ->withAvg('reviews', 'rating')
             ->orderByDesc('reviews_count')
@@ -83,15 +85,85 @@ class CourseController extends Controller
             ->take(3)
             ->get();
 
+        $this->attachStudentProgress($heroCourses);
+
+        $search = trim((string) $request->query('search', ''));
+        $price = $request->query('price', 'all');
+        $sort = $request->query('sort', 'popular');
+        $enrollment = $request->query('enrollment', 'all');
+
+        $hasFilters = ($search !== '' || $price !== 'all' || ($sort !== 'popular' && $sort !== '') || $enrollment !== 'all');
+
+        $query = (clone $approvedCourses)->with('teacher')
+            ->withCount(['lessons', 'reviews'])
+            ->withAvg('reviews', 'rating');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($price === 'free') {
+            $query->where(function ($q) {
+                $q->whereNull('price')->orWhere('price', '<=', 0);
+            });
+        } elseif ($price === 'paid') {
+            $query->where('price', '>', 0);
+        } elseif ($price === 'under_200k') {
+            $query->where('price', '>', 0)->where('price', '<', 200000);
+        } elseif ($price === '200k_500k') {
+            $query->where('price', '>=', 200000)->where('price', '<=', 500000);
+        } elseif ($price === 'over_500k') {
+            $query->where('price', '>', 500000);
+        }
+
+        if ($sort === 'latest') {
+            $query->latest('id');
+        } elseif ($sort === 'price_asc') {
+            $query->orderBy('price', 'asc')->latest('id');
+        } elseif ($sort === 'price_desc') {
+            $query->orderBy('price', 'desc')->latest('id');
+        } elseif ($sort === 'rating') {
+            $query->orderByDesc('reviews_avg_rating')->orderByDesc('reviews_count')->latest('id');
+        } else { // popular
+            $query->orderByDesc('reviews_count')->orderByDesc('reviews_avg_rating')->latest('id');
+        }
+
+        // Nếu không có filter tìm kiếm/giá nào được gửi lên (mặc định), lấy 3 khóa học nổi bật
+        if (! $hasFilters) {
+            $courses = (clone $query)->take(3)->get();
+        } else {
+            $courses = $query->get();
+        }
+
         $this->attachStudentProgress($courses);
 
-        return view('welcome', compact('courses', 'totalCourses'));
+        if ($hasFilters && auth()->check() && $enrollment !== 'all') {
+            $courses = $courses->filter(function ($c) use ($enrollment) {
+                if ($enrollment === 'enrolled') {
+                    return (bool) ($c->is_enrolled ?? false);
+                } elseif ($enrollment === 'not_enrolled') {
+                    return ! (bool) ($c->is_enrolled ?? false);
+                }
+
+                return true;
+            })->values();
+        }
+
+        return view('welcome', compact('courses', 'heroCourses', 'totalCourses', 'search', 'price', 'sort', 'enrollment'));
     }
 
     // trang riêng liệt kê tất cả khóa học đã được admin duyệt
     public function list(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
+        $price = $request->query('price', 'all');
+        $sort = $request->query('sort', 'latest');
 
         $query = Course::where('status', 'approved')
             ->with('teacher')
@@ -108,13 +180,37 @@ class CourseController extends Controller
             });
         }
 
-        $courses = $query->latest()
-            ->latest('id')
-            ->get();
+        if ($price === 'free') {
+            $query->where(function ($q) {
+                $q->whereNull('price')->orWhere('price', '<=', 0);
+            });
+        } elseif ($price === 'paid') {
+            $query->where('price', '>', 0);
+        } elseif ($price === 'under_200k') {
+            $query->where('price', '>', 0)->where('price', '<', 200000);
+        } elseif ($price === '200k_500k') {
+            $query->where('price', '>=', 200000)->where('price', '<=', 500000);
+        } elseif ($price === 'over_500k') {
+            $query->where('price', '>', 500000);
+        }
+
+        if ($sort === 'popular') {
+            $query->orderByDesc('reviews_count')->orderByDesc('reviews_avg_rating')->latest('id');
+        } elseif ($sort === 'price_asc') {
+            $query->orderBy('price', 'asc')->latest('id');
+        } elseif ($sort === 'price_desc') {
+            $query->orderBy('price', 'desc')->latest('id');
+        } elseif ($sort === 'rating') {
+            $query->orderByDesc('reviews_avg_rating')->orderByDesc('reviews_count')->latest('id');
+        } else {
+            $query->latest()->latest('id');
+        }
+
+        $courses = $query->get();
 
         $this->attachStudentProgress($courses);
 
-        return view('student.courses.index', compact('courses', 'search'));
+        return view('student.courses.index', compact('courses', 'search', 'price', 'sort'));
     }
 
     /**

@@ -211,4 +211,91 @@ class CoursePagesTest extends TestCase
         $this->assertEquals($course3->id, $coursesOnPage[1]->id);
         $this->assertEquals($course1->id, $coursesOnPage[2]->id);
     }
+
+    public function test_home_page_displays_search_and_price_filter_bar_in_courses_section(): void
+    {
+        $this->createCourses(approved: 2, pending: 0);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('homeCoursesHandler');
+        $response->assertSee('Tìm kiếm khóa học theo tên, mô tả, giảng viên...');
+        $response->assertSee('Tất cả mức giá');
+        $response->assertSee('Miễn phí');
+        $response->assertSee('Có phí');
+        $response->assertSee('Dưới 200.000 đ');
+        $response->assertSee('200.000 - 500.000 đ');
+        $response->assertSee('Trên 500.000 đ');
+        $response->assertSee('Nổi bật nhất');
+    }
+
+    public function test_home_page_can_filter_courses_by_price_and_search_query(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+
+        $freeCourse = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Miễn Phí HTML CSS',
+            'price' => 0,
+            'status' => 'approved',
+        ]);
+
+        $paidCourse = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Trả Phí Laravel Pro',
+            'price' => 250000,
+            'status' => 'approved',
+        ]);
+
+        // Lọc miễn phí
+        $freeResponse = $this->get(route('home', ['price' => 'free']));
+        $freeResponse->assertOk();
+        $freeCourses = $freeResponse->viewData('courses');
+        $this->assertTrue($freeCourses->contains('id', $freeCourse->id));
+        $this->assertFalse($freeCourses->contains('id', $paidCourse->id));
+
+        // Lọc có phí
+        $paidResponse = $this->get(route('home', ['price' => 'paid']));
+        $paidResponse->assertOk();
+        $paidCourses = $paidResponse->viewData('courses');
+        $this->assertTrue($paidCourses->contains('id', $paidCourse->id));
+        $this->assertFalse($paidCourses->contains('id', $freeCourse->id));
+
+        // Tìm kiếm theo từ khóa kết hợp
+        $searchResponse = $this->get(route('home', ['search' => 'HTML CSS', 'price' => 'free']));
+        $searchResponse->assertOk();
+        $searchCourses = $searchResponse->viewData('courses');
+        $this->assertTrue($searchCourses->contains('id', $freeCourse->id));
+        $this->assertFalse($searchCourses->contains('id', $paidCourse->id));
+    }
+
+    public function test_courses_page_can_filter_by_price(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+
+        Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khoa Free',
+            'price' => 0,
+            'status' => 'approved',
+        ]);
+
+        Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khoa Paid',
+            'price' => 350000,
+            'status' => 'approved',
+        ]);
+
+        $resFree = $this->get(route('courses.index', ['price' => 'free']));
+        $resFree->assertOk();
+        $resFree->assertSee('Khoa Free');
+        $resFree->assertDontSee('Khoa Paid');
+
+        $resPaid = $this->get(route('courses.index', ['price' => 'paid']));
+        $resPaid->assertOk();
+        $resPaid->assertSee('Khoa Paid');
+        $resPaid->assertDontSee('Khoa Free');
+    }
 }

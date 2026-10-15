@@ -111,15 +111,33 @@
                                         {{ $attempt->created_at->format('d/m/Y H:i') }}
                                     </td>
                                     <td class="py-4 px-6 text-center whitespace-nowrap">
-                                        <button type="button" 
-                                                @click="openAttemptId = {{ $attempt->id }}"
-                                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-neutral-900 hover:bg-pink-600 text-white transition shadow-2xs cursor-pointer">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                            </svg>
-                                            <span>Xem</span>
-                                        </button>
+                                        <div class="inline-flex items-center justify-center gap-1.5">
+                                            <button type="button" 
+                                                    @click="openAttemptId = {{ $attempt->id }}"
+                                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-neutral-900 hover:bg-pink-600 text-white transition shadow-2xs cursor-pointer"
+                                                    title="Xem chi tiết bài làm">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                <span>Xem</span>
+                                            </button>
+
+                                            <form action="{{ route('admin.quizzes.attempts.destroy', [$quiz->id, $attempt->id]) }}" 
+                                                  method="POST" 
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm/lượt làm bài này của học viên {{ addslashes($attempt->student->name ?? 'này') }}? Thao tác này không thể hoàn tác.');" 
+                                                  class="inline-block">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="w-7 h-7 inline-flex items-center justify-center rounded-xl text-xs font-black bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 transition shadow-2xs cursor-pointer active:scale-95"
+                                                        title="Xóa điểm làm bài của học viên">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
 
@@ -294,12 +312,29 @@
 
                                         <!-- Footer Modal -->
                                         <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
-                                            <a href="{{ route('student.quizzes.result', [$quiz->id, $attempt->id]) }}" 
-                                               target="_blank"
-                                               class="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition">
-                                                <span>Mở trang chi tiết đầy đủ</span>
-                                                <span>&rarr;</span>
-                                            </a>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ route('student.quizzes.result', [$quiz->id, $attempt->id]) }}" 
+                                                   target="_blank"
+                                                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition">
+                                                    <span>Mở trang chi tiết đầy đủ</span>
+                                                    <span>&rarr;</span>
+                                                </a>
+                                                <form action="{{ route('admin.quizzes.attempts.destroy', [$quiz->id, $attempt->id]) }}" 
+                                                      method="POST" 
+                                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm/lượt làm bài này của học viên {{ addslashes($attempt->student->name ?? 'này') }}? Thao tác này không thể hoàn tác.');" 
+                                                      class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                            class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
+                                                            title="Xóa kết quả bài làm này">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                                        </svg>
+                                                        <span>Xóa kết quả này</span>
+                                                    </button>
+                                                </form>
+                                            </div>
                                             <button type="button" 
                                                     @click="openAttemptId = null"
                                                     class="px-5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition cursor-pointer">

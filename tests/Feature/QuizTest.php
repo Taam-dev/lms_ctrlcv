@@ -1435,19 +1435,19 @@ class QuizTest extends TestCase
         ]);
         $submit3->assertStatus(403);
 
-        // Giao diện chuyển button sang "Không thể làm tiếp" và bị disabled
+        // Giao diện chuyển button sang "Đã hết lượt" và bị disabled
         $coursePage = $this->actingAs($student)->get(route('student.courses.show', $course->id));
         $coursePage->assertOk();
-        $coursePage->assertSee('Không thể làm tiếp');
+        $coursePage->assertSee('Đã hết lượt');
 
         $quizzesIndexPage = $this->actingAs($student)->get(route('student.quizzes.index'));
         $quizzesIndexPage->assertOk();
-        $quizzesIndexPage->assertSee('Không thể làm tiếp');
+        $quizzesIndexPage->assertSee('Đã hết lượt');
 
         $lastAttempt = $quiz->attempts()->where('student_id', $student->id)->latest()->first();
         $resultPage = $this->actingAs($student)->get(route('student.quizzes.result', [$quiz->id, $lastAttempt->id]));
         $resultPage->assertOk();
-        $resultPage->assertSee('Không thể làm tiếp');
+        $resultPage->assertSee('Đã hết lượt');
     }
 
     /**
@@ -1787,5 +1787,48 @@ class QuizTest extends TestCase
         $resultVisibleResponse->assertSee('Đối chiếu đáp án chi tiết');
         $resultVisibleResponse->assertSee('Nội dung câu hỏi công khai 456?');
         $resultVisibleResponse->assertSee('Giải thích công khai cho thí sinh đối chiếu');
+    }
+
+    public function test_admin_can_delete_student_quiz_attempt(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'student']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Quiz kiem tra xoa diem',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $attempt = QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'total_questions' => 5,
+            'correct_answers' => 3,
+            'score' => 6.0,
+            'is_passed' => true,
+            'answers' => [],
+            'completed_at' => now(),
+        ]);
+
+        $this->assertDatabaseHas('quiz_attempts', ['id' => $attempt->id]);
+
+        // Học viên không có quyền xóa
+        $studentAttemptDelete = $this->actingAs($student)->delete(route('admin.quizzes.attempts.destroy', [$quiz->id, $attempt->id]));
+        $studentAttemptDelete->assertForbidden();
+
+        // Admin xem trang kết quả thấy nút xóa
+        $resultsPage = $this->actingAs($admin)->get(route('admin.quizzes.results', $quiz->id));
+        $resultsPage->assertOk();
+        $resultsPage->assertSee(route('admin.quizzes.attempts.destroy', [$quiz->id, $attempt->id]));
+
+        // Admin thực hiện xóa kết quả
+        $deleteResponse = $this->actingAs($admin)->delete(route('admin.quizzes.attempts.destroy', [$quiz->id, $attempt->id]));
+        $deleteResponse->assertRedirect();
+        $deleteResponse->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('quiz_attempts', ['id' => $attempt->id]);
     }
 }

@@ -87,7 +87,7 @@
                         <button type="button" disabled
                               class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed"
                               title="Bạn đã đạt số lần làm bài tối đa ({{ $quiz->max_attempts }} lần).">
-                            Không thể làm tiếp
+                            Đã hết lượt
                         </button>
                     @elseif((!$quiz->isExpired() && !$quiz->isNotStarted()) || auth()->user()->isAdmin())
                         <button type="button" 
@@ -242,7 +242,7 @@
                                 @if($quiz->max_attempts)
                                     <li class="flex items-start gap-2">
                                         <span class="text-amber-600 font-bold leading-tight">•</span>
-                                        <span>Bài thi giới hạn tối đa <strong>{{ $quiz->max_attempts }} lần làm</strong> (bạn đã hoàn thành {{ $studentAttemptsCount }} lần, còn lại <strong>{{ max(0, $quiz->max_attempts - $studentAttemptsCount) }}</strong> lượt).</span>
+                                        <span>Bài thi giới hạn tối đa <strong class="whitespace-nowrap">{{ $quiz->max_attempts }} lần làm</strong> (đã làm <span class="whitespace-nowrap">{{ $studentAttemptsCount }} lần</span>, còn lại <strong class="whitespace-nowrap">{{ max(0, $quiz->max_attempts - $studentAttemptsCount) }} lượt</strong>).</span>
                                     </li>
                                 @endif
                                 <li class="flex items-start gap-2">

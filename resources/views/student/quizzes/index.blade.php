@@ -260,7 +260,7 @@
                                     <button type="button" disabled
                                           class="px-4 py-2 rounded-xl bg-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider cursor-not-allowed"
                                           title="Bạn đã làm {{ $attemptsCount }}/{{ $quiz->max_attempts }} lần tối đa.">
-                                        Không thể làm tiếp
+                                        Đã hết lượt
                                     </button>
                                 @elseif($lastAttempt)
                                     <a href="{{ route('student.quizzes.result', [$quiz->id, $lastAttempt->id]) }}" 
@@ -375,19 +375,19 @@
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200/60 text-center">
                                 <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
                                     <span class="block text-[10px] uppercase font-bold text-slate-400">Thời gian</span>
-                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block" x-text="pendingQuiz.duration + ' phút'"></span>
+                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block whitespace-nowrap" x-text="pendingQuiz.duration + ' phút'"></span>
                                 </div>
                                 <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
                                     <span class="block text-[10px] uppercase font-bold text-slate-400">Số câu</span>
-                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block" x-text="pendingQuiz.questionsCount ? (pendingQuiz.questionsCount + ' câu') : 'Theo đề'"></span>
+                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block whitespace-nowrap" x-text="pendingQuiz.questionsCount ? (pendingQuiz.questionsCount + ' câu') : 'Theo đề'"></span>
                                 </div>
                                 <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
                                     <span class="block text-[10px] uppercase font-bold text-slate-400">Điểm đạt</span>
-                                    <span class="text-sm font-extrabold text-pink-600 mt-0.5 block" x-text="pendingQuiz.passingScore ? ('≥ ' + pendingQuiz.passingScore) : '≥ 5.0'"></span>
+                                    <span class="text-sm font-extrabold text-pink-600 mt-0.5 block whitespace-nowrap" x-text="pendingQuiz.passingScore ? ('≥ ' + pendingQuiz.passingScore) : '≥ 5.0'"></span>
                                 </div>
                                 <div class="bg-white rounded-xl p-2.5 border border-slate-100/80 shadow-2xs">
                                     <span class="block text-[10px] uppercase font-bold text-slate-400">Lượt làm</span>
-                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block" x-text="pendingQuiz.maxAttempts ? (pendingQuiz.attemptsCount + '/' + pendingQuiz.maxAttempts) : 'Thoải mái'"></span>
+                                    <span class="text-sm font-extrabold text-slate-900 mt-0.5 block whitespace-nowrap" x-text="pendingQuiz.maxAttempts ? (pendingQuiz.attemptsCount + '/' + pendingQuiz.maxAttempts) : 'Thoải mái'"></span>
                                 </div>
                             </div>
                         </div>
@@ -403,17 +403,17 @@
                             <ul class="space-y-1.5 text-xs text-amber-950/90 leading-relaxed">
                                 <li class="flex items-start gap-2">
                                     <span class="text-amber-600 font-bold leading-tight">•</span>
-                                    <span>Thời gian làm bài sẽ đếm ngược <strong>ngay lập tức</strong> khi bạn xác nhận.</span>
+                                    <span>Thời gian làm bài sẽ đếm ngược <strong class="whitespace-nowrap">ngay lập tức</strong> khi bạn xác nhận.</span>
                                 </li>
                                 <template x-if="pendingQuiz.maxAttempts">
                                     <li class="flex items-start gap-2">
                                         <span class="text-amber-600 font-bold leading-tight">•</span>
-                                        <span>Đề thi giới hạn tối đa <strong x-text="pendingQuiz.maxAttempts + ' lượt làm bài'"></strong> (bạn đang chuẩn bị thực hiện lượt thứ <strong x-text="pendingQuiz.attemptsCount + 1"></strong>).</span>
+                                        <span>Đề thi giới hạn tối đa <strong class="whitespace-nowrap" x-text="pendingQuiz.maxAttempts + ' lượt làm bài'"></strong> (<span class="whitespace-nowrap">chuẩn bị làm lượt thứ <strong x-text="pendingQuiz.attemptsCount + 1"></strong></span>).</span>
                                     </li>
                                 </template>
                                 <li class="flex items-start gap-2">
                                     <span class="text-amber-600 font-bold leading-tight">•</span>
-                                    <span>Không thể hủy giữa chừng; lượt thi sẽ được <strong>ghi nhận chính thức</strong>.</span>
+                                    <span>Không thể hủy giữa chừng; lượt thi sẽ được <strong class="whitespace-nowrap">ghi nhận chính thức</strong>.</span>
                                 </li>
                                 <li class="flex items-start gap-2">
                                     <span class="text-amber-600 font-bold leading-tight">•</span>
