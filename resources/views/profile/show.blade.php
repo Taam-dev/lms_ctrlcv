@@ -46,19 +46,6 @@
                         <span>Quản lý trong Admin</span>
                     </a>
                 @endif
-                @if(!auth()->check() || auth()->id() !== $user->id)
-                    <button type="button"
-                            x-data
-                            @click="$dispatch('open-user-report-modal')"
-                            onclick="window.dispatchEvent(new CustomEvent('open-user-report-modal'))"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold text-xs shadow-2xs transition active:scale-95"
-                            title="Báo cáo người dùng vi phạm">
-                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
-                        </svg>
-                        <span>Báo cáo</span>
-                    </button>
-                @endif
                 <button onclick="window.history.back()"
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs shadow-2xs transition">
                     &larr; Quay lại
@@ -102,9 +89,6 @@
                             <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
                                 {{ $user->name }}
                             </h1>
-                            <span class="text-xs font-bold text-neutral-400 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-lg">
-                                ID: #{{ $user->id }}
-                            </span>
                             @if(!auth()->check() || auth()->id() !== $user->id)
                                 <button type="button"
                                         x-data
