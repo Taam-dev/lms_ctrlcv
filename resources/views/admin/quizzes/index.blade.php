@@ -41,7 +41,7 @@
                     </div>
 
                     <a href="{{ route('admin.quizzes.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                        + Tạo Quiz mới
+                        + Tạo bài kiểm tra (quiz)
                     </a>
                 </div>
 

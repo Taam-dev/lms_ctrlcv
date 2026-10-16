@@ -1513,22 +1513,25 @@ class QuizTest extends TestCase
     }
 
     /**
-     * Admin có thể truy cập danh sách và làm bài quiz thuộc khóa học mà không cần đăng ký khóa học
+     * Giảng viên và Admin đều không thể thấy hoặc làm bài kiểm tra của khóa học nếu chưa đăng ký,
+     * trừ khi bản thân là người tạo ra bài kiểm tra hoặc tạo ra khóa học đó.
      */
-    public function test_admin_can_access_and_take_course_quiz_without_enrollment(): void
+    public function test_admin_and_teacher_cannot_see_or_take_course_quiz_if_not_enrolled_and_not_creator(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $teacher = User::factory()->create(['role' => 'teacher']);
+        $courseCreatorTeacher = User::factory()->create(['role' => 'teacher']);
+        $quizCreatorAdmin = User::factory()->create(['role' => 'admin']);
+        $otherTeacher = User::factory()->create(['role' => 'teacher']);
 
         $course = Course::create([
-            'teacher_id' => $teacher->id,
+            'teacher_id' => $courseCreatorTeacher->id,
             'title' => 'Khóa học Node.js Nâng Cao',
             'status' => 'approved',
         ]);
 
         $quiz = Quiz::create([
             'course_id' => $course->id,
-            'teacher_id' => $teacher->id,
+            'teacher_id' => $quizCreatorAdmin->id,
             'title' => 'Quiz Event Loop & Buffer',
             'duration_minutes' => 15,
             'passing_score' => 5.0,
@@ -1543,24 +1546,61 @@ class QuizTest extends TestCase
         QuizOption::create(['quiz_question_id' => $question->id, 'option_text' => '6 phases', 'is_correct' => true, 'order_number' => 1]);
         QuizOption::create(['quiz_question_id' => $question->id, 'option_text' => '2 phases', 'is_correct' => false, 'order_number' => 2]);
 
-        // 1. Admin truy cập danh sách quizzes thấy bài kiểm tra của khóa học dù không enroll
-        $indexResponse = $this->actingAs($admin)->get(route('student.quizzes.index'));
-        $indexResponse->assertOk();
-        $indexResponse->assertSee('Quiz Event Loop & Buffer');
+        // 1. Admin khác (không tạo quiz, không tạo course, chưa enroll) KHÔNG THỂ thấy bài kiểm tra trong danh sách
+        $indexResponseAdmin = $this->actingAs($admin)->get(route('student.quizzes.index'));
+        $indexResponseAdmin->assertOk();
+        $indexResponseAdmin->assertDontSee('Quiz Event Loop & Buffer');
 
-        // 2. Admin vào trang làm bài trực tiếp mà không bị redirect bắt đăng ký
-        $takeResponse = $this->actingAs($admin)->get(route('student.quizzes.take', $quiz->id));
-        $takeResponse->assertOk();
-        $takeResponse->assertSee('Quiz Event Loop & Buffer');
+        // 2. Admin khác cố truy cập trang làm bài bị redirect về trang khóa học báo lỗi
+        $takeResponseAdmin = $this->actingAs($admin)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponseAdmin->assertRedirect(route('student.courses.show', $course->id));
+        $takeResponseAdmin->assertSessionHas('error');
 
-        // 3. Admin nộp bài thi thành công không bị 403
-        $submitResponse = $this->actingAs($admin)->post(route('student.quizzes.submit', $quiz->id), [
-            'answers' => [
-                $question->id => $question->options()->where('is_correct', true)->first()->id,
-            ],
+        // 3. Admin khác nộp bài thi bị từ chối 403
+        $submitResponseAdmin = $this->actingAs($admin)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [$question->id => $question->options()->first()->id],
+        ]);
+        $submitResponseAdmin->assertStatus(403);
+
+        // 4. Giảng viên khác (không tạo course, không tạo quiz, chưa enroll) cũng KHÔNG THỂ thấy hoặc làm bài
+        $indexResponseOtherTeacher = $this->actingAs($otherTeacher)->get(route('student.quizzes.index'));
+        $indexResponseOtherTeacher->assertOk();
+        $indexResponseOtherTeacher->assertDontSee('Quiz Event Loop & Buffer');
+
+        $takeResponseOtherTeacher = $this->actingAs($otherTeacher)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponseOtherTeacher->assertRedirect(route('student.courses.show', $course->id));
+
+        // 5. Người tạo khóa học (courseCreatorTeacher) ĐƯỢC THẤY và làm bài
+        $indexResponseCourseCreator = $this->actingAs($courseCreatorTeacher)->get(route('student.quizzes.index'));
+        $indexResponseCourseCreator->assertOk();
+        $indexResponseCourseCreator->assertSee('Quiz Event Loop & Buffer');
+
+        $takeResponseCourseCreator = $this->actingAs($courseCreatorTeacher)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponseCourseCreator->assertOk();
+
+        // 6. Người tạo bài kiểm tra (quizCreatorAdmin) ĐƯỢC THẤY và làm bài
+        $indexResponseQuizCreator = $this->actingAs($quizCreatorAdmin)->get(route('student.quizzes.index'));
+        $indexResponseQuizCreator->assertOk();
+        $indexResponseQuizCreator->assertSee('Quiz Event Loop & Buffer');
+
+        $takeResponseQuizCreator = $this->actingAs($quizCreatorAdmin)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponseQuizCreator->assertOk();
+
+        // 7. Sau khi Admin hoặc Giảng viên đăng ký khóa học (Enroll) thì được thấy và làm bài bình thường
+        Enrollment::create(['student_id' => $admin->id, 'course_id' => $course->id]);
+
+        $indexResponseEnrolledAdmin = $this->actingAs($admin)->get(route('student.quizzes.index'));
+        $indexResponseEnrolledAdmin->assertOk();
+        $indexResponseEnrolledAdmin->assertSee('Quiz Event Loop & Buffer');
+
+        $takeResponseEnrolledAdmin = $this->actingAs($admin)->get(route('student.quizzes.take', $quiz->id));
+        $takeResponseEnrolledAdmin->assertOk();
+
+        $submitResponseEnrolledAdmin = $this->actingAs($admin)->post(route('student.quizzes.submit', $quiz->id), [
+            'answers' => [$question->id => $question->options()->where('is_correct', true)->first()->id],
             'question_ids' => [$question->id],
         ]);
-        $submitResponse->assertRedirect();
+        $submitResponseEnrolledAdmin->assertRedirect();
     }
 
     /**
@@ -1635,6 +1675,8 @@ class QuizTest extends TestCase
             'title' => 'Khóa Học Lập Trình Python',
             'status' => 'approved',
         ]);
+
+        Enrollment::create(['student_id' => $takingTeacher->id, 'course_id' => $course->id]);
 
         $quiz = Quiz::create([
             'course_id' => $course->id,

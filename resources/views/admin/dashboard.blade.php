@@ -102,7 +102,7 @@
                     @endif
                     @if(in_array($currentTab, ['overview', 'quizzes']))
                         <a href="{{ route('admin.quizzes.create') }}" class="px-4 py-2 rounded-xl text-xs font-bold bg-pink-600 hover:bg-pink-700 text-white shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                            + Tạo Quiz mới
+                            + Tạo bài kiểm tra (quiz)
                         </a>
                     @endif
                 </div>

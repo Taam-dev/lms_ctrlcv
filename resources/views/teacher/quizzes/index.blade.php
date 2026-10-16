@@ -14,7 +14,7 @@
                 <!-- Hàng trên: Nút tạo mới -->
                 <div class="flex items-center gap-2 sm:gap-3 flex-nowrap shrink-0">
                     <a href="{{ route('teacher.quizzes.create') }}" class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                        + Tạo bài kiểm tra
+                        + Tạo bài kiểm tra (quiz)
                     </a>
                 </div>
 
@@ -57,7 +57,7 @@
                         <h3 class="text-lg font-bold text-slate-900 mb-1">Chưa có bài kiểm tra nào</h3>
                         <p class="text-slate-500 text-sm mb-5">Bạn chưa tạo bài kiểm tra trắc nghiệm nào cho các khóa học của mình.</p>
                         <a href="{{ route('teacher.quizzes.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold shadow-xs transition">
-                            + Tạo bài kiểm tra đầu tiên
+                            + Tạo bài kiểm tra (quiz) đầu tiên
                         </a>
                     </div>
                 @else

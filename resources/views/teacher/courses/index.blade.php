@@ -112,7 +112,7 @@
                                                     + Bài giảng
                                                 </a>
                                                 <a href="{{ route('instructor.quizzes.create') }}" class="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg border border-pink-200 text-pink-700 hover:bg-pink-50 text-xs font-bold transition whitespace-nowrap shrink-0">
-                                                    + Tạo Quiz
+                                                    + Tạo bài kiểm tra (quiz)
                                                 </a>
                                                 <a href="{{ route('instructor.courses.edit', $course->id) }}" class="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:text-pink-600 hover:bg-slate-100 transition shrink-0" title="Chỉnh sửa khóa học">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

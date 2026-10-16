@@ -77,7 +77,7 @@
                     @if(in_array($currentTab, ['quizzes', 'overview', '']))
                         <a href="{{ route('instructor.quizzes.create') }}" 
                            class="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                            + Tạo bài kiểm tra
+                            + Tạo bài kiểm tra (quiz)
                         </a>
                     @endif
                 </div>
@@ -533,7 +533,7 @@
                                     </a>
                                 @else
                                     <a href="{{ route('instructor.quizzes.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs shadow-xs hover:bg-pink-700 transition whitespace-nowrap shrink-0">
-                                        + Tạo bài kiểm tra đầu tiên
+                                        + Tạo bài kiểm tra (quiz) đầu tiên
                                     </a>
                                 @endif
                             </div>

@@ -1,4 +1,4 @@
-<x-admin-layout breadcrumb="Tạo Quiz mới">
+<x-admin-layout breadcrumb="Tạo bài kiểm tra (quiz)">
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>

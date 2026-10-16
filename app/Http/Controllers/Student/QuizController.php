@@ -24,18 +24,21 @@ class QuizController extends Controller
         // Lấy danh sách ID các khóa học học viên đã đăng ký
         $enrolledCourseIds = Enrollment::where('student_id', $studentId)->pluck('course_id');
 
-        // Các bài quiz đã duyệt: thuộc khóa học học viên đã đăng ký HOẶC bài quiz tự do (course_id IS NULL)
-        // Riêng Quản trị viên (Admin) có quyền xem toàn bộ bài kiểm tra đã duyệt trong hệ thống
+        // Các bài quiz đã duyệt:
+        // Cả học viên, giảng viên và admin đều không thể thấy bài kiểm tra của khóa học nếu chưa đăng ký,
+        // trừ khi bản thân là người tạo ra bài kiểm tra (teacher_id) hoặc tạo ra khóa học đó (course.teacher_id).
         $query = Quiz::with(['course.teacher', 'teacher'])
             ->withCount('questions')
             ->where('status', 'approved');
 
-        if (! auth()->user()->isAdmin() && ! auth()->user()->isTeacher()) {
-            $query->where(function ($query) use ($enrolledCourseIds) {
-                $query->whereIn('course_id', $enrolledCourseIds)
-                    ->orWhereNull('course_id');
-            });
-        }
+        $query->where(function ($q) use ($enrolledCourseIds, $studentId) {
+            $q->whereNull('course_id')
+                ->orWhereIn('course_id', $enrolledCourseIds)
+                ->orWhere('teacher_id', $studentId)
+                ->orWhereHas('course', function ($cq) use ($studentId) {
+                    $cq->where('teacher_id', $studentId);
+                });
+        });
 
         // Lọc chính xác bài kiểm tra theo ID nếu được chuyển hướng từ thông báo (tránh trùng tên bài giữa các khóa)
         if (! empty($quizId) && is_numeric($quizId)) {
@@ -103,15 +106,22 @@ class QuizController extends Controller
                 ->with('error', 'Bài kiểm tra này đã quá hạn làm bài (Hạn chót: '.$quiz->ends_at->format('d/m/Y H:i').'). Bạn không thể vào làm được nữa.');
         }
 
-        // Kiểm tra bảo mật: Nếu gắn với khóa học thì học viên phải đăng ký khóa học (Giảng viên & Admin được quyền làm bài trực tiếp)
-        if ($quiz->course_id && ! auth()->user()->isAdmin() && ! auth()->user()->isTeacher()) {
-            $isEnrolled = Enrollment::where('student_id', auth()->id())
-                ->where('course_id', $quiz->course_id)
-                ->exists();
+        // Kiểm tra bảo mật: Nếu gắn với khóa học thì người dùng (học viên, giảng viên, admin)
+        // đều không thể làm bài nếu chưa đăng ký khóa học, trừ khi chính là người tạo ra bài kiểm tra hoặc tạo ra khóa học đó
+        if ($quiz->course_id) {
+            $userId = auth()->id();
+            $isCreator = ($quiz->teacher_id === $userId)
+                || ($quiz->course && $quiz->course->teacher_id === $userId);
 
-            if (! $isEnrolled) {
-                return redirect()->route('student.courses.show', $quiz->course_id)
-                    ->with('error', 'Bạn cần đăng ký khóa học để có thể tham gia làm bài kiểm tra trắc nghiệm này!');
+            if (! $isCreator) {
+                $isEnrolled = Enrollment::where('student_id', $userId)
+                    ->where('course_id', $quiz->course_id)
+                    ->exists();
+
+                if (! $isEnrolled) {
+                    return redirect()->route('student.courses.show', $quiz->course_id)
+                        ->with('error', 'Bạn cần đăng ký khóa học để có thể tham gia làm bài kiểm tra trắc nghiệm này!');
+                }
             }
         }
 
@@ -164,14 +174,21 @@ class QuizController extends Controller
             abort(403, 'Bài kiểm tra này đã quá hạn nộp bài.');
         }
 
-        // Kiểm tra điều kiện đăng ký nếu quiz thuộc về khóa học (Giảng viên & Admin có quyền làm bài)
-        if ($quiz->course_id && ! auth()->user()->isAdmin() && ! auth()->user()->isTeacher()) {
-            $isEnrolled = Enrollment::where('student_id', auth()->id())
-                ->where('course_id', $quiz->course_id)
-                ->exists();
+        // Kiểm tra điều kiện đăng ký nếu quiz thuộc về khóa học:
+        // Cả giảng viên, admin đều phải đăng ký khóa học trừ khi là người tạo ra bài kiểm tra hoặc khóa học đó
+        if ($quiz->course_id) {
+            $userId = auth()->id();
+            $isCreator = ($quiz->teacher_id === $userId)
+                || ($quiz->course && $quiz->course->teacher_id === $userId);
 
-            if (! $isEnrolled) {
-                abort(403, 'Bạn cần đăng ký khóa học để có thể thực hiện bài kiểm tra này.');
+            if (! $isCreator) {
+                $isEnrolled = Enrollment::where('student_id', $userId)
+                    ->where('course_id', $quiz->course_id)
+                    ->exists();
+
+                if (! $isEnrolled) {
+                    abort(403, 'Bạn cần đăng ký khóa học để có thể thực hiện bài kiểm tra này.');
+                }
             }
         }
 

@@ -414,7 +414,12 @@
                     }
                 }">
                     @php
-                        $canAccessQuizzes = (bool) $isEnrolled || (auth()->check() && (auth()->id() === $course->teacher_id));
+                        $userId = auth()->id();
+                        $isCourseOrQuizCreator = auth()->check() && (
+                            $userId === $course->teacher_id ||
+                            $course->approvedQuizzes->contains('teacher_id', $userId)
+                        );
+                        $canAccessQuizzes = (bool) $isEnrolled || $isCourseOrQuizCreator;
                     @endphp
 
                     <div class="flex items-center justify-between">
@@ -1069,7 +1074,9 @@
                     @else
                         <div class="space-y-4">
                             @foreach($reviews as $review)
-                                <div class="bg-white rounded-3xl p-6 border border-pink-100/80 shadow-2xs hover:shadow-xs transition space-y-3">
+                                <div id="review-{{ $review->id }}"
+                                     data-review-id="{{ $review->id }}"
+                                     class="review-item scroll-mt-28 bg-white rounded-3xl p-6 border border-pink-100/80 shadow-2xs hover:shadow-xs transition-all duration-500 space-y-3">
                                     <div class="flex items-start justify-between gap-4">
                                         
                                         <!-- Người đánh giá -->
@@ -1328,4 +1335,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Script tự động cuộn tới bình luận/đánh giá và làm nổi bật khi mở từ thông báo -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function handleReviewHighlight() {
+                const hash = window.location.hash;
+                const params = new URLSearchParams(window.location.search);
+                let reviewId = null;
+
+                if (hash && hash.startsWith('#review-')) {
+                    reviewId = hash.replace('#review-', '');
+                } else if (params.has('review_id')) {
+                    reviewId = params.get('review_id');
+                }
+
+                if (!reviewId) return;
+
+                const targetElement = document.getElementById('review-' + reviewId);
+                if (targetElement) {
+                    setTimeout(() => {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // Áp dụng hiệu ứng làm nổi bật (glowing highlight) bắt mắt
+                        targetElement.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                        targetElement.style.boxShadow = '0 20px 25px -5px rgba(244, 63, 94, 0.25), 0 8px 10px -6px rgba(244, 63, 94, 0.15)';
+                        targetElement.style.borderColor = '#f43f5e';
+                        targetElement.style.backgroundColor = '#fff1f2';
+                        targetElement.style.outline = '3px solid rgba(244, 63, 94, 0.45)';
+                        targetElement.style.outlineOffset = '2px';
+
+                        // Tự động mờ dần và hoàn trả giao diện ban đầu sau 3.5 giây
+                        setTimeout(() => {
+                            targetElement.style.boxShadow = '';
+                            targetElement.style.borderColor = '';
+                            targetElement.style.backgroundColor = '';
+                            targetElement.style.outline = '';
+                            targetElement.style.outlineOffset = '';
+                        }, 3500);
+                    }, 250);
+                }
+            }
+
+            handleReviewHighlight();
+            window.addEventListener('hashchange', handleReviewHighlight);
+        });
+    </script>
 </x-app-layout>

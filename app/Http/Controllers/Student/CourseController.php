@@ -666,7 +666,7 @@ class CourseController extends Controller
             'comment.max' => 'Nội dung bình luận không được vượt quá 2000 ký tự.',
         ]);
 
-        CourseReview::updateOrCreate(
+        $review = CourseReview::updateOrCreate(
             [
                 'course_id' => $course->id,
                 'user_id' => $userId,
@@ -682,11 +682,16 @@ class CourseController extends Controller
             $reviewerName = auth()->user()->name;
             $starText = "{$validated['rating']}/5 sao";
             $commentSnippet = ! empty($validated['comment']) ? ': "'.Str::limit($validated['comment'], 80).'"' : '.';
+            $targetUrl = route('courses.show', [
+                'slug' => $course->slug ?: $course->id,
+                'review_id' => $review->id,
+            ]).'#review-'.$review->id;
+
             Notification::send(
                 $course->teacher_id,
                 'Đánh giá mới cho khóa học',
                 "Học viên {$reviewerName} đã đánh giá {$starText} cho khóa học \"{$course->title}\"{$commentSnippet}",
-                route('courses.show', $course->slug ?? $course->id),
+                $targetUrl,
                 'course_reviewed'
             );
         }

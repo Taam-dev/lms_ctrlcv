@@ -287,6 +287,7 @@ class QuizController extends Controller
             ])->withInput();
         }
 
+        $oldStatus = $quiz->status;
         $quiz->update([
             'course_id' => $courseId,
             'type' => $type,
@@ -302,6 +303,21 @@ class QuizController extends Controller
             'starts_at' => $request->filled('starts_at') ? $request->starts_at : null,
             'ends_at' => $request->filled('ends_at') ? $request->ends_at : null,
         ]);
+
+        if ($oldStatus !== 'rejected' && $request->status === 'rejected' && $quiz->teacher_id && $quiz->teacher_id !== auth()->id()) {
+            $quiz->loadMissing('teacher');
+            $targetUrl = ($quiz->teacher && $quiz->teacher->isAdmin())
+                ? route('admin.quizzes.edit', $quiz->id)
+                : route('instructor.quizzes.questions', $quiz->id);
+
+            Notification::send(
+                $quiz->teacher_id,
+                'Bài kiểm tra bị từ chối phê duyệt',
+                "Bài kiểm tra \"{$quiz->title}\" của bạn đã bị quản trị viên từ chối phê duyệt. Vui lòng kiểm tra lại bộ câu hỏi và cấu hình bài thi.",
+                $targetUrl,
+                'quiz_rejected'
+            );
+        }
 
         return redirect()->route('admin.quizzes.index')
             ->with('success', 'Đã cập nhật bài kiểm tra thành công!');
@@ -502,8 +518,22 @@ class QuizController extends Controller
      */
     public function reject($id)
     {
-        $quiz = Quiz::findOrFail($id);
+        $quiz = Quiz::with('teacher')->findOrFail($id);
         $quiz->update(['status' => 'rejected']);
+
+        if ($quiz->teacher_id && $quiz->teacher_id !== auth()->id()) {
+            $targetUrl = ($quiz->teacher && $quiz->teacher->isAdmin())
+                ? route('admin.quizzes.edit', $quiz->id)
+                : route('instructor.quizzes.questions', $quiz->id);
+
+            Notification::send(
+                $quiz->teacher_id,
+                'Bài kiểm tra bị từ chối phê duyệt',
+                "Bài kiểm tra \"{$quiz->title}\" của bạn đã bị quản trị viên từ chối phê duyệt. Vui lòng kiểm tra lại bộ câu hỏi và cấu hình bài thi.",
+                $targetUrl,
+                'quiz_rejected'
+            );
+        }
 
         return back()->with('success', 'Đã từ chối bài kiểm tra!');
     }
@@ -513,8 +543,22 @@ class QuizController extends Controller
      */
     public function remove($id)
     {
-        $quiz = Quiz::findOrFail($id);
+        $quiz = Quiz::with('teacher')->findOrFail($id);
         $quiz->update(['status' => 'rejected']);
+
+        if ($quiz->teacher_id && $quiz->teacher_id !== auth()->id()) {
+            $targetUrl = ($quiz->teacher && $quiz->teacher->isAdmin())
+                ? route('admin.quizzes.edit', $quiz->id)
+                : route('instructor.quizzes.questions', $quiz->id);
+
+            Notification::send(
+                $quiz->teacher_id,
+                'Bài kiểm tra bị từ chối / gỡ bỏ',
+                "Bài kiểm tra \"{$quiz->title}\" của bạn đã bị quản trị viên gỡ bỏ khỏi hệ thống.",
+                $targetUrl,
+                'quiz_rejected'
+            );
+        }
 
         return back()->with('success', 'Đã loại bỏ bài kiểm tra khỏi danh sách hiển thị!');
     }

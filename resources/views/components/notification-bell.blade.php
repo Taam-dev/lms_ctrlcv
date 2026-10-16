@@ -9,22 +9,30 @@
 <div x-data="{ 
     open: false, 
     unreadCount: {{ (int) $unreadCount }},
+    toggleBell() {
+        this.open = !this.open;
+        if (this.unreadCount > 0) {
+            this.markAllRead();
+        }
+    },
     markAllRead() {
         if (this.unreadCount <= 0) return;
+        this.unreadCount = 0;
+        this.clearUnreadUI();
         fetch('{{ route('notifications.markAllRead') }}', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             }
-        }).then(() => {
-            this.unreadCount = 0;
-            $el.querySelectorAll('.notif-unread-item').forEach(el => {
-                el.classList.remove('bg-pink-50/50', 'notif-unread-item');
-                el.classList.add('bg-white');
-            });
-            $el.querySelectorAll('.notif-dot').forEach(el => el.remove());
         }).catch(err => console.error(err));
+    },
+    clearUnreadUI() {
+        $el.querySelectorAll('.notif-unread-item').forEach(el => {
+            el.classList.remove('bg-pink-50/50', 'bg-pink-50/40', 'notif-unread-item');
+            el.classList.add('bg-white');
+        });
+        $el.querySelectorAll('.notif-dot').forEach(el => el.remove());
     },
     deleteNotification(id, event) {
         if (event) {
@@ -56,7 +64,7 @@
 
     <!-- Nút Chuông Thông Báo (Trắng đen tối giản, tinh tế) -->
     <button type="button" 
-            @click="open = !open" 
+            @click="toggleBell()" 
             class="relative inline-flex items-center justify-center w-10 h-10 transition duration-150 focus:outline-none cursor-pointer {{ $dark ? 'border border-white/15 hover:border-pink-500 text-neutral-300 hover:text-white bg-transparent' : 'border border-slate-200 hover:border-pink-500 text-slate-700 hover:text-slate-900 bg-white' }}"
             title="Thông báo"
             aria-label="Thông báo">
@@ -133,6 +141,10 @@
                             @elseif($notification->type === 'course_reviewed')
                                 <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            @elseif($notification->type === 'course_rejected' || $notification->type === 'quiz_rejected')
+                                <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             @elseif($notification->type === 'user_reported')
                                 <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

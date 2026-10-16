@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Notification;
 use App\Models\Quiz;
 use Illuminate\Http\JsonResponse;
@@ -16,9 +18,14 @@ class NotificationController extends Controller
      */
     public function index(Request $request): View
     {
-        $notifications = Notification::where('user_id', auth()->id())
+        $userId = auth()->id();
+        $notifications = Notification::where('user_id', $userId)
             ->latest()
             ->paginate(15);
+
+        Notification::where('user_id', $userId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
 
         return view('notifications.index', compact('notifications'));
     }
@@ -100,6 +107,35 @@ class NotificationController extends Controller
                             'search' => $quiz->title,
                             'quiz_id' => $quiz->id,
                         ]);
+                    }
+                }
+            }
+        }
+
+        // Nếu là thông báo đánh giá / bình luận khóa học, đảm bảo chuyển hướng kèm review_id và anchor #review-
+        if ($notification->type === 'course_reviewed') {
+            $url = $notification->target_url;
+            if (! str_contains($url, '#review-') && ! str_contains($url, 'review_id=')) {
+                if (preg_match('~/(?:khoa-hoc|courses)/([^/?#]+)~', $url, $m)) {
+                    $slugOrId = $m[1];
+                    $course = Course::where('slug', $slugOrId)->orWhere('id', $slugOrId)->first();
+                    if ($course) {
+                        $review = null;
+                        if (preg_match('/Học viên\s+(.*?)\s+đã đánh giá/u', $notification->message, $nm)) {
+                            $userName = trim($nm[1]);
+                            $review = CourseReview::where('course_id', $course->id)
+                                ->whereHas('user', fn ($q) => $q->where('name', $userName))
+                                ->latest()
+                                ->first();
+                        }
+                        if (! $review) {
+                            $review = CourseReview::where('course_id', $course->id)->latest()->first();
+                        }
+                        if ($review) {
+                            $separator = str_contains($url, '?') ? '&' : '?';
+
+                            return redirect()->to($url.$separator.'review_id='.$review->id.'#review-'.$review->id);
+                        }
                     }
                 }
             }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Notification;
 use App\Models\Quiz;
@@ -140,6 +141,71 @@ class NotificationTest extends TestCase
     }
 
     /**
+     * Giảng viên nhận thông báo khi khóa học bị admin từ chối phê duyệt
+     */
+    public function test_teacher_receives_notification_when_course_is_rejected_by_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Flutter Mobile',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.courses.reject', $course->id));
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $teacher->id,
+            'type' => 'course_rejected',
+            'title' => 'Khóa học bị từ chối phê duyệt',
+        ]);
+
+        $notification = Notification::where('user_id', $teacher->id)->where('type', 'course_rejected')->first();
+        $this->assertStringContainsString('Flutter Mobile', $notification->message);
+        $this->assertStringContainsString('từ chối', $notification->message);
+    }
+
+    /**
+     * Giảng viên nhận thông báo khi bài kiểm tra bị admin từ chối phê duyệt
+     */
+    public function test_teacher_receives_notification_when_quiz_is_rejected_by_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Rust Căn Bản',
+            'status' => 'approved',
+        ]);
+
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'title' => 'Quiz Rust Ownership & Borrowing',
+            'duration_minutes' => 20,
+            'passing_score' => 6.0,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.quizzes.reject', $quiz->id));
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $teacher->id,
+            'type' => 'quiz_rejected',
+            'title' => 'Bài kiểm tra bị từ chối phê duyệt',
+        ]);
+
+        $notification = Notification::where('user_id', $teacher->id)->where('type', 'quiz_rejected')->first();
+        $this->assertStringContainsString('Quiz Rust Ownership & Borrowing', $notification->message);
+        $this->assertStringContainsString('từ chối', $notification->message);
+    }
+
+    /**
      * Giảng viên nhận thông báo khi có học viên đánh giá/bình luận khóa học
      */
     public function test_course_owner_receives_notification_when_student_reviews_course(): void
@@ -169,6 +235,81 @@ class NotificationTest extends TestCase
         $notification = Notification::where('user_id', $teacher->id)->first();
         $this->assertStringContainsString('Nguyễn Văn A', $notification->message);
         $this->assertStringContainsString('5/5 sao', $notification->message);
+        $this->assertStringContainsString('#review-', $notification->target_url);
+        $this->assertStringContainsString('review_id=', $notification->target_url);
+    }
+
+    /**
+     * Giảng viên bấm vào thông báo đánh giá khóa học sẽ chuyển hướng tới đúng bình luận với anchor #review-{id}
+     */
+    public function test_clicking_course_reviewed_notification_redirects_to_review_anchor(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student', 'name' => 'Lê Văn B']);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Laravel Master',
+            'slug' => 'khoa-hoc-laravel-master',
+            'status' => 'approved',
+        ]);
+
+        Enrollment::create(['student_id' => $student->id, 'course_id' => $course->id, 'status' => 'active']);
+
+        $this->actingAs($student)->post(route('student.courses.reviews.store', $course->id), [
+            'rating' => 5,
+            'comment' => 'Khóa học tuyệt vời!',
+        ]);
+
+        $notification = Notification::where('user_id', $teacher->id)->first();
+        $this->assertNotNull($notification);
+
+        // Click thông báo qua endpoint notifications.go
+        $response = $this->actingAs($teacher)->get(route('notifications.go', $notification->id));
+        $response->assertRedirect();
+        $this->assertStringContainsString('#review-', $response->headers->get('Location'));
+        $this->assertStringContainsString('review_id=', $response->headers->get('Location'));
+        $this->assertTrue($notification->fresh()->isRead());
+    }
+
+    /**
+     * Thông báo cũ chưa có hash anchor vẫn được tự động bổ sung #review-{id} khi click
+     */
+    public function test_legacy_course_reviewed_notification_appends_review_anchor(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = User::factory()->create(['role' => 'student', 'name' => 'Trần Văn C']);
+
+        $course = Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khóa học Tailwind CSS',
+            'slug' => 'khoa-hoc-tailwind-css',
+            'status' => 'approved',
+        ]);
+
+        $review = CourseReview::create([
+            'course_id' => $course->id,
+            'user_id' => $student->id,
+            'rating' => 5,
+            'comment' => 'Rất đáng tiền!',
+        ]);
+
+        // Giả lập thông báo cũ chỉ có link đến khóa học thuần túy
+        $legacyNotification = Notification::create([
+            'user_id' => $teacher->id,
+            'type' => 'course_reviewed',
+            'title' => 'Đánh giá mới cho khóa học',
+            'message' => 'Học viên Trần Văn C đã đánh giá 5/5 sao cho khóa học "Khóa học Tailwind CSS": "Rất đáng tiền!"',
+            'target_url' => route('courses.show', $course->slug),
+            'read_at' => null,
+        ]);
+
+        $response = $this->actingAs($teacher)->get(route('notifications.go', $legacyNotification->id));
+        $response->assertRedirect();
+        $location = $response->headers->get('Location');
+        $this->assertStringContainsString('#review-'.$review->id, $location);
+        $this->assertStringContainsString('review_id='.$review->id, $location);
+        $this->assertTrue($legacyNotification->fresh()->isRead());
     }
 
     /**
@@ -254,6 +395,30 @@ class NotificationTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('notifications.markAllRead'));
         $response->assertRedirect();
+
+        $this->assertEquals(0, $user->unreadNotificationsCount());
+    }
+
+    /**
+     * Truy cập hộp thư thông báo sẽ tự động đánh dấu tất cả là đã đọc
+     */
+    public function test_viewing_notifications_index_automatically_marks_notifications_as_read(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'quiz_created',
+            'title' => 'Thông báo kiểm tra',
+            'message' => 'Nội dung kiểm tra',
+            'target_url' => '/target',
+            'read_at' => null,
+        ]);
+
+        $this->assertEquals(1, $user->unreadNotificationsCount());
+
+        $response = $this->actingAs($user)->get(route('notifications.index'));
+        $response->assertOk();
 
         $this->assertEquals(0, $user->unreadNotificationsCount());
     }

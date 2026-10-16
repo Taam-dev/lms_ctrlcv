@@ -40,22 +40,12 @@
 
     $navGroups = [
         [
-            'title' => 'Tổng quan',
-            'items' => [
-                [
-                    'label' => 'Bảng điều khiển',
-                    'href' => route($routeBase . '.dashboard'),
-                    'active' => $onDashboard && empty($tab),
-                ],
-            ],
-        ],
-        [
             'title' => 'Nội dung giảng dạy',
             'items' => [
                 [
                     'label' => 'Khóa học / Bài học',
                     'href' => ($pendingCoursesCount ?? 0) > 0 ? route($routeBase . '.dashboard', ['tab' => 'courses', 'status' => 'pending']) : route($routeBase . '.dashboard', ['tab' => 'courses']),
-                    'active' => ($onDashboard && in_array($tab, ['courses', 'lessons'])) || request()->routeIs($routeBase . '.courses.*') || request()->routeIs($routeBase . '.lessons.*'),
+                    'active' => ($onDashboard && (empty($tab) || in_array($tab, ['courses', 'lessons']))) || request()->routeIs($routeBase . '.courses.*') || request()->routeIs($routeBase . '.lessons.*'),
                     'badge' => ($pendingCoursesCount ?? 0) > 0 ? ($pendingCoursesCount . ' chờ duyệt') : ($totalCoursesCount ?? null),
                     'badgeWarn' => ($pendingCoursesCount ?? 0) > 0,
                 ],
@@ -77,7 +67,7 @@
             'title' => 'Tạo mới',
             'items' => [
                 ['label' => 'Tạo khóa học mới', 'href' => route($routeBase . '.courses.create'), 'active' => request()->routeIs($routeBase . '.courses.create')],
-                ['label' => 'Tạo bài kiểm tra', 'href' => route($routeBase . '.quizzes.create'), 'active' => request()->routeIs($routeBase . '.quizzes.create')],
+                ['label' => 'Tạo bài kiểm tra (quiz)', 'href' => route($routeBase . '.quizzes.create'), 'active' => request()->routeIs($routeBase . '.quizzes.create')],
             ],
         ],
         [

@@ -227,6 +227,7 @@ class CourseController extends Controller
             $thumbnail = $request->thumbnail_preset;
         }
 
+        $oldStatus = $course->status;
         $course->update([
             'title' => $request->title,
             'description' => $request->description,
@@ -235,6 +236,21 @@ class CourseController extends Controller
             'teacher_id' => $request->teacher_id ?: $course->teacher_id,
             'status' => $request->status,
         ]);
+
+        if ($oldStatus !== 'rejected' && $request->status === 'rejected' && $course->teacher_id && $course->teacher_id !== auth()->id()) {
+            $course->loadMissing('teacher');
+            $targetUrl = ($course->teacher && $course->teacher->isAdmin())
+                ? route('admin.courses.edit', $course->id)
+                : route('instructor.courses.edit', $course->id);
+
+            Notification::send(
+                $course->teacher_id,
+                'Khóa học bị từ chối phê duyệt',
+                "Khóa học \"{$course->title}\" của bạn đã bị quản trị viên từ chối phê duyệt. Vui lòng kiểm tra và cập nhật lại nội dung.",
+                $targetUrl,
+                'course_rejected'
+            );
+        }
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Đã cập nhật thông tin khóa học thành công!');
@@ -338,8 +354,22 @@ class CourseController extends Controller
      */
     public function reject($id)
     {
-        $course = Course::findOrFail($id);
+        $course = Course::with('teacher')->findOrFail($id);
         $course->update(['status' => 'rejected']);
+
+        if ($course->teacher_id && $course->teacher_id !== auth()->id()) {
+            $targetUrl = ($course->teacher && $course->teacher->isAdmin())
+                ? route('admin.courses.edit', $course->id)
+                : route('instructor.courses.edit', $course->id);
+
+            Notification::send(
+                $course->teacher_id,
+                'Khóa học bị từ chối phê duyệt',
+                "Khóa học \"{$course->title}\" của bạn đã bị quản trị viên từ chối phê duyệt. Vui lòng kiểm tra và cập nhật lại nội dung.",
+                $targetUrl,
+                'course_rejected'
+            );
+        }
 
         return back()->with('success', 'Đã từ chối khóa học!');
     }
@@ -349,8 +379,22 @@ class CourseController extends Controller
      */
     public function remove($id)
     {
-        $course = Course::findOrFail($id);
+        $course = Course::with('teacher')->findOrFail($id);
         $course->update(['status' => 'rejected']);
+
+        if ($course->teacher_id && $course->teacher_id !== auth()->id()) {
+            $targetUrl = ($course->teacher && $course->teacher->isAdmin())
+                ? route('admin.courses.edit', $course->id)
+                : route('instructor.courses.edit', $course->id);
+
+            Notification::send(
+                $course->teacher_id,
+                'Khóa học bị từ chối / gỡ bỏ',
+                "Khóa học \"{$course->title}\" của bạn đã bị quản trị viên gỡ bỏ khỏi hệ thống.",
+                $targetUrl,
+                'course_rejected'
+            );
+        }
 
         return back()->with('success', 'Đã loại bỏ khóa học khỏi danh sách hiển thị!');
     }
