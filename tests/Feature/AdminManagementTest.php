@@ -536,7 +536,7 @@ class AdminManagementTest extends TestCase
             'status' => 'approved',
         ]);
 
-        QuizAttempt::create([
+        $attempt = QuizAttempt::create([
             'quiz_id' => $quiz->id,
             'student_id' => $student->id,
             'score' => 9.0,
@@ -551,6 +551,46 @@ class AdminManagementTest extends TestCase
         $response->assertSee('Quiz Admin Toan Cao Cap');
         $response->assertSee('9.0');
         $response->assertSee('ĐẠT');
+        $response->assertSee(route('admin.attempts.destroy', $attempt->id));
+    }
+
+    /**
+     * admin co the xoa ket qua hoc vien truc tiep tu dashboard va hoc vien khong co quyen xoa
+     */
+    public function test_admin_can_delete_student_attempt_from_dashboard(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['name' => 'Nguyen Van A', 'role' => 'student']);
+        $quiz = Quiz::create([
+            'teacher_id' => $admin->id,
+            'title' => 'Quiz Kiem Tra Xoa',
+            'type' => 'quiz',
+            'duration_minutes' => 15,
+            'passing_score' => 5.0,
+            'status' => 'approved',
+        ]);
+
+        $attempt = QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'student_id' => $student->id,
+            'score' => 7.0,
+            'correct_answers' => 7,
+            'total_questions' => 10,
+            'is_passed' => true,
+        ]);
+
+        $this->assertDatabaseHas('quiz_attempts', ['id' => $attempt->id]);
+
+        // Hoc vien khong co quyen xoa
+        $studentRes = $this->actingAs($student)->delete(route('admin.attempts.destroy', $attempt->id));
+        $studentRes->assertForbidden();
+
+        // Admin xoa thanh cong
+        $adminRes = $this->actingAs($admin)->delete(route('admin.attempts.destroy', $attempt->id));
+        $adminRes->assertRedirect();
+        $adminRes->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('quiz_attempts', ['id' => $attempt->id]);
     }
 
     /**

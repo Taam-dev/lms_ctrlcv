@@ -143,6 +143,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('users/{user}', [AdminDashboardController::class, 'destroyUser'])->name('users.destroy');
     Route::post('reports/{report}/action', [AdminDashboardController::class, 'updateReportStatus'])->name('reports.action');
     Route::delete('reports/{report}', [AdminDashboardController::class, 'destroyReport'])->name('reports.destroy');
+    Route::delete('attempts/{attempt}', [AdminDashboardController::class, 'destroyAttempt'])->name('attempts.destroy');
 
     // duyệt và quản lý khóa học bài giảng
     Route::resource('courses', AdminCourseController::class)->except(['show']);

@@ -164,6 +164,27 @@ class CourseController extends Controller
         $search = trim((string) $request->query('search', ''));
         $price = $request->query('price', 'all');
         $sort = $request->query('sort', 'latest');
+        $enrollment = $request->query('enrollment', 'all');
+        $minPrice = $request->query('min_price');
+        $maxPrice = $request->query('max_price');
+        $customPrice = $request->query('custom_price');
+
+        $cleanPrice = function ($val) {
+            if ($val === null || $val === '') {
+                return null;
+            }
+            $num = preg_replace('/[^0-9]/', '', (string) $val);
+
+            return $num !== '' ? (int) $num : null;
+        };
+
+        $min = $cleanPrice($minPrice);
+        $max = $cleanPrice($maxPrice);
+        $custom = $cleanPrice($customPrice);
+
+        if (($min !== null || $max !== null || $custom !== null) && $price === 'all') {
+            $price = 'custom';
+        }
 
         $query = Course::where('status', 'approved')
             ->with('teacher')
@@ -192,6 +213,29 @@ class CourseController extends Controller
             $query->where('price', '>=', 200000)->where('price', '<=', 500000);
         } elseif ($price === 'over_500k') {
             $query->where('price', '>', 500000);
+        } elseif ($price === 'custom' || $min !== null || $max !== null || $custom !== null) {
+            if ($min !== null && $max !== null) {
+                $query->whereBetween('price', [min($min, $max), max($min, $max)]);
+            } elseif ($min !== null) {
+                $query->where('price', '>=', $min);
+            } elseif ($max !== null) {
+                $query->where('price', '<=', $max);
+            } elseif ($custom !== null) {
+                $query->where('price', '<=', $custom);
+            }
+        }
+
+        if (auth()->check() && $enrollment !== 'all') {
+            $userId = auth()->id();
+            if ($enrollment === 'enrolled') {
+                $query->whereHas('enrollments', function ($e) use ($userId) {
+                    $e->where('student_id', $userId);
+                });
+            } elseif ($enrollment === 'not_enrolled') {
+                $query->whereDoesntHave('enrollments', function ($e) use ($userId) {
+                    $e->where('student_id', $userId);
+                });
+            }
         }
 
         if ($sort === 'popular') {
@@ -210,7 +254,7 @@ class CourseController extends Controller
 
         $this->attachStudentProgress($courses);
 
-        return view('student.courses.index', compact('courses', 'search', 'price', 'sort'));
+        return view('student.courses.index', compact('courses', 'search', 'price', 'sort', 'enrollment', 'minPrice', 'maxPrice', 'customPrice'));
     }
 
     /**

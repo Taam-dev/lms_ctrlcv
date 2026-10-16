@@ -20,9 +20,18 @@ class CourseReviewSeeder extends Seeder
             return;
         }
 
-        $students = User::where('role', 'student')->get();
+        $students = User::where('email', 'like', 'reviewer_%@example.com')->get();
         if ($students->isEmpty()) {
-            $students = User::factory(3)->create(['role' => 'student']);
+            $students = collect([
+                User::firstOrCreate(
+                    ['email' => 'reviewer_1@example.com'],
+                    ['name' => 'Nguyễn Văn Review', 'password' => bcrypt('password'), 'role' => 'student']
+                ),
+                User::firstOrCreate(
+                    ['email' => 'reviewer_2@example.com'],
+                    ['name' => 'Trần Thị Review', 'password' => bcrypt('password'), 'role' => 'student']
+                ),
+            ]);
         }
 
         $sampleComments = [

@@ -1152,9 +1152,25 @@
                                             {{ $attempt->completed_at ? $attempt->completed_at->format('d/m/Y H:i') : $attempt->created_at->format('d/m/Y H:i') }}
                                         </td>
                                         <td class="py-4 px-6 text-right whitespace-nowrap">
-                                            <a href="{{ route('admin.quizzes.results', $attempt->quiz_id) }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition whitespace-nowrap shrink-0" title="Xem bảng điểm bài kiểm tra này">
-                                                Xem bảng điểm
-                                            </a>
+                                            <div class="inline-flex items-center justify-end gap-1.5 flex-nowrap">
+                                                <a href="{{ route('admin.quizzes.results', $attempt->quiz_id) }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition whitespace-nowrap shrink-0 shadow-2xs" title="Xem bảng điểm bài kiểm tra này">
+                                                    Xem bảng điểm
+                                                </a>
+                                                <form action="{{ route('admin.attempts.destroy', $attempt->id) }}" 
+                                                      method="POST" 
+                                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm/lượt làm bài này của học viên {{ addslashes($attempt->student->name ?? 'này') }}? Thao tác này không thể hoàn tác.');" 
+                                                      class="inline-block shrink-0">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                            class="w-7 h-7 inline-flex items-center justify-center rounded-xl text-xs font-black bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 transition shadow-2xs cursor-pointer active:scale-95 shrink-0"
+                                                            title="Xóa kết quả làm bài của học viên">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

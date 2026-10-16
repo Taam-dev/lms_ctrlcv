@@ -232,108 +232,21 @@
     </section>
 
     <!-- ================= KHÓA HỌC ================= -->
-    <section id="featured-courses" class="py-16 lg:py-20" x-data="homeCoursesHandler()">
+    <section id="featured-courses" class="py-16 lg:py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
                 <div>
                     <span class="text-xs font-extrabold text-pink-600 uppercase tracking-[0.25em] block mb-2">
-                        {{ (!empty($search) || ($price ?? 'all') !== 'all' || ($sort ?? 'popular') !== 'popular') ? 'Tìm kiếm khóa học' : 'Được đánh giá nhiều nhất' }}
+                        Được đánh giá nhiều nhất
                     </span>
                     <h2 class="text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight">
-                        {{ (!empty($search) || ($price ?? 'all') !== 'all' || ($sort ?? 'popular') !== 'popular') ? 'Kết quả tìm kiếm' : 'Khóa học nổi bật' }}
+                        Khóa học nổi bật
                     </h2>
                 </div>
                 <a href="{{ route('courses.index') }}"
                    class="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-neutral-900 hover:text-pink-600 border-b-2 border-pink-600 pb-1 self-start sm:self-auto transition-colors">
                     Xem tất cả khóa học &rarr;
                 </a>
-            </div>
-
-            <!-- Thanh tìm kiếm & lọc khóa học (giống trang bài kiểm tra) -->
-            <div class="mb-8 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
-                <form method="GET" action="{{ route('home') }}#featured-courses" class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-                    <!-- Ô tìm kiếm -->
-                    <div class="relative flex-grow">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
-                        <input type="text" name="search" x-model="search"
-                               placeholder="Tìm kiếm khóa học theo tên, mô tả, giảng viên..."
-                               class="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm border-slate-200 focus:border-pink-600 focus:ring-pink-500 rounded-xl bg-slate-50/50 focus:bg-white transition">
-                        <button type="button" x-show="search && search.length > 0" @click="search = ''" style="display: none;"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 cursor-pointer" title="Xóa tìm kiếm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-
-                    <!-- Dropdowns lọc: Giá, Sắp xếp, Trạng thái -->
-                    <div class="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
-                        <!-- Dropdown Lọc Giá -->
-                        <select name="price" x-model="price"
-                                class="text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-slate-50/50 focus:bg-white cursor-pointer">
-                            <option value="all">Tất cả mức giá</option>
-                            <option value="free">Miễn phí</option>
-                            <option value="paid">Có phí</option>
-                            <option value="under_200k">Dưới 200.000 đ</option>
-                            <option value="200k_500k">200.000 - 500.000 đ</option>
-                            <option value="over_500k">Trên 500.000 đ</option>
-                        </select>
-
-                        <!-- Dropdown Sắp xếp -->
-                        <select name="sort" x-model="sort"
-                                class="text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-slate-50/50 focus:bg-white cursor-pointer">
-                            <option value="popular">Nổi bật nhất</option>
-                            <option value="latest">Mới nhất</option>
-                            <option value="price_asc">Giá: Thấp đến cao</option>
-                            <option value="price_desc">Giá: Cao đến thấp</option>
-                            <option value="rating">Đánh giá cao nhất</option>
-                        </select>
-
-                        @auth
-                            <!-- Dropdown Trạng thái đăng ký -->
-                            <select name="enrollment" x-model="enrollment"
-                                    class="text-xs font-semibold rounded-xl border-slate-200 focus:border-pink-600 focus:ring-pink-500 py-2.5 bg-slate-50/50 focus:bg-white cursor-pointer">
-                                <option value="all">Tất cả trạng thái</option>
-                                <option value="enrolled">Đã đăng ký / Mua</option>
-                                <option value="not_enrolled">Chưa đăng ký</option>
-                            </select>
-                        @endauth
-
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-pink-600 text-white text-xs font-extrabold uppercase tracking-wider transition whitespace-nowrap shadow-xs cursor-pointer">
-                            Tìm kiếm
-                        </button>
-
-                        <button type="button" x-show="hasActiveFilters()" @click="resetFilters()" style="display: none;"
-                                class="px-3 py-2.5 text-xs font-bold text-slate-500 hover:text-pink-600 transition underline whitespace-nowrap cursor-pointer">
-                            Đặt lại
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Kết quả hiển thị / đếm số lượng -->
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <span>Đang hiển thị <strong class="text-pink-600 font-extrabold" x-text="countVisible()">{{ $courses->count() }}</strong> khóa học</span>
-                    <span x-show="search && search.trim() !== ''" style="display: none;" class="text-[11px] text-slate-400">
-                        Lọc theo từ khóa: "<span class="text-slate-700 font-semibold" x-text="search"></span>"
-                    </span>
-                </div>
-            </div>
-
-            <!-- Empty state khi không khớp kết quả tìm kiếm -->
-            <div x-show="countVisible() === 0" style="display: none;"
-                 class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center max-w-xl mx-auto shadow-xs my-6">
-                <div class="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 mx-auto flex items-center justify-center mb-3 text-lg font-bold">
-                    🔍
-                </div>
-                <h3 class="text-lg font-extrabold text-slate-900 mb-1">Không tìm thấy khóa học nào</h3>
-                <p class="text-slate-500 text-xs mb-4">
-                    Không có khóa học nào khớp với từ khóa tìm kiếm hoặc bộ lọc giá đã chọn.
-                </p>
-                <button type="button" @click="resetFilters()" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-pink-600 text-white text-xs font-extrabold uppercase tracking-wider transition shadow-xs cursor-pointer">
-                    Xóa bộ lọc
-                </button>
             </div>
 
             @if($courses->isEmpty())
@@ -344,7 +257,7 @@
             @else
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                     @foreach($courses as $course)
-                        <div x-show="matches({{ $course->id }})" class="transition-all duration-200 h-full">
+                        <div class="transition-all duration-200 h-full">
                             <x-course-card :course="$course" :index="$loop->iteration" />
                         </div>
                     @endforeach
@@ -476,82 +389,6 @@
                         e.preventDefault();
                         e.stopPropagation();
                         this.wasDragged = false;
-                    }
-                }
-            };
-        }
-
-        function homeCoursesHandler() {
-            return {
-                search: @json($search ?? ''),
-                price: @json($price ?? 'all'),
-                sort: @json($sort ?? 'popular'),
-                enrollment: @json($enrollment ?? 'all'),
-                courses: [
-                    @foreach($courses as $c)
-                    @php
-                        $cTeacher = $c->teacher?->name ?? 'Ban Đào Tạo';
-                        $cTeacherLower = mb_strtolower($cTeacher, 'UTF-8');
-                        $cTitleLower = mb_strtolower($c->title, 'UTF-8');
-                        $cDescLower = mb_strtolower($c->description ?? '', 'UTF-8');
-                        $cPrice = (int) ($c->price ?? 0);
-                    @endphp
-                    {
-                        id: {{ $c->id }},
-                        title: @json($cTitleLower),
-                        desc: @json($cDescLower),
-                        teacher: @json($cTeacherLower),
-                        price: {{ $cPrice }},
-                        isEnrolled: {{ ($c->is_enrolled ?? false) ? 'true' : 'false' }},
-                        rating: {{ (float) ($c->average_rating ?? 0) }},
-                        reviewsCount: {{ (int) ($c->reviews_count ?? 0) }}
-                    },
-                    @endforeach
-                ],
-                matches(id) {
-                    const item = this.courses.find(x => x.id === id);
-                    if (!item) return true;
-
-                    // Lọc theo giá
-                    if (this.price === 'free' && item.price > 0) return false;
-                    if (this.price === 'paid' && item.price <= 0) return false;
-                    if (this.price === 'under_200k' && (item.price <= 0 || item.price >= 200000)) return false;
-                    if (this.price === '200k_500k' && (item.price < 200000 || item.price > 500000)) return false;
-                    if (this.price === 'over_500k' && item.price <= 500000) return false;
-
-                    // Lọc theo trạng thái đăng ký
-                    if (this.enrollment === 'enrolled' && !item.isEnrolled) return false;
-                    if (this.enrollment === 'not_enrolled' && item.isEnrolled) return false;
-
-                    // Lọc theo từ khóa tìm kiếm
-                    if (!this.search || !this.search.trim()) return true;
-                    const q = this.search.toLowerCase().trim();
-                    return item.title.includes(q) || item.desc.includes(q) || item.teacher.includes(q);
-                },
-                countVisible() {
-                    return this.courses.filter(item => {
-                        if (this.price === 'free' && item.price > 0) return false;
-                        if (this.price === 'paid' && item.price <= 0) return false;
-                        if (this.price === 'under_200k' && (item.price <= 0 || item.price >= 200000)) return false;
-                        if (this.price === '200k_500k' && (item.price < 200000 || item.price > 500000)) return false;
-                        if (this.price === 'over_500k' && item.price <= 500000) return false;
-                        if (this.enrollment === 'enrolled' && !item.isEnrolled) return false;
-                        if (this.enrollment === 'not_enrolled' && item.isEnrolled) return false;
-                        if (!this.search || !this.search.trim()) return true;
-                        const q = this.search.toLowerCase().trim();
-                        return item.title.includes(q) || item.desc.includes(q) || item.teacher.includes(q);
-                    }).length;
-                },
-                hasActiveFilters() {
-                    return (this.search && this.search.trim() !== '') || this.price !== 'all' || this.sort !== 'popular' || this.enrollment !== 'all';
-                },
-                resetFilters() {
-                    this.search = '';
-                    this.price = 'all';
-                    this.sort = 'popular';
-                    this.enrollment = 'all';
-                    if (window.location.search) {
-                        window.location.href = @json(route('home')) + '#featured-courses';
                     }
                 }
             };

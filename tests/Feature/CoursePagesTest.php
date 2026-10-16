@@ -213,14 +213,26 @@ class CoursePagesTest extends TestCase
         $this->assertEquals($course1->id, $coursesOnPage[2]->id);
     }
 
-    public function test_home_page_displays_search_and_price_filter_bar_in_courses_section(): void
+    public function test_home_page_does_not_display_search_bar_in_courses_section(): void
     {
         $this->createCourses(approved: 2, pending: 0);
 
         $response = $this->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('homeCoursesHandler');
+        $response->assertSee('Khóa học nổi bật');
+        $response->assertDontSee('placeholder="Tìm kiếm khóa học theo tên, mô tả, giảng viên..."', false);
+        $response->assertDontSee('coursesHandler');
+    }
+
+    public function test_courses_page_displays_search_and_price_filter_bar_with_custom_price_option(): void
+    {
+        $this->createCourses(approved: 2, pending: 0);
+
+        $response = $this->get(route('courses.index'));
+
+        $response->assertOk();
+        $response->assertSee('coursesHandler');
         $response->assertSee('Tìm kiếm khóa học theo tên, mô tả, giảng viên...');
         $response->assertSee('Tất cả mức giá');
         $response->assertSee('Miễn phí');
@@ -228,50 +240,12 @@ class CoursePagesTest extends TestCase
         $response->assertSee('Dưới 200.000 đ');
         $response->assertSee('200.000 - 500.000 đ');
         $response->assertSee('Trên 500.000 đ');
-        $response->assertSee('Nổi bật nhất');
+        $response->assertSee('Tự nhập mức giá mong muốn...');
+        $response->assertSee('name="min_price"', false);
+        $response->assertSee('name="max_price"', false);
     }
 
-    public function test_home_page_can_filter_courses_by_price_and_search_query(): void
-    {
-        $teacher = User::factory()->teacher()->create();
-
-        $freeCourse = Course::create([
-            'teacher_id' => $teacher->id,
-            'title' => 'Khóa học Miễn Phí HTML CSS',
-            'price' => 0,
-            'status' => 'approved',
-        ]);
-
-        $paidCourse = Course::create([
-            'teacher_id' => $teacher->id,
-            'title' => 'Khóa học Trả Phí Laravel Pro',
-            'price' => 250000,
-            'status' => 'approved',
-        ]);
-
-        // Lọc miễn phí
-        $freeResponse = $this->get(route('home', ['price' => 'free']));
-        $freeResponse->assertOk();
-        $freeCourses = $freeResponse->viewData('courses');
-        $this->assertTrue($freeCourses->contains('id', $freeCourse->id));
-        $this->assertFalse($freeCourses->contains('id', $paidCourse->id));
-
-        // Lọc có phí
-        $paidResponse = $this->get(route('home', ['price' => 'paid']));
-        $paidResponse->assertOk();
-        $paidCourses = $paidResponse->viewData('courses');
-        $this->assertTrue($paidCourses->contains('id', $paidCourse->id));
-        $this->assertFalse($paidCourses->contains('id', $freeCourse->id));
-
-        // Tìm kiếm theo từ khóa kết hợp
-        $searchResponse = $this->get(route('home', ['search' => 'HTML CSS', 'price' => 'free']));
-        $searchResponse->assertOk();
-        $searchCourses = $searchResponse->viewData('courses');
-        $this->assertTrue($searchCourses->contains('id', $freeCourse->id));
-        $this->assertFalse($searchCourses->contains('id', $paidCourse->id));
-    }
-
-    public function test_courses_page_can_filter_by_price(): void
+    public function test_courses_page_can_filter_by_price_including_custom_range(): void
     {
         $teacher = User::factory()->teacher()->create();
 
@@ -284,20 +258,44 @@ class CoursePagesTest extends TestCase
 
         Course::create([
             'teacher_id' => $teacher->id,
-            'title' => 'Khoa Paid',
-            'price' => 350000,
+            'title' => 'Khoa Mid 250k',
+            'price' => 250000,
             'status' => 'approved',
         ]);
 
+        Course::create([
+            'teacher_id' => $teacher->id,
+            'title' => 'Khoa High 600k',
+            'price' => 600000,
+            'status' => 'approved',
+        ]);
+
+        // Lọc miễn phí
         $resFree = $this->get(route('courses.index', ['price' => 'free']));
         $resFree->assertOk();
         $resFree->assertSee('Khoa Free');
-        $resFree->assertDontSee('Khoa Paid');
+        $resFree->assertDontSee('Khoa Mid 250k');
+        $resFree->assertDontSee('Khoa High 600k');
 
+        // Lọc có phí
         $resPaid = $this->get(route('courses.index', ['price' => 'paid']));
         $resPaid->assertOk();
-        $resPaid->assertSee('Khoa Paid');
+        $resPaid->assertSee('Khoa Mid 250k');
+        $resPaid->assertSee('Khoa High 600k');
         $resPaid->assertDontSee('Khoa Free');
+
+        // Lọc tự nhập mức giá: tối đa 300.000 đ (price=custom, max_price=300000)
+        $resCustomMax = $this->get(route('courses.index', ['price' => 'custom', 'max_price' => '300000']));
+        $resCustomMax->assertOk();
+        $resCustomMax->assertSee('Khoa Mid 250k');
+        $resCustomMax->assertDontSee('Khoa High 600k');
+
+        // Lọc tự nhập khoảng giá: từ 200.000 đ đến 500.000 đ
+        $resCustomRange = $this->get(route('courses.index', ['min_price' => '200000', 'max_price' => '500000']));
+        $resCustomRange->assertOk();
+        $resCustomRange->assertSee('Khoa Mid 250k');
+        $resCustomRange->assertDontSee('Khoa High 600k');
+        $resCustomRange->assertDontSee('Khoa Free');
     }
 
     public function test_quizzes_are_blurred_and_locked_when_user_is_not_enrolled(): void
@@ -326,6 +324,8 @@ class CoursePagesTest extends TestCase
         $response->assertOk();
         $response->assertSee('Bài kiểm tra đang bị khóa');
         $response->assertSee('Chưa mở khóa');
+        $response->assertSee('min-h-[460px]');
+        $response->assertSee('items-center justify-center');
         $response->assertDontSee('Làm bài thi');
     }
 

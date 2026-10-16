@@ -434,4 +434,15 @@ class DashboardController extends Controller
 
         return back()->with('success', "Đã xóa bản ghi báo cáo #{$reportId} thành công!");
     }
+
+    /**
+     * Xóa lượt làm bài / kết quả của học viên (Admin)
+     */
+    public function destroyAttempt(QuizAttempt $attempt): RedirectResponse
+    {
+        $studentName = $attempt->student?->name ?? 'học viên';
+        $attempt->delete();
+
+        return back()->with('success', "Đã xóa kết quả làm bài của học viên {$studentName} thành công.");
+    }
 }
