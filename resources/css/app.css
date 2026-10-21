@@ -33,3 +33,19 @@
     height: 0 !important;
 }
 
+/* AI Chatbox messages scrollbar */
+#ai-chatbox-messages::-webkit-scrollbar {
+    width: 5px;
+}
+#ai-chatbox-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+#ai-chatbox-messages::-webkit-scrollbar-thumb {
+    background-color: rgba(244, 114, 182, 0.35);
+    border-radius: 9999px;
+}
+#ai-chatbox-messages::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(236, 72, 153, 0.7);
+}
+
+

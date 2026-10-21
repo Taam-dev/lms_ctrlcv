@@ -187,6 +187,10 @@
             </footer>
         </div>
     </div>
+
+    <!-- Trợ lý AI Chatbox -->
+    <x-ai-chatbox />
+
     @stack('scripts')
 </body>
 </html>

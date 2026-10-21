@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\QuizController as AdminQuizController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -15,6 +16,10 @@ use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardControll
 use App\Http\Controllers\Teacher\LessonController as TeacherLessonController;
 use App\Http\Controllers\Teacher\QuizController as TeacherQuizController;
 use Illuminate\Support\Facades\Route;
+
+// Trợ lý AI Chatbox (Local AI & Smart Fallback)
+Route::post('/ai/chat', [AiChatController::class, 'chat'])->name('ai.chat');
+Route::get('/ai/status', [AiChatController::class, 'status'])->name('ai.status');
 
 // sitemap xml
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
