@@ -7,8 +7,16 @@ use Illuminate\Support\Str;
 
 class SmartFallbackService
 {
+    public function __construct(
+        protected ?AiGuardrailService $guardrailService = null,
+        protected ?LmsContextService $contextService = null
+    ) {
+        $this->guardrailService = $guardrailService ?? app(AiGuardrailService::class);
+        $this->contextService = $contextService ?? app(LmsContextService::class);
+    }
+
     /**
-     * Sinh câu trả lời thông minh dựa trên dữ liệu database khi máy chủ Local AI offline.
+     * Sinh câu trả lời thông minh, đúng phạm vi và phân tích dữ liệu database.
      *
      * @param  array<int, mixed>  $relevantCourses
      * @param  array<string, mixed>  $catalogSummary
@@ -26,10 +34,15 @@ class SmartFallbackService
         array $catalogSummary,
         array $userProgress
     ): array {
+        // Tầng 1: Kiểm tra Guardrail phạm vi website
+        if ($this->guardrailService->isOffTopic($query)) {
+            return $this->guardrailService->getRefusalResponse();
+        }
+
         $queryLower = mb_strtolower(trim($query), 'UTF-8');
         $queryAscii = Str::ascii($queryLower);
 
-        // 1. Phân tích intent của người dùng
+        // Phân tích intent của người dùng
         $intent = $this->detectIntent($queryLower, $queryAscii);
 
         return match ($intent) {
@@ -44,17 +57,15 @@ class SmartFallbackService
     }
 
     /**
-     * Nhận diện ý định (Intent Detection) bằng heuristics chính xác cao.
+     * Nhận diện ý định (Intent Detection) bằng heuristics.
      */
     protected function detectIntent(string $lower, string $ascii): string
     {
-        // Chào hỏi
         if (preg_match('/^(xin chào|chào|hello|hi|hey|alo|bạn là ai|giúp tôi|trợ giúp)/i', $lower)
             || $lower === 'hi' || $lower === 'hello') {
             return 'greeting';
         }
 
-        // Khóa học của tôi / Tiến độ học tập
         if (str_contains($lower, 'khóa học của tôi')
             || str_contains($lower, 'khoa hoc cua toi')
             || str_contains($lower, 'tôi đang học')
@@ -66,7 +77,6 @@ class SmartFallbackService
             return 'my_courses';
         }
 
-        // Tất cả khóa học / Danh mục
         if (str_contains($lower, 'các khóa học hiện có')
             || str_contains($lower, 'danh sách khóa học')
             || str_contains($lower, 'tất cả khóa học')
@@ -76,14 +86,12 @@ class SmartFallbackService
             return 'all_courses';
         }
 
-        // Khóa học miễn phí
         if (str_contains($lower, 'miễn phí')
             || str_contains($lower, 'mien phi')
             || str_contains($lower, 'free')) {
             return 'free_courses';
         }
 
-        // Lộ trình học tập / Tư vấn người mới
         if (str_contains($lower, 'lộ trình')
             || str_contains($lower, 'lo trinh')
             || str_contains($lower, 'tư vấn')
@@ -95,7 +103,6 @@ class SmartFallbackService
             return 'roadmap';
         }
 
-        // Bài thi trắc nghiệm / Quizzes
         if (str_contains($lower, 'quiz')
             || str_contains($lower, 'trắc nghiệm')
             || str_contains($lower, 'trac nghiem')
@@ -108,7 +115,7 @@ class SmartFallbackService
     }
 
     /**
-     * Xử lý câu chào hỏi ban đầu
+     * Chào hỏi ngắn gọn
      */
     protected function handleGreeting(?User $user, array $catalogSummary): array
     {
@@ -116,110 +123,104 @@ class SmartFallbackService
         $totalCourses = $catalogSummary['total_courses'] ?? 0;
         $freeCount = $catalogSummary['free_courses_count'] ?? 0;
 
-        $msg = "👋 Xin chào{$userName}! Mình là **Trợ lý AI Học tập** của nền tảng **Ctrl C+V**.\n\n";
-        $msg .= "Hiện tại hệ thống đang có **{$totalCourses} khóa học** (trong đó có **{$freeCount} khóa học miễn phí**) và nhiều bộ đề kiểm tra trắc nghiệm thực chiến.\n\n";
-        $msg .= "Bạn có thể hỏi mình những nội dung như:\n";
-        $msg .= "- 📚 **Xem các khóa học hiện có** trên hệ thống.\n";
-        $msg .= "- 🎯 **Tư vấn lộ trình học** cho người mới bắt đầu hoặc theo chuyên môn.\n";
-        $msg .= "- 📖 **Kiểm tra tiến độ học tập** và gợi ý bài học tiếp theo của bạn.\n";
-        $msg .= "- 📝 **Luyện thi trắc nghiệm (Quizzes)** nâng cao phản xạ kiến thức.\n\n";
-        $msg .= 'Bạn đang quan tâm đến chủ đề hoặc kỹ năng nào hôm nay?';
+        $msg = "Xin chào{$userName}! Tôi là **Trợ lý AI** của **Ctrl C+V LMS**.\n\n";
+        $msg .= "Hệ thống hiện có **{$totalCourses} khóa học** (gồm **{$freeCount} khóa miễn phí**) và kho đề thi trắc nghiệm thực tế.\n\n";
+        $msg .= "**Bạn có thể tra cứu nhanh:**\n";
+        $msg .= "- Danh sách khóa học & học phí\n";
+        $msg .= "- Lộ trình học tập phù hợp cho người mới\n";
+        $msg .= "- Tiến độ bài học cá nhân\n";
+        $msg .= "- Luyện đề thi trắc nghiệm\n\n";
+        $msg .= 'Bạn cần tìm khóa học hoặc thông tin gì?';
 
         return [
             'message' => $msg,
             'intent' => 'greeting',
             'suggested_chips' => [
-                '📚 Các khóa học hiện có',
-                '🎯 Tư vấn lộ trình học',
-                '📖 Khóa học của tôi',
-                '🚀 Khóa học miễn phí',
+                'Tất cả khóa học',
+                'Lộ trình học',
+                'Khóa học của tôi',
+                'Khóa học miễn phí',
             ],
         ];
     }
 
     /**
-     * Xử lý xem khóa học cá nhân & tiến độ học tập
+     * Khóa học của tôi & tiến độ (gọn gàng, rõ ý)
      */
     protected function handleMyCourses(?User $user, array $userProgress, array $catalogSummary): array
     {
         if (! $user) {
-            $msg = "🔒 **Bạn hiện chưa đăng nhập vào hệ thống!**\n\n";
-            $msg .= 'Để theo dõi tiến độ hoàn thành bài học, lưu điểm quiz và nhận lộ trình học tập cá nhân hóa, bạn hãy [Đăng nhập]('.route('login').') hoặc [Đăng ký tài khoản mới]('.route('register').") nhé.\n\n";
-            $msg .= "Dưới đây là một số khóa học nổi bật mà bạn có thể tham khảo ngay:\n";
+            $msg = "**Bạn chưa đăng nhập**\n\n";
+            $msg .= 'Vui lòng [Đăng nhập]('.route('login').') hoặc [Đăng ký]('.route('register').") để theo dõi tiến độ học tập và bài học tiếp theo.\n\n";
+            $msg .= "**Khóa học tiêu biểu:**\n";
 
             $coursesList = array_slice($catalogSummary['courses_list'] ?? [], 0, 3);
             foreach ($coursesList as $c) {
-                $msg .= "- 🎓 [{$c['title']}]({$c['url']}) — Giảng viên: **{$c['teacher']}** ({$c['price']})\n";
+                $msg .= "- [{$c['title']}]({$c['url']}) — Giảng viên: **{$c['teacher']}** • **{$c['price']}**\n";
             }
 
             return [
                 'message' => $msg,
                 'intent' => 'my_courses',
                 'suggested_chips' => [
-                    '📚 Các khóa học hiện có',
-                    '🚀 Khóa học miễn phí',
+                    'Tất cả khóa học',
+                    'Khóa học miễn phí',
                 ],
             ];
         }
 
         $enrolledCourses = $userProgress['enrolled_courses'] ?? [];
         if (empty($enrolledCourses)) {
-            $msg = "Chào **{$user->name}**, hiện tại bạn **chưa đăng ký khóa học nào** trên hệ thống Ctrl C+V.\n\n";
-            $msg .= "Đừng lo lắng, hãy bắt đầu hành trình học tập ngay hôm nay với các khóa học được chọn lọc dành cho bạn:\n\n";
+            $msg = "Chào **{$user->name}**, bạn chưa đăng ký khóa học nào trên hệ thống.\n\n";
+            $msg .= "**Gợi ý bắt đầu:**\n";
 
             $coursesList = array_slice($catalogSummary['courses_list'] ?? [], 0, 3);
             foreach ($coursesList as $c) {
-                $msg .= "- 🚀 [{$c['title']}]({$c['url']}) ({$c['price']}) — **{$c['teacher']}**\n";
+                $msg .= "- [{$c['title']}]({$c['url']}) — **{$c['teacher']}** • **{$c['price']}**\n";
             }
-            $msg .= "\n👉 Xem thêm tại danh mục: [Tất cả khóa học](".route('courses.index').')';
+            $msg .= "\nXem thêm tại: [Tất cả khóa học](".route('courses.index').')';
 
             return [
                 'message' => $msg,
                 'intent' => 'my_courses',
                 'suggested_chips' => [
-                    '📚 Các khóa học hiện có',
-                    '🎯 Tư vấn lộ trình học',
+                    'Tất cả khóa học',
+                    'Lộ trình học',
                 ],
             ];
         }
 
-        $msg = "📊 **Tiến độ học tập hiện tại của {$user->name}:**\n\n";
-        $msg .= 'Bạn đang tham gia **'.count($enrolledCourses)." khóa học**:\n\n";
+        $msg = "**Tiến độ học tập của {$user->name}** (".count($enrolledCourses)." khóa học):\n\n";
 
         foreach ($enrolledCourses as $course) {
             $percent = $course['progress_percent'];
             $completed = $course['completed_lessons'];
             $total = $course['total_lessons'];
 
-            $progressBar = $this->renderAsciiProgress($percent);
-
-            $msg .= "### 📖 [{$course['title']}]({$course['url']})\n";
-            $msg .= "- **Tiến độ**: {$progressBar} **{$percent}%** ({$completed}/{$total} bài đã hoàn thành)\n";
+            $msg .= "- [{$course['title']}]({$course['url']})\n";
+            $msg .= "  Tiến độ: **{$percent}%** ({$completed}/{$total} bài)\n";
 
             if (! empty($course['next_lesson'])) {
                 $next = $course['next_lesson'];
-                $msg .= "- 🎯 **Bài tiếp theo gợi ý**: [{$next['title']}]({$next['url']})\n";
+                $msg .= "  Bài tiếp theo: [{$next['title']}]({$next['url']})\n";
             } else {
-                $msg .= "- 🎉 **Chúc mừng!** Bạn đã hoàn thành toàn bộ bài học trong khóa này.\n";
+                $msg .= "  Trạng thái: Đã hoàn thành toàn bộ bài học\n";
             }
-            $msg .= "\n";
         }
-
-        $msg .= '💡 *Mẹo: Hãy dành 30 phút mỗi ngày để hoàn thành ít nhất 1 bài học nhé!*';
 
         return [
             'message' => $msg,
             'intent' => 'my_courses',
             'suggested_chips' => [
-                '🎯 Tư vấn lộ trình học',
-                '📝 Luyện thi trắc nghiệm',
-                '📚 Các khóa học khác',
+                'Lộ trình học',
+                'Luyện thi trắc nghiệm',
+                'Tất cả khóa học',
             ],
         ];
     }
 
     /**
-     * Xử lý hiển thị toàn bộ danh sách khóa học hiện có
+     * Danh sách khóa học (gọn gàng, kèm thống kê đánh giá & học viên)
      */
     protected function handleAllCourses(array $catalogSummary): array
     {
@@ -228,36 +229,39 @@ class SmartFallbackService
 
         if (empty($courses)) {
             return [
-                'message' => 'Hiện tại hệ thống đang cập nhật danh sách khóa học mới. Bạn vui lòng quay lại sau ít phút hoặc liên hệ Quản trị viên nhé!',
+                'message' => 'Hệ thống đang cập nhật danh sách khóa học. Vui lòng quay lại sau.',
                 'intent' => 'all_courses',
-                'suggested_chips' => ['📝 Luyện thi trắc nghiệm'],
+                'suggested_chips' => ['Luyện thi trắc nghiệm'],
             ];
         }
 
-        $msg = "📚 **Danh sách các khóa học hiện có trên Ctrl C+V ({$total} khóa học):**\n\n";
+        $msg = "**Danh sách khóa học hiện có ({$total} khóa):**\n\n";
 
         foreach ($courses as $index => $c) {
             $num = $index + 1;
-            $msg .= "{$num}. **[{$c['title']}]({$c['url']})**\n";
-            $msg .= "   - 👨‍🏫 Giảng viên: **{$c['teacher']}**\n";
-            $msg .= "   - 💰 Học phí: **{$c['price']}** | 📝 Bài giảng: **{$c['lessons_count']} bài**\n\n";
+            $rating = number_format($c['average_rating'] ?? 5.0, 1);
+            $revCount = (int) ($c['reviews_count'] ?? 0);
+            $enrollCount = (int) ($c['enrollments_count'] ?? 0);
+
+            $msg .= "{$num}. [{$c['title']}]({$c['url']})\n";
+            $msg .= "   Giảng viên: **{$c['teacher']}** • ⭐ {$rating} ({$revCount} đánh giá) • 👥 {$enrollCount} học viên • **{$c['price']}** ({$c['lessons_count']} bài)\n";
         }
 
-        $msg .= '👉 Bạn có thể nhấp trực tiếp vào tên khóa học để xem nội dung chi tiết hoặc [Khám phá Thư viện khóa học]('.route('courses.index').').';
+        $msg .= "\nNhấp vào tên khóa học để xem nội dung chi tiết.";
 
         return [
             'message' => $msg,
             'intent' => 'all_courses',
             'suggested_chips' => [
-                '🚀 Khóa học miễn phí',
-                '🎯 Tư vấn lộ trình học',
-                '📖 Khóa học của tôi',
+                'Khóa học miễn phí',
+                'Lộ trình học',
+                'Khóa học của tôi',
             ],
         ];
     }
 
     /**
-     * Xử lý lọc khóa học miễn phí
+     * Khóa học miễn phí
      */
     protected function handleFreeCourses(array $catalogSummary): array
     {
@@ -265,174 +269,169 @@ class SmartFallbackService
         $freeCourses = array_filter($courses, fn ($c) => $c['price'] === 'Miễn phí' || str_contains(mb_strtolower($c['price']), 'miễn phí'));
 
         if (empty($freeCourses)) {
-            $msg = 'Hiện tại các khóa học trên hệ thống đều có mức học phí tượng trưng cực kỳ ưu đãi. Bạn có thể tham khảo toàn bộ danh sách tại: [Khám phá khóa học]('.route('courses.index').').';
+            $msg = 'Hiện tại các khóa học đang có mức học phí tượng trưng. Bạn có thể xem toàn bộ tại: [Tất cả khóa học]('.route('courses.index').').';
 
             return [
                 'message' => $msg,
                 'intent' => 'free_courses',
-                'suggested_chips' => ['📚 Các khóa học hiện có'],
+                'suggested_chips' => ['Tất cả khóa học'],
             ];
         }
 
-        $msg = "🚀 **Danh sách các khóa học MIỄN PHÍ chất lượng cao dành cho bạn:**\n\n";
+        $msg = "**Khóa học miễn phí:**\n\n";
 
         foreach ($freeCourses as $c) {
-            $msg .= "- 🌟 **[{$c['title']}]({$c['url']})**\n";
-            $msg .= "  - 👨‍🏫 Giảng viên: **{$c['teacher']}**\n";
-            $msg .= "  - 📑 Số lượng bài giảng: **{$c['lessons_count']} bài** (Học trọn đời không mất phí)\n\n";
+            $msg .= "- [{$c['title']}]({$c['url']})\n";
+            $msg .= "  Giảng viên: **{$c['teacher']}** • {$c['lessons_count']} bài giảng\n";
         }
-
-        $msg .= 'Đăng ký ngay hôm nay để không bỏ lỡ kiến thức bổ ích nhé!';
 
         return [
             'message' => $msg,
             'intent' => 'free_courses',
             'suggested_chips' => [
-                '🎯 Tư vấn lộ trình học',
-                '📚 Tất cả khóa học',
-                '📖 Khóa học của tôi',
+                'Lộ trình học',
+                'Tất cả khóa học',
+                'Khóa học của tôi',
             ],
         ];
     }
 
     /**
-     * Xử lý tư vấn lộ trình học tập
+     * Lộ trình học tập
      */
     protected function handleRoadmap(array $catalogSummary, array $relevantCourses): array
     {
         $courses = $catalogSummary['courses_list'] ?? [];
 
-        $msg = "🎯 **Gợi ý Lộ trình học tập chuẩn mực tại Ctrl C+V:**\n\n";
-        $msg .= "Để đạt hiệu quả học tập cao nhất, bạn nên đi theo lộ trình 3 giai đoạn tinh gọn sau:\n\n";
+        $msg = "**Lộ trình học tập đề xuất (3 bước):**\n\n";
 
-        $msg .= "### 🟢 Giai đoạn 1: Nắm vững Nền tảng & Cú pháp\n";
-        $msg .= "- Bắt đầu với các khóa học căn bản, làm quen với tư duy lập trình và cấu trúc dữ liệu.\n";
+        $msg .= "1. **Nền tảng & Cú pháp:**\n";
         if (! empty($courses)) {
             $first = $courses[0];
-            $msg .= "- Khóa học gợi ý: [{$first['title']}]({$first['url']}) ({$first['price']})\n";
+            $msg .= "   - Học: [{$first['title']}]({$first['url']}) ({$first['price']})\n";
+        } else {
+            $msg .= "   - Nắm vững kiến thức cơ bản và tư duy logic.\n";
         }
-        $msg .= "\n";
 
-        $msg .= "### 🟡 Giai đoạn 2: Thực chiến Dự án & Kỹ năng Nâng cao\n";
-        $msg .= "- Áp dụng kiến thức vào xây dựng ứng dụng thực tế, hiểu rõ luồng xử lý và tương tác cơ sở dữ liệu.\n";
+        $msg .= "2. **Thực hành Dự án:**\n";
         if (count($courses) > 1) {
             $second = $courses[1];
-            $msg .= "- Khóa học gợi ý: [{$second['title']}]({$second['url']}) ({$second['price']})\n";
+            $msg .= "   - Học: [{$second['title']}]({$second['url']}) ({$second['price']})\n";
+        } else {
+            $msg .= "   - Xây dựng ứng dụng hoàn chỉnh và tương tác cơ sở dữ liệu.\n";
         }
-        $msg .= "\n";
 
-        $msg .= "### 🔴 Giai đoạn 3: Kiểm tra Đánh giá & Rèn luyện Phản xạ\n";
-        $msg .= '- Tham gia làm các bài trắc nghiệm tính giờ tại hệ thống [Thi Trắc Nghiệm / Quizzes]('.route('student.quizzes.index').") để củng cố lý thuyết và sẵn sàng cho các bài kiểm tra thực tế.\n\n";
-
-        $msg .= '💡 *Bạn có thể bấm vào từng khóa học ở trên để xem chi tiết đề cương và bắt đầu học ngay!*';
+        $msg .= "3. **Đánh giá Kiến thức:**\n";
+        $msg .= '   - Làm bài kiểm tra tại [Thi Trắc Nghiệm / Quizzes]('.route('student.quizzes.index').") để củng cố phản xạ.\n";
 
         return [
             'message' => $msg,
             'intent' => 'roadmap',
             'suggested_chips' => [
-                '📚 Các khóa học hiện có',
-                '🚀 Khóa học miễn phí',
-                '📝 Làm bài thi quizzes',
+                'Tất cả khóa học',
+                'Khóa học miễn phí',
+                'Luyện thi trắc nghiệm',
             ],
         ];
     }
 
     /**
-     * Xử lý điều hướng tới hệ thống Quizzes
+     * Thi trắc nghiệm
      */
     protected function handleQuizzes(): array
     {
         $url = route('student.quizzes.index');
-        $msg = "📝 **Hệ thống Thi Trắc Nghiệm Trực Tuyến Ctrl C+V**\n\n";
-        $msg .= "Nền tảng cung cấp kho bài kiểm tra trắc nghiệm đa dạng với các tính năng:\n";
-        $msg .= "- ⏱️ **Tự động đếm giờ & tính điểm** chính xác, minh bạch.\n";
-        $msg .= "- 📊 **Xem lại kết quả & giải thích chi tiết** từng câu hỏi ngay sau khi nộp bài.\n";
-        $msg .= "- 🔄 Hỗ trợ làm bài trắc nghiệm theo từng khóa học hoặc bài thi độc lập.\n\n";
-        $msg .= "👉 Nhấn vào đây để thử sức ngay: **[Vào Trang Thi Trắc Nghiệm]({$url})**";
+        $msg = "**Hệ thống thi trắc nghiệm Ctrl C+V:**\n\n";
+        $msg .= "- Tự động bấm giờ và tính điểm tức thì\n";
+        $msg .= "- Xem lại lời giải thích chi tiết sau khi nộp bài\n";
+        $msg .= "- Luyện đề theo từng khóa học hoặc đề thi tổng hợp\n\n";
+        $msg .= "Truy cập ngay: [Vào Trang Thi Trắc Nghiệm]({$url})";
 
         return [
             'message' => $msg,
             'intent' => 'quizzes',
             'suggested_chips' => [
-                '📚 Các khóa học hiện có',
-                '🎯 Tư vấn lộ trình học',
+                'Tất cả khóa học',
+                'Lộ trình học',
             ],
         ];
     }
 
     /**
-     * Xử lý tìm kiếm thông minh từ khóa trong danh mục
+     * Tìm kiếm và phân tích số liệu khóa học (Analytical Search Logic)
      */
     protected function handleSearch(string $query, array $relevantCourses, array $catalogSummary): array
     {
         if (empty($relevantCourses)) {
-            $msg = "🔎 Xin lỗi bạn, hệ thống chưa tìm thấy khóa học nào khớp chính xác với từ khóa **\"{$query}\"**.\n\n";
-            $msg .= "Tuy nhiên, bạn có thể tham khảo các khóa học đang được học viên yêu thích nhất trên Ctrl C+V:\n\n";
+            $msg = "Không tìm thấy khóa học khớp với từ khóa **\"{$query}\"**.\n\n";
+            $msg .= "**Khóa học gợi ý:**\n";
 
             $popular = array_slice($catalogSummary['courses_list'] ?? [], 0, 3);
             foreach ($popular as $c) {
-                $msg .= "- 📌 **[{$c['title']}]({$c['url']})** — Giảng viên: **{$c['teacher']}** ({$c['price']})\n";
+                $rating = number_format($c['average_rating'] ?? 5.0, 1);
+                $revCount = (int) ($c['reviews_count'] ?? 0);
+                $enrollCount = (int) ($c['enrollments_count'] ?? 0);
+                $msg .= "- [{$c['title']}]({$c['url']}) — **{$c['teacher']}** • ⭐ {$rating} ({$revCount} đánh giá) • 👥 {$enrollCount} học viên • **{$c['price']}**\n";
             }
 
-            $msg .= "\n👉 Hoặc bạn có thể truy cập [Trang danh mục tất cả khóa học](".route('courses.index').') để tra cứu đầy đủ hơn.';
+            $msg .= "\nXem danh mục đầy đủ: [Tất cả khóa học](".route('courses.index').')';
 
             return [
                 'message' => $msg,
                 'intent' => 'search',
                 'suggested_chips' => [
-                    '📚 Các khóa học hiện có',
-                    '🎯 Tư vấn lộ trình học',
-                    '🚀 Khóa học miễn phí',
+                    'Tất cả khóa học',
+                    'Lộ trình học',
+                    'Khóa học miễn phí',
                 ],
             ];
         }
 
-        $msg = '🔍 **Tìm thấy '.count($relevantCourses)." khóa học phù hợp với yêu cầu của bạn:**\n\n";
+        $count = count($relevantCourses);
+        $sortCriteria = $this->contextService?->detectSortingCriteria($query);
+
+        // Sinh tiêu đề tự nhiên theo đúng tiêu chí và số lượng yêu cầu
+        $title = match ($sortCriteria) {
+            'most_reviews' => ($count === 1) ? '**Khóa học có nhiều lượt đánh giá nhất trên Ctrl C+V:**' : "**Top {$count} khóa học có nhiều lượt đánh giá nhất:**",
+            'highest_rating' => ($count === 1) ? '**Khóa học có điểm đánh giá cao nhất trên Ctrl C+V:**' : "**Top {$count} khóa học được đánh giá cao nhất:**",
+            'most_enrolled' => ($count === 1) ? '**Khóa học có số lượng học viên đông nhất:**' : "**Top {$count} khóa học đông học viên nhất:**",
+            'most_lessons' => ($count === 1) ? '**Khóa học có số lượng bài giảng nhiều nhất:**' : "**Top {$count} khóa học nhiều bài giảng nhất:**",
+            'cheapest' => ($count === 1) ? '**Khóa học có mức học phí tiết kiệm nhất:**' : '**Các khóa học có học phí tiết kiệm nhất:**',
+            'most_expensive' => ($count === 1) ? '**Khóa học cao cấp nhất trên hệ thống:**' : '**Các khóa học tiêu biểu trên hệ thống:**',
+            'newest' => ($count === 1) ? '**Khóa học mới nhất trên Ctrl C+V:**' : '**Các khóa học mới nhất trên Ctrl C+V:**',
+            default => ($count === 1) ? '**Khóa học phù hợp nhất với yêu cầu của bạn:**' : "**Tìm thấy {$count} khóa học phù hợp:**",
+        };
+
+        $msg = "{$title}\n\n";
 
         foreach ($relevantCourses as $index => $c) {
             $num = $index + 1;
-            $msg .= "### {$num}. [{$c['title']}]({$c['url']})\n";
-            $msg .= "- 👨‍🏫 **Giảng viên**: {$c['teacher']}\n";
-            $msg .= "- 💰 **Học phí**: **{$c['formatted_price']}** | 📑 **Số bài học**: {$c['lessons_count']} bài\n";
+            $rating = number_format($c['average_rating'] ?? 5.0, 1);
+            $revCount = (int) ($c['reviews_count'] ?? 0);
+            $enrollCount = (int) ($c['enrollments_count'] ?? 0);
+            $lesCount = (int) ($c['lessons_count'] ?? 0);
+            $priceStr = $c['formatted_price'] ?? ($c['price'] > 0 ? number_format($c['price']).' đ' : 'Miễn phí');
 
-            if (! empty($c['average_rating']) && $c['average_rating'] > 0) {
-                $msg .= "- ⭐ **Đánh giá**: {$c['average_rating']}/5.0 ({$c['reviews_count']} lượt đánh giá)\n";
+            if ($count === 1) {
+                $msg .= "- [{$c['title']}]({$c['url']})\n";
+                $msg .= "  Giảng viên: **{$c['teacher']}** • ⭐ **{$rating}/5.0** ({$revCount} đánh giá) • 👥 **{$enrollCount} học viên** • {$lesCount} bài • **{$priceStr}**\n";
+                if (! empty($c['description'])) {
+                    $msg .= "  Mô tả: {$c['description']}\n";
+                }
+            } else {
+                $msg .= "{$num}. [{$c['title']}]({$c['url']})\n";
+                $msg .= "   Giảng viên: **{$c['teacher']}** • ⭐ {$rating} ({$revCount} đánh giá) • 👥 {$enrollCount} học viên • {$lesCount} bài • **{$priceStr}**\n";
             }
-
-            if (! empty($c['description'])) {
-                $msg .= "- 📝 *{$c['description']}*\n";
-            }
-
-            if (! empty($c['key_lessons'])) {
-                $lessonsPreview = implode(', ', array_slice($c['key_lessons'], 0, 3));
-                $msg .= "- 🔑 **Nội dung nổi bật**: {$lessonsPreview}...\n";
-            }
-
-            $msg .= "\n";
         }
-
-        $msg .= '💡 *Nhấp vào liên kết từng khóa học để xem chi tiết giáo trình và đăng ký học ngay.*';
 
         return [
             'message' => $msg,
             'intent' => 'search',
             'suggested_chips' => [
-                '🎯 Tư vấn lộ trình học',
-                '📚 Tất cả khóa học',
-                '📖 Khóa học của tôi',
+                'Lộ trình học',
+                'Tất cả khóa học',
+                'Khóa học của tôi',
             ],
         ];
-    }
-
-    /**
-     * Tạo thanh tiến độ ASCII đẹp mắt
-     */
-    protected function renderAsciiProgress(int $percent): string
-    {
-        $percent = max(0, min(100, $percent));
-        $bars = (int) round($percent / 10);
-        $empty = 10 - $bars;
-
-        return '['.str_repeat('█', $bars).str_repeat('░', $empty).']';
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonCompletion;
@@ -242,5 +243,125 @@ class AiChatTest extends TestCase
         $this->assertStringContainsString('Khoa hoc JavaScript ES6', $message);
         $this->assertStringContainsString('50%', $message);
         $this->assertStringContainsString('Bai 2: Promise va Async Await', $message);
+    }
+
+    public function test_off_topic_queries_are_refused_strictly_by_guardrails(): void
+    {
+        $response = $this->postJson(route('ai.chat'), [
+            'message' => 'Cách nấu phở bò Hà Nội thơm ngon',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'source' => 'guardrail',
+            'message' => 'Nội dung bạn hỏi không thuộc phạm vi của trang web Ctrl C+V LMS. Mình chỉ hỗ trợ giải đáp thông tin về các khóa học, giảng viên, lộ trình học tập và các tính năng trên hệ thống thôi nhé!',
+        ]);
+    }
+
+    public function test_analytical_query_superlative_returns_exact_count_and_sorting(): void
+    {
+        $courseFewReviews = Course::create([
+            'teacher_id' => $this->teacher->id,
+            'title' => 'Khóa học ít đánh giá',
+            'slug' => 'khoa-hoc-it-danh-gia',
+            'description' => 'Mô tả',
+            'price' => 100000,
+            'status' => 'approved',
+        ]);
+
+        $courseManyReviews = Course::create([
+            'teacher_id' => $this->teacher->id,
+            'title' => 'Khóa học nhiều đánh giá vượt trội',
+            'slug' => 'khoa-hoc-nhieu-danh-gia-vuot-troi',
+            'description' => 'Mô tả',
+            'price' => 200000,
+            'status' => 'approved',
+        ]);
+
+        $student = User::factory()->create();
+
+        // 1 review cho courseFew
+        CourseReview::create([
+            'course_id' => $courseFewReviews->id,
+            'user_id' => $student->id,
+            'rating' => 4,
+            'comment' => 'Khá ổn',
+        ]);
+
+        // 3 reviews cho courseMany
+        for ($i = 0; $i < 3; $i++) {
+            $u = User::factory()->create();
+            CourseReview::create([
+                'course_id' => $courseManyReviews->id,
+                'user_id' => $u->id,
+                'rating' => 5,
+                'comment' => 'Tuyệt vời '.$i,
+            ]);
+        }
+
+        $response = $this->postJson(route('ai.chat'), [
+            'message' => 'cho tôi 1 khóa học có nhiều đánh giá nhất đi',
+        ]);
+
+        $response->assertOk();
+        $message = $response->json('message');
+        $courses = $response->json('relevant_courses');
+
+        // Phải trả về đúng 1 khóa học
+        $this->assertCount(1, $courses);
+        $this->assertEquals($courseManyReviews->id, $courses[0]['id']);
+        $this->assertStringContainsString('Khóa học nhiều đánh giá vượt trội', $message);
+        $this->assertStringNotContainsString('Khóa học ít đánh giá', $message);
+        $this->assertStringNotContainsString('Tìm thấy 5 khóa học', $message);
+    }
+
+    public function test_multi_api_provider_failover_rotates_when_primary_fails(): void
+    {
+        config([
+            'ai_chat.providers' => [
+                [
+                    'id' => 'provider_1',
+                    'name' => 'Provider 1',
+                    'url' => 'https://api.openai.com/v1',
+                    'key' => 'key-1',
+                    'model' => 'gpt-4o',
+                    'timeout' => 5,
+                ],
+                [
+                    'id' => 'provider_2',
+                    'name' => 'Provider 2',
+                    'url' => 'https://api.groq.com/openai/v1',
+                    'key' => 'key-2',
+                    'model' => 'llama-3.3-70b-versatile',
+                    'timeout' => 5,
+                ],
+            ],
+        ]);
+
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response(['error' => 'Rate limit exceeded'], 429),
+            'https://api.groq.com/openai/v1/chat/completions' => Http::response([
+                'id' => 'chatcmpl-backup',
+                'choices' => [
+                    [
+                        'index' => 0,
+                        'message' => [
+                            'role' => 'assistant',
+                            'content' => 'Câu trả lời từ Backup Provider 2 Groq',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->postJson(route('ai.chat'), [
+            'message' => 'Tư vấn khóa học lập trình phù hợp cho người mới bắt đầu',
+        ]);
+
+        $response->assertOk();
+        $this->assertEquals('Câu trả lời từ Backup Provider 2 Groq', $response->json('message'));
+        $this->assertEquals('provider_2', $response->json('source'));
+        $this->assertEquals('llama-3.3-70b-versatile', $response->json('model'));
     }
 }

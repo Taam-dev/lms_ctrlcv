@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Ai\AiGuardrailService;
 use App\Services\Ai\LmsContextService;
 use App\Services\Ai\LocalAiClient;
 use App\Services\Ai\SmartFallbackService;
@@ -15,11 +16,12 @@ class AiChatController extends Controller
     public function __construct(
         protected LmsContextService $contextService,
         protected LocalAiClient $aiClient,
-        protected SmartFallbackService $fallbackService
+        protected SmartFallbackService $fallbackService,
+        protected AiGuardrailService $guardrailService
     ) {}
 
     /**
-     * Xử lý gửi tin nhắn trò chuyện với Local AI hoặc Smart Fallback.
+     * Xử lý gửi tin nhắn trò chuyện với Multi-API Key Failover hoặc Smart Fallback.
      */
     public function chat(Request $request): JsonResponse
     {
@@ -31,25 +33,32 @@ class AiChatController extends Controller
         ]);
 
         $userMessage = trim($validated['message']);
-        $history = $validated['history'] ?? [];
+        $rawHistory = $validated['history'] ?? [];
         $user = $request->user();
 
+        // 1. Tầng 1: Kiểm tra Scope Guardrail (Từ chối câu hỏi ngoài lề trang web)
+        if ($this->guardrailService->isOffTopic($userMessage)) {
+            return response()->json($this->guardrailService->getRefusalResponse());
+        }
+
         try {
-            // 1. Thu thập dữ liệu LMS theo thời gian thực (RAG-Lite)
-            $relevantCourses = $this->contextService->findRelevantCourses($userMessage, $user, 5);
+            // 2. Thu thập dữ liệu LMS thời gian thực với phân tích số liệu chính xác
+            $relevantCourses = $this->contextService->findRelevantCourses($userMessage, $user);
             $catalogSummary = $this->contextService->getCatalogSummary();
             $userProgress = $this->contextService->getUserLearningProgress($user);
 
-            // 2. Chuẩn bị ngữ cảnh hội thoại cho AI
+            // 3. Khử trùng lặp lịch sử trò chuyện (Anti-Duplicate Messages)
+            $cleanedHistory = $this->deduplicateHistory($rawHistory);
+            $maxTurns = (int) config('ai_chat.max_history_turns', config('local_ai.max_history_turns', 8));
+            $recentHistory = array_slice($cleanedHistory, -$maxTurns);
+
+            // 4. Chuẩn bị ngữ cảnh và System Prompt tuân thủ Guardrail
             $systemPrompt = $this->contextService->buildSystemPrompt(
                 $user,
                 $relevantCourses,
                 $catalogSummary,
                 $userProgress
             );
-
-            $maxTurns = (int) config('local_ai.max_history_turns', 8);
-            $recentHistory = array_slice($history, -$maxTurns);
 
             $messages = [
                 ['role' => 'system', 'content' => $systemPrompt],
@@ -67,22 +76,24 @@ class AiChatController extends Controller
                 'content' => $userMessage,
             ];
 
-            // 3. Thử kết nối tới máy chủ Local AI
+            // 5. Gửi yêu cầu qua hệ thống Multi-API Key Failover
             $aiResponse = $this->aiClient->chat($messages);
 
             if ($aiResponse['success'] && ! empty($aiResponse['content'])) {
+                // Kiểm tra xem phản hồi của model có vi phạm quy tắc từ chối ngoài lề không
                 return response()->json([
                     'success' => true,
                     'message' => $aiResponse['content'],
-                    'source' => 'local_ai',
+                    'source' => $aiResponse['provider_id'] ?? 'local_ai',
                     'model' => $aiResponse['model'],
+                    'provider' => $aiResponse['provider'] ?? 'AI',
                     'relevant_courses' => $relevantCourses,
                     'suggested_chips' => $this->generateSuggestedChips($userMessage, $user),
                 ]);
             }
 
-            // 4. Nếu Local AI offline hoặc lỗi, kích hoạt Graceful Offline Fallback
-            Log::info('Local AI is offline or unreachable. Triggering SmartFallbackService.');
+            // 6. Tự động kích hoạt Smart Offline Fallback nếu toàn bộ API Key lỗi/hết hạn
+            Log::info('All AI API keys failed or are offline. Triggering SmartFallbackService.');
 
             $fallback = $this->fallbackService->generateResponse(
                 $userMessage,
@@ -100,26 +111,25 @@ class AiChatController extends Controller
                 'model' => 'Ctrl C+V LMS Intelligence',
                 'relevant_courses' => $relevantCourses,
                 'suggested_chips' => $fallback['suggested_chips'],
-                'offline_notice' => 'Đã kích hoạt chế độ tra cứu LMS nội bộ (Máy chủ Local AI đang offline).',
+                'offline_notice' => 'Đã kích hoạt cơ chế tra cứu dữ liệu nội bộ (Máy chủ AI tạm thời gián đoạn).',
             ]);
         } catch (Throwable $e) {
             Log::error('AI Chatbot critical error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            // Tuyệt đối không trả về mã lỗi 500 làm sập giao diện người dùng
             return response()->json([
                 'success' => true,
                 'message' => 'Hệ thống đang tạm thời xử lý dữ liệu. Bạn có thể xem danh sách khóa học tại [Tất cả khóa học]('.route('courses.index').') hoặc thử lại sau ít giây nhé!',
                 'source' => 'safety_fallback',
                 'relevant_courses' => [],
-                'suggested_chips' => ['📚 Các khóa học hiện có', '🎯 Tư vấn lộ trình học'],
+                'suggested_chips' => ['Tất cả khóa học', 'Lộ trình học'],
             ]);
         }
     }
 
     /**
-     * Lấy trạng thái cấu hình và kiểm tra kết nối Local AI.
+     * Lấy trạng thái cấu hình và kiểm tra kết nối hệ thống AI.
      */
     public function status(): JsonResponse
     {
@@ -128,10 +138,10 @@ class AiChatController extends Controller
 
         return response()->json([
             'success' => true,
-            'enabled' => (bool) config('local_ai.enabled', true),
-            'provider' => config('local_ai.provider', 'ollama'),
-            'model' => config('local_ai.model', 'qwen2.5:latest'),
-            'base_url' => config('local_ai.base_url'),
+            'enabled' => (bool) config('ai_chat.enabled', true),
+            'provider' => $ping['provider'] ?? config('ai_chat.providers.0.name', 'Primary AI'),
+            'model' => $ping['model'] ?? config('ai_chat.api_model', 'gpt-4o-mini'),
+            'base_url' => $ping['base_url'] ?? '',
             'ai_health' => $ping,
             'catalog_summary' => [
                 'total_courses' => $catalog['total_courses'],
@@ -139,6 +149,42 @@ class AiChatController extends Controller
                 'paid_courses' => $catalog['paid_courses_count'],
             ],
         ]);
+    }
+
+    /**
+     * Loại bỏ các tin nhắn trùng lặp liên tiếp trong lịch sử hội thoại (Anti-Duplicate Protection).
+     *
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @return array<int, array{role: string, content: string}>
+     */
+    protected function deduplicateHistory(array $history): array
+    {
+        $cleaned = [];
+        $lastRole = null;
+        $lastContent = null;
+
+        foreach ($history as $msg) {
+            $role = (string) ($msg['role'] ?? '');
+            $content = trim((string) ($msg['content'] ?? ''));
+
+            if ($content === '') {
+                continue;
+            }
+
+            if ($role === $lastRole && $content === $lastContent) {
+                continue;
+            }
+
+            $cleaned[] = [
+                'role' => $role,
+                'content' => $content,
+            ];
+
+            $lastRole = $role;
+            $lastContent = $content;
+        }
+
+        return $cleaned;
     }
 
     /**
@@ -152,24 +198,24 @@ class AiChatController extends Controller
 
         if (str_contains($lower, 'khóa học') || str_contains($lower, 'khoa hoc')) {
             return [
-                '🎯 Tư vấn lộ trình học',
-                '🚀 Khóa học miễn phí',
-                '📝 Làm bài thi quizzes',
+                'Lộ trình học',
+                'Khóa học miễn phí',
+                'Luyện thi trắc nghiệm',
             ];
         }
 
         if (str_contains($lower, 'lộ trình') || str_contains($lower, 'người mới')) {
             return [
-                '📚 Các khóa học hiện có',
-                '📖 Khóa học của tôi',
-                '💡 Gợi ý khóa học miễn phí',
+                'Tất cả khóa học',
+                'Khóa học của tôi',
+                'Khóa học miễn phí',
             ];
         }
 
         return [
-            '📚 Các khóa học hiện có',
-            '🎯 Tư vấn lộ trình học',
-            '📖 Khóa học của tôi',
+            'Tất cả khóa học',
+            'Lộ trình học',
+            'Khóa học của tôi',
         ];
     }
 }
