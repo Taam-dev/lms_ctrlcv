@@ -1,8 +1,8 @@
 @php
-    if (defined('CTRLCV_AI_CHATBOX_MOUNTED')) {
+    if (app()->bound('ctrlcv_ai_chatbox_mounted')) {
         return;
     }
-    define('CTRLCV_AI_CHATBOX_MOUNTED', true);
+    app()->instance('ctrlcv_ai_chatbox_mounted', true);
 @endphp
 
 <div x-data="lmsAiChatbox()"
@@ -42,13 +42,13 @@
                 aria-label="Trợ lý AI Ctrl C+V">
 
             <!-- Icon khi đang Đóng: Team Logo với viền và chấm trạng thái -->
-            <span x-show="!isOpen" class="relative flex items-center justify-center w-9 h-9">
+            <span x-show="!isOpen" class="relative flex items-center justify-center w-10 h-10 rounded-full bg-white p-1 shadow-xs">
                 <img src="{{ asset('logo.png') }}"
                      alt="Ctrl C+V AI"
                      class="w-full h-full object-contain rounded-full group-hover:scale-105 transition-transform duration-200">
                 <!-- Chấm trạng thái nhỏ gọn -->
-                <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 border border-neutral-900"></span>
+                <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 border border-white"></span>
                 </span>
             </span>
 
@@ -80,10 +80,10 @@
         <div class="bg-neutral-900 text-white px-4 py-3 flex items-center justify-between border-b border-neutral-800 shrink-0">
             <!-- Left: Team Logo Avatar + Title -->
             <div class="flex items-center gap-2.5">
-                <div class="relative w-8 h-8 rounded-lg bg-neutral-800 p-0.5 border border-neutral-700 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img src="{{ asset('logo.png') }}" alt="Ctrl C+V AI" class="w-full h-full object-contain rounded">
+                <div class="relative w-8 h-8 rounded-lg bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                    <img src="{{ asset('logo.png') }}" alt="Ctrl C+V AI" class="w-full h-full object-contain">
                     <!-- Active status dot -->
-                    <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-neutral-900"></span>
+                    <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white"></span>
                 </div>
                 <div>
                     <div class="flex items-center gap-1.5">
@@ -94,7 +94,10 @@
                             Assistant
                         </span>
                     </div>
-                    <p class="text-[11px] text-neutral-400" x-text="statusSubtitle">Tra cứu thông tin LMS</p>
+                    <p class="text-[11px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                        <span x-text="statusSubtitle">Trực tuyến • Sẵn sàng hỗ trợ</span>
+                    </p>
                 </div>
             </div>
 
@@ -169,7 +172,7 @@
                     <template x-if="msg.role === 'assistant'">
                         <div class="flex items-start gap-2">
                             <!-- Team Logo Bot Avatar -->
-                            <div class="w-7 h-7 rounded-lg bg-neutral-900 p-0.5 border border-neutral-700 flex items-center justify-center shrink-0 mt-0.5 overflow-hidden">
+                            <div class="w-7 h-7 rounded-lg bg-white p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0 mt-0.5 overflow-hidden">
                                 <img src="{{ asset('logo.png') }}" alt="Ctrl C+V AI" class="w-full h-full object-contain rounded">
                             </div>
 
@@ -179,37 +182,9 @@
                                     <!-- Render Markdown an toàn, không emoji -->
                                     <div class="chat-markdown-content break-words" x-html="renderMarkdown(msg.content)"></div>
 
-                                    <!-- Thẻ hiển thị khóa học liên quan (nếu có) -->
-                                    <template x-if="msg.relevant_courses && msg.relevant_courses.length > 0">
-                                        <div class="pt-2.5 mt-2.5 border-t border-slate-100 space-y-1.5">
-                                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                                Khóa học liên quan:
-                                            </p>
-                                            <div class="space-y-1.5">
-                                                <template x-for="c in msg.relevant_courses" :key="c.id">
-                                                    <a :href="c.url"
-                                                       class="group/card flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition text-left">
-                                                        <div class="min-w-0 pr-2">
-                                                            <div class="text-xs font-bold text-slate-900 group-hover/card:text-pink-600 transition truncate" x-text="c.title"></div>
-                                                            <div class="text-[11px] text-slate-500 mt-0.5">
-                                                                <span x-text="c.teacher"></span>
-                                                                <span>&bull;</span>
-                                                                <span class="font-semibold text-slate-700" x-text="c.formatted_price"></span>
-                                                            </div>
-                                                        </div>
-                                                        <span class="shrink-0 px-2 py-0.5 rounded bg-neutral-900 text-white text-[10px] font-bold group-hover/card:bg-black transition flex items-center gap-1">
-                                                            <span>Xem</span>
-                                                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                        </span>
-                                                    </a>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </template>
-
                                     <!-- Bottom metadata tag -->
                                     <div class="flex items-center justify-between pt-1.5 mt-2 border-t border-slate-100 text-[10px] text-slate-400">
-                                        <span class="font-medium text-slate-500" x-text="msg.source === 'local_ai' ? 'Local AI' : 'LMS Data'"></span>
+                                        <span class="font-medium text-slate-500" x-text="msg.source === 'smart_fallback' ? 'Dữ liệu LMS' : 'Ctrl C+V AI'"></span>
                                         <span x-text="msg.time"></span>
                                     </div>
                                 </div>
@@ -225,8 +200,8 @@
                  x-transition:enter-start="opacity-0 translate-y-1"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="flex items-start gap-2">
-                <div class="w-7 h-7 rounded-lg bg-neutral-900 p-0.5 border border-neutral-700 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img src="{{ asset('logo.png') }}" alt="Ctrl C+V AI" class="w-full h-full object-contain rounded opacity-80">
+                <div class="w-7 h-7 rounded-lg bg-white p-0.5 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src="{{ asset('logo.png') }}" alt="Ctrl C+V AI" class="w-full h-full object-contain rounded">
                 </div>
                 <div class="bg-white border border-slate-200 rounded-xl rounded-tl-xs px-3.5 py-2.5 shadow-2xs flex items-center gap-2">
                     <div class="flex items-center gap-1">
@@ -293,10 +268,10 @@
             inputMessage: '',
             isLoading: false,
             isSending: false,
-            statusSubtitle: 'Tra cứu thông tin LMS',
+            statusSubtitle: 'Trực tuyến • Sẵn sàng hỗ trợ',
             coursesCountText: '...',
             suggestedChips: [
-                'Tất cả khóa học',
+                'Lập trình Web',
                 'Lộ trình học',
                 'Khóa học của tôi',
                 'Khóa học miễn phí',
@@ -458,6 +433,7 @@
                             role: 'assistant',
                             content: replyText,
                             source: data.source || 'smart_fallback',
+                            provider: data.provider || '',
                             model: data.model || '',
                             time: this.currentTime(),
                             relevant_courses: data.relevant_courses || []
@@ -509,9 +485,9 @@
                             this.coursesCountText = `${data.catalog_summary.total_courses} khóa học đã duyệt`;
                         }
                         if (data.ai_health && data.ai_health.online) {
-                            this.statusSubtitle = `Local AI (${data.model}) sẵn sàng`;
+                            this.statusSubtitle = 'Trực tuyến • Sẵn sàng hỗ trợ';
                         } else {
-                            this.statusSubtitle = 'LMS Intelligence';
+                            this.statusSubtitle = 'Trực tuyến • Sẵn sàng hỗ trợ';
                         }
                     }
                 } catch (e) {

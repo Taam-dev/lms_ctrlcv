@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Ai\AiClientManager;
 use App\Services\Ai\AiGuardrailService;
 use App\Services\Ai\LmsContextService;
-use App\Services\Ai\LocalAiClient;
 use App\Services\Ai\SmartFallbackService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AiChatController extends Controller
 {
     public function __construct(
         protected LmsContextService $contextService,
-        protected LocalAiClient $aiClient,
+        protected AiClientManager $aiClient,
         protected SmartFallbackService $fallbackService,
         protected AiGuardrailService $guardrailService
     ) {}
@@ -49,7 +50,7 @@ class AiChatController extends Controller
 
             // 3. Khử trùng lặp lịch sử trò chuyện (Anti-Duplicate Messages)
             $cleanedHistory = $this->deduplicateHistory($rawHistory);
-            $maxTurns = (int) config('ai_chat.max_history_turns', config('local_ai.max_history_turns', 8));
+            $maxTurns = (int) config('ai_chat.max_history_turns', 8);
             $recentHistory = array_slice($cleanedHistory, -$maxTurns);
 
             // 4. Chuẩn bị ngữ cảnh và System Prompt tuân thủ Guardrail
@@ -80,13 +81,58 @@ class AiChatController extends Controller
             $aiResponse = $this->aiClient->chat($messages);
 
             if ($aiResponse['success'] && ! empty($aiResponse['content'])) {
-                // Kiểm tra xem phản hồi của model có vi phạm quy tắc từ chối ngoài lề không
+                $content = $aiResponse['content'];
+
+                // Nếu người dùng chỉ chào hỏi mà model AI phản hồi nhầm câu từ chối, tự động chuyển về câu chào thân thiện
+                if ($this->contextService->isGreetingOrCasual($userMessage) && trim($content) === AiGuardrailService::REFUSAL_MESSAGE) {
+                    $userName = $user ? " **{$user->name}**" : '';
+                    $content = "Xin chào{$userName}! Tôi là Trợ lý AI Cố vấn Học tập của **Ctrl C+V LMS**.\n\nBạn cần tìm khóa học, tư vấn lộ trình hay giải đáp thắc mắc nào trên hệ thống không?";
+                }
+
+                // Nếu người dùng hỏi nghiệp vụ giảng viên nhưng model AI chưa nêu rõ bước Profile góc phải -> GV
+                if ($this->contextService->isTeacherInquiry($userMessage)) {
+                    $contentLower = mb_strtolower($content);
+                    $contentAscii = Str::ascii($contentLower);
+                    $hasProfileRef = str_contains($contentLower, 'profile') || str_contains($contentLower, 'góc') || str_contains($contentAscii, 'goc');
+                    $hasGvRef = str_contains($contentLower, 'gv') || str_contains($contentLower, 'giảng viên') || str_contains($contentAscii, 'giang vien');
+
+                    if (! ($hasProfileRef && $hasGvRef)) {
+                        $fallback = $this->fallbackService->generateResponse($userMessage, $user, [], $catalogSummary, $userProgress);
+                        $content = $fallback['message'];
+                    }
+                }
+
+                // Nếu người dùng hỏi chung chung về "tất cả khóa học", đảm bảo không liệt kê lan man mà hỏi về lĩnh vực quan tâm
+                if ($this->contextService->isGeneralCatalogInquiry($userMessage)) {
+                    $contentLower = mb_strtolower($content);
+                    if (! str_contains($contentLower, 'lĩnh vực') && ! str_contains($contentLower, 'quan tâm')) {
+                        $fallback = $this->fallbackService->generateResponse($userMessage, $user, [], $catalogSummary, $userProgress);
+                        $content = $fallback['message'];
+                    }
+                }
+
+                // Nếu người dùng tâm sự chuyện buồn/chia tay nhưng model AI phản hồi máy móc cứng nhắc
+                if ($this->contextService->isHeartbreakOrVenting($userMessage)) {
+                    $contentLower = mb_strtolower($content);
+                    $isRobotic = str_contains($contentLower, 'không thể tham gia vào các vấn đề đời tư')
+                        || str_contains($contentLower, 'đời tư hay tình cảm')
+                        || str_contains($contentLower, 'không thể hỗ trợ về chuyện tình cảm')
+                        || str_contains($contentLower, 'vấn đề tình cảm cá nhân')
+                        || str_contains($contentLower, 'chỉ là trợ lý ai')
+                        || (! str_contains($contentLower, '😎') && ! str_contains($contentLower, 'buồn'));
+
+                    if ($isRobotic) {
+                        $fallback = $this->fallbackService->generateResponse($userMessage, $user, $relevantCourses, $catalogSummary, $userProgress);
+                        $content = $fallback['message'];
+                    }
+                }
+
                 return response()->json([
                     'success' => true,
-                    'message' => $aiResponse['content'],
-                    'source' => $aiResponse['provider_id'] ?? 'local_ai',
+                    'message' => $content,
+                    'source' => $aiResponse['provider_id'] ?? 'ai_provider',
                     'model' => $aiResponse['model'],
-                    'provider' => $aiResponse['provider'] ?? 'AI',
+                    'provider' => $aiResponse['provider'] ?? 'AI Provider',
                     'relevant_courses' => $relevantCourses,
                     'suggested_chips' => $this->generateSuggestedChips($userMessage, $user),
                 ]);
@@ -196,6 +242,33 @@ class AiChatController extends Controller
     {
         $lower = mb_strtolower($query);
 
+        if ($this->contextService->isHeartbreakOrVenting($query)) {
+            return [
+                'Lập trình Web',
+                'Lộ trình học',
+                'Khóa học miễn phí',
+                'Luyện thi trắc nghiệm',
+            ];
+        }
+
+        if ($this->contextService->isTeacherInquiry($query)) {
+            return [
+                'Bảng điều khiển Giảng viên',
+                'Tạo khóa học mới',
+                'Tạo đề trắc nghiệm',
+                'Khóa học của tôi',
+            ];
+        }
+
+        if ($this->contextService->isGeneralCatalogInquiry($query)) {
+            return [
+                'Lập trình Web',
+                'Laravel & PHP',
+                'Frontend & React',
+                'Lộ trình học',
+            ];
+        }
+
         if (str_contains($lower, 'khóa học') || str_contains($lower, 'khoa hoc')) {
             return [
                 'Lộ trình học',
@@ -206,14 +279,14 @@ class AiChatController extends Controller
 
         if (str_contains($lower, 'lộ trình') || str_contains($lower, 'người mới')) {
             return [
-                'Tất cả khóa học',
+                'Lập trình Web',
                 'Khóa học của tôi',
                 'Khóa học miễn phí',
             ];
         }
 
         return [
-            'Tất cả khóa học',
+            'Lập trình Web',
             'Lộ trình học',
             'Khóa học của tôi',
         ];

@@ -83,23 +83,116 @@
                 </header>
             @endisset
 
-            <!-- Global Alert Messages -->
+            <!-- Floating Centered Toast Notifications (Không đẩy giao diện, hiển thị giữa màn hình) -->
             @if(session('success') || session('error'))
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full space-y-2">
+                <div class="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] w-[92%] max-w-md pointer-events-none space-y-3">
                     @if(session('success'))
-                        <div x-data="{ show: true }" x-show="show"
-                             class="flex items-center justify-between p-4 text-sm text-emerald-800 bg-white border-l-4 border-emerald-500 shadow-sm font-semibold"
+                        <div x-data="{ show: true, percent: 100 }"
+                             x-show="show"
+                             x-cloak
+                             x-init="
+                                 const start = Date.now();
+                                 const duration = 4000;
+                                 const timer = setInterval(() => {
+                                     const elapsed = Date.now() - start;
+                                     percent = Math.max(0, 100 - (elapsed / duration) * 100);
+                                     if (elapsed >= duration) {
+                                         clearInterval(timer);
+                                         show = false;
+                                     }
+                                 }, 25);
+                             "
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 -translate-y-6 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 -translate-y-6 scale-95"
+                             class="pointer-events-auto relative overflow-hidden bg-zinc-900/95 text-white border border-emerald-500/40 rounded-2xl p-4 shadow-2xl shadow-black/80 backdrop-blur-xl"
                              role="alert">
-                            <span>{{ session('success') }}</span>
-                            <button @click="show = false" class="text-emerald-700 hover:text-emerald-900 px-2 text-lg leading-none" aria-label="Đóng thông báo">&times;</button>
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+
+                                <div class="flex-1 min-w-0 pt-0.5">
+                                    <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">Thành công</h4>
+                                    <p class="text-xs sm:text-sm font-semibold text-zinc-100 mt-0.5 leading-snug">{{ session('success') }}</p>
+                                </div>
+
+                                <button type="button"
+                                        @click="show = false"
+                                        class="w-7 h-7 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition shrink-0 cursor-pointer"
+                                        aria-label="Đóng thông báo">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Thanh đếm ngược thời gian tự đóng -->
+                            <div class="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800/80">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-75 ease-linear"
+                                     :style="`width: ${percent}%`"></div>
+                            </div>
                         </div>
                     @endif
+
                     @if(session('error'))
-                        <div x-data="{ show: true }" x-show="show"
-                             class="flex items-center justify-between p-4 text-sm text-rose-800 bg-white border-l-4 border-rose-500 shadow-sm font-semibold"
+                        <div x-data="{ show: true, percent: 100 }"
+                             x-show="show"
+                             x-cloak
+                             x-init="
+                                 const start = Date.now();
+                                 const duration = 5000;
+                                 const timer = setInterval(() => {
+                                     const elapsed = Date.now() - start;
+                                     percent = Math.max(0, 100 - (elapsed / duration) * 100);
+                                     if (elapsed >= duration) {
+                                         clearInterval(timer);
+                                         show = false;
+                                     }
+                                 }, 25);
+                             "
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 -translate-y-6 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 -translate-y-6 scale-95"
+                             class="pointer-events-auto relative overflow-hidden bg-zinc-900/95 text-white border border-rose-500/40 rounded-2xl p-4 shadow-2xl shadow-black/80 backdrop-blur-xl"
                              role="alert">
-                            <span>{{ session('error') }}</span>
-                            <button @click="show = false" class="text-rose-700 hover:text-rose-900 px-2 text-lg leading-none" aria-label="Đóng thông báo">&times;</button>
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0 shadow-inner">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+
+                                <div class="flex-1 min-w-0 pt-0.5">
+                                    <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-rose-400">Thông báo lỗi</h4>
+                                    <p class="text-xs sm:text-sm font-semibold text-zinc-100 mt-0.5 leading-snug">{{ session('error') }}</p>
+                                </div>
+
+                                <button type="button"
+                                        @click="show = false"
+                                        class="w-7 h-7 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition shrink-0 cursor-pointer"
+                                        aria-label="Đóng thông báo">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Thanh đếm ngược thời gian tự đóng -->
+                            <div class="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800/80">
+                                <div class="h-full bg-gradient-to-r from-rose-500 to-pink-500 transition-all duration-75 ease-linear"
+                                     :style="`width: ${percent}%`"></div>
+                            </div>
                         </div>
                     @endif
                 </div>

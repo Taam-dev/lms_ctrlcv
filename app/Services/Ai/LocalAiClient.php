@@ -2,6 +2,10 @@
 
 namespace App\Services\Ai;
 
+/**
+ * Lớp bọc tương thích ngược cho AiClientManager.
+ * Quản trị kết nối Multi-Provider AI và chuyển đổi API backup khi hết token.
+ */
 class LocalAiClient
 {
     public function __construct(
@@ -11,10 +15,10 @@ class LocalAiClient
     }
 
     /**
-     * Gửi yêu cầu hoàn thành đoạn chat qua hệ thống Multi-API Key Failover.
+     * Gửi yêu cầu hoàn thành đoạn chat qua hệ thống Multi-Provider AI Failover.
      *
      * @param  array<int, array{role: string, content: string}>  $messages
-     * @return array{success: bool, content: ?string, error: ?string, model: string, provider?: ?string}
+     * @return array{success: bool, content: ?string, error: ?string, model: string, provider?: ?string, provider_id?: string}
      */
     public function chat(array $messages): array
     {
@@ -22,9 +26,9 @@ class LocalAiClient
     }
 
     /**
-     * Kiểm tra trạng thái hoạt động của hệ thống AI.
+     * Kiểm tra trạng thái hoạt động của hệ thống AI Provider.
      *
-     * @return array{online: bool, model: string, base_url: string, message: string, provider?: string}
+     * @return array{online: bool, model: string, base_url: string, provider: string, message: string}
      */
     public function ping(): array
     {
@@ -33,12 +37,12 @@ class LocalAiClient
 
     public function getModel(): string
     {
-        return (string) config('ai_chat.api_model', config('local_ai.model', 'qwen2.5:latest'));
+        return (string) config('ai_chat.api_model', config('ai_chat.providers.0.model', 'auto'));
     }
 
     public function getBaseUrl(): string
     {
-        return (string) config('ai_chat.api_url', config('local_ai.base_url', 'http://127.0.0.1:11434/v1'));
+        return (string) config('ai_chat.api_url', config('ai_chat.providers.0.base_url', ''));
     }
 
     public function getClientManager(): AiClientManager

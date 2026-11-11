@@ -171,4 +171,40 @@ class User extends Authenticatable
     {
         return $this->appNotifications()->whereNull('read_at')->count();
     }
+
+    /**
+     * Kiểm tra quyền tạo/quản lý bộ câu hỏi và phòng chơi Minigame (Admin hoặc Giảng viên)
+     */
+    public function canManageMinigames(): bool
+    {
+        return $this->isAdmin() || $this->isTeacher();
+    }
+
+    /**
+     * Kiểm tra quyền đăng và quản lý tài liệu trong Kho Tài Liệu (Admin hoặc Giảng viên)
+     */
+    public function canManageDocuments(): bool
+    {
+        return $this->isAdmin() || $this->isTeacher();
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class, 'user_id');
+    }
+
+    public function minigameQuizzes(): HasMany
+    {
+        return $this->hasMany(MinigameQuiz::class, 'user_id');
+    }
+
+    public function hostedMinigameRooms(): HasMany
+    {
+        return $this->hasMany(MinigameRoom::class, 'host_id');
+    }
+
+    public function minigameParticipations(): HasMany
+    {
+        return $this->hasMany(MinigameParticipant::class, 'user_id');
+    }
 }

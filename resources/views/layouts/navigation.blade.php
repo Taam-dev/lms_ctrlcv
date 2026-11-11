@@ -23,6 +23,8 @@
                     @auth
                         <a href="{{ route('student.quizzes.index') }}" class="{{ $navLink(request()->routeIs('student.quizzes.*')) }}">Bài kiểm tra</a>
                     @endauth
+                    <a href="{{ route('minigame.index') }}" class="{{ $navLink(request()->routeIs('minigame.*')) }}">Minigame</a>
+                    <a href="{{ route('documents.index') }}" class="{{ $navLink(request()->routeIs('documents.*')) }}">Kho tài liệu</a>
                 </div>
             </div>
 
@@ -131,6 +133,14 @@
         </a>
         <a href="{{ route('courses.index') }}" class="block px-3 py-2.5 text-sm font-bold border-l-2 {{ request()->routeIs('courses.index') ? 'text-white border-pink-500 bg-white/5' : 'text-neutral-400 border-transparent' }}">
             Khóa học
+        </a>
+
+        <a href="{{ route('minigame.index') }}" class="block px-3 py-2.5 text-sm font-bold border-l-2 {{ request()->routeIs('minigame.*') ? 'text-white border-pink-500 bg-white/5' : 'text-neutral-400 border-transparent hover:text-white' }}">
+            Minigame
+        </a>
+
+        <a href="{{ route('documents.index') }}" class="block px-3 py-2.5 text-sm font-bold border-l-2 {{ request()->routeIs('documents.*') ? 'text-white border-pink-500 bg-white/5' : 'text-neutral-400 border-transparent hover:text-white' }}">
+            Kho tài liệu
         </a>
 
         @auth

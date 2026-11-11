@@ -20,6 +20,7 @@ FROM php:8.3-fpm-alpine
 
 # cài nginx và thư viện hệ thống
 RUN apk add --no-cache \
+    ca-certificates \
     nginx \
     libpng-dev \
     libjpeg-turbo-dev \

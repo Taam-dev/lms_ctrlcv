@@ -26,7 +26,12 @@ class AiGuardrailService
             return false;
         }
 
-        // 2. Nếu có chứa từ khóa liên quan trực tiếp đến khóa học / hệ thống LMS -> Cho phép
+        // 2. Nếu là tâm sự chuyện tình cảm, thất tình, chia tay, buồn bã -> Cho phép để AI "thêm muối" và gợi ý khóa học
+        if ($this->isHeartbreakOrVenting($lower, $ascii)) {
+            return false;
+        }
+
+        // 3. Nếu có chứa từ khóa liên quan trực tiếp đến khóa học / hệ thống LMS -> Cho phép
         if ($this->isLmsRelevant($lower, $ascii)) {
             return false;
         }
@@ -55,14 +60,14 @@ class AiGuardrailService
     protected function isGreetingOrCourtesy(string $lower, string $ascii): bool
     {
         $patterns = [
-            '/^(xin chào|chào|chao|hello|hi|hey|alo|halo)/i',
-            '/^(bạn là ai|ban la ai|who are you|bạn tên gì|gioi thieu|giới thiệu)/i',
-            '/^(cảm ơn|cam on|thanks|thank you|cảm ơn bạn|tạm biệt|tam biet|bye)/i',
-            '/^(giúp tôi|giup toi|trợ giúp|tro giup|help)/i',
+            '/^(xin\s*chao[sp]?|chao[sp]?|hello+|helo+|hi+|hey+|alo+|halo+|h[eê]\s*l[oô]|h[eê]\s*nh[oô]|good\s*(morning|afternoon|evening))/iu',
+            '/^(bạn là ai|ban la ai|who are you|bạn tên gì|gioi thieu|giới thiệu)/iu',
+            '/^(cảm ơn|cam on|thanks|thank you|cảm ơn bạn|tạm biệt|tam biet|bye)/iu',
+            '/^(giúp tôi|giup toi|trợ giúp|tro giup|help)/iu',
         ];
 
         foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $lower)) {
+            if (preg_match($pattern, $lower) || preg_match($pattern, $ascii)) {
                 return true;
             }
         }
@@ -80,7 +85,10 @@ class AiGuardrailService
             'bai giang', 'bài giảng', 'bai hoc', 'bài học', 'giao trinh', 'giáo trình',
             'lo trinh', 'lộ trình', 'tu van', 'tư vấn', 'hoc phi', 'học phí',
             'hoc gi', 'học gì', 'nen hoc', 'nên học', 'nguoi moi', 'người mới',
-            'giang vien', 'giảng viên', 'thay', 'thầy', 'co', 'cô', 'teacher',
+            'giang vien', 'giảng viên', 'thay', 'thầy', 'co', 'cô', 'teacher', 'instructor',
+            'tao bai giang', 'tạo bài giảng', 'tao bai hoc', 'tạo bài học', 'them bai giang', 'thêm bài giảng',
+            'tao khoa hoc', 'tạo khóa học', 'tao quiz', 'tạo quiz', 'panel gv', 'panel giảng viên',
+            'bảng điều khiển giảng viên', 'bang dieu khien giang vien', 'teacher portal',
             'danh gia', 'đánh giá', 'review', 'rating', 'sao', 'star',
             'hoc vien', 'học viên', 'dang ky', 'đăng ký', 'enroll', 'mua khoa', 'mua khóa',
             'mien phi', 'miễn phí', 'free', 'tien do', 'tiến độ', 'hoan thanh', 'hoàn thành',
@@ -89,6 +97,19 @@ class AiGuardrailService
             'tai khoan', 'tài khoản', 'mat khau', 'mật khẩu', 'dang nhap', 'đăng nhập', 'profile', 'ho so', 'hồ sơ',
             'ctrl c+v', 'ctrlcv', 'lms', 'he thong', 'hệ thống', 'trang web', 'website',
             'chung chi', 'chứng chỉ', 'bao cao', 'báo cáo', 'report',
+
+            // Minigame & Trò chơi tương tác (Gold Quest, Blooket, Cướp vàng, Mở rương)
+            'minigame', 'mini game', 'gold quest', 'blooket', 'cuop vang', 'cướp vàng',
+            'mo ruong', 'mở rương', 'ruong vang', 'rương vàng', 'swap', 'doi vang', 'đổi vàng',
+            'pin', 'ma pin', 'mã pin', 'dau truong', 'đấu trường', 'phong choi', 'phòng chơi',
+            'host room', 'blook', 'linh vat', 'linh vật', 'bang xep hang', 'bảng xếp hạng', 'leaderboard',
+            'tro choi', 'trò chơi', 'game hoc tap', 'game học tập',
+
+            // Kho tài liệu & Học liệu đính kèm
+            'kho tai lieu', 'kho tài liệu', 'tai lieu', 'tài liệu', 'tai lieu hoc tap', 'tài liệu học tập',
+            'slide', 'slide bai giang', 'slide bài giảng', 'ebook', 'giao trinh pdf', 'giáo trình pdf',
+            'download tai lieu', 'tải tài liệu', 'tai file', 'tải file', 'source code mau', 'source code mẫu',
+            'de thi', 'đề thi', 'de cuong', 'đề cương', 'on tap', 'ôn tập', 'do an mau', 'đồ án mẫu',
         ];
 
         foreach ($lmsKeywords as $kw) {
@@ -191,6 +212,25 @@ class AiGuardrailService
     }
 
     /**
+     * Nhận diện tâm sự chuyện tình cảm, thất tình, chia tay, buồn chán.
+     */
+    public function isHeartbreakOrVenting(string $lower, string $ascii): bool
+    {
+        return (bool) (
+            preg_match('/(chia tay|bo da|that tinh|nguoi yeu|crush|cam sung|nyc|nguoi yeu cu|yeu duong|tinh yeu|hen ho)/i', $ascii)
+            || preg_match('/(buon qua|chan qua|chan doi|co don|tuyet vong|met moi qua|stress qua|dau long)/i', $ascii)
+            || str_contains($lower, 'chia tay')
+            || str_contains($lower, 'thất tình')
+            || str_contains($lower, 'bồ đá')
+            || str_contains($lower, 'người yêu')
+            || str_contains($lower, 'buồn quá')
+            || str_contains($lower, 'chán đời')
+            || str_contains($lower, 'cô đơn')
+            || str_contains($lower, 'đau lòng')
+        );
+    }
+
+    /**
      * Trả về thông báo từ chối chuẩn mực theo quy định
      */
     public function getRefusalResponse(): array
@@ -202,7 +242,7 @@ class AiGuardrailService
             'intent' => 'refusal',
             'relevant_courses' => [],
             'suggested_chips' => [
-                'Tất cả khóa học',
+                'Lập trình Web',
                 'Lộ trình học',
                 'Khóa học của tôi',
             ],

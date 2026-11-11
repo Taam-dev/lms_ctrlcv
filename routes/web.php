@@ -4,6 +4,9 @@ use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\QuizController as AdminQuizController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\Minigame\GoldQuestController;
+use App\Http\Controllers\Minigame\MinigameController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -17,7 +20,7 @@ use App\Http\Controllers\Teacher\LessonController as TeacherLessonController;
 use App\Http\Controllers\Teacher\QuizController as TeacherQuizController;
 use Illuminate\Support\Facades\Route;
 
-// Trợ lý AI Chatbox (Local AI & Smart Fallback)
+// Trợ lý AI Chatbox (Multi-Provider AI & Smart Fallback)
 Route::post('/ai/chat', [AiChatController::class, 'chat'])->name('ai.chat');
 Route::get('/ai/status', [AiChatController::class, 'status'])->name('ai.status');
 
@@ -177,6 +180,104 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('quizzes/{quiz}/questions/{question}', [AdminQuizController::class, 'destroyQuestion'])->name('quizzes.questions.destroy');
     Route::get('quizzes/{quiz}/results', [AdminQuizController::class, 'results'])->name('quizzes.results');
     Route::delete('quizzes/{quiz}/attempts/{attempt}', [AdminQuizController::class, 'destroyAttempt'])->name('quizzes.attempts.destroy');
+});
+
+// ==========================================
+// TÍNH NĂNG MINIGAME (BLOOKET GOLD QUEST)
+// Yêu cầu đăng nhập trước khi tham gia minigame
+// ==========================================
+Route::middleware(['auth'])->prefix('minigame')->name('minigame.')->group(function () {
+    // Sảnh chính & tham gia phòng
+    Route::get('/', [MinigameController::class, 'index'])->name('index');
+    Route::get('/sample-json', [MinigameController::class, 'downloadSampleJson'])->name('sample-json');
+    Route::post('/join', [MinigameController::class, 'joinRoom'])->name('join');
+
+    // Quản lý bộ câu hỏi & mở phòng (Giảng viên & Admin)
+    Route::middleware(['role:admin,teacher'])->group(function () {
+        Route::get('/quizzes/create', [MinigameController::class, 'createQuiz'])->name('quizzes.create');
+        Route::post('/quizzes', [MinigameController::class, 'storeQuiz'])->name('quizzes.store');
+        Route::get('/quizzes/{quiz}/edit', [MinigameController::class, 'editQuiz'])->name('quizzes.edit');
+        Route::put('/quizzes/{quiz}', [MinigameController::class, 'updateQuiz'])->name('quizzes.update');
+        Route::delete('/quizzes/{quiz}', [MinigameController::class, 'destroyQuiz'])->name('quizzes.destroy');
+
+        Route::post('/rooms/create', [MinigameController::class, 'createRoom'])->name('rooms.create');
+        Route::get('/rooms/{pin}/host', [MinigameController::class, 'lobbyHost'])->name('rooms.host');
+        Route::post('/rooms/{pin}/start', [MinigameController::class, 'startRoom'])->name('rooms.start');
+        Route::get('/rooms/{pin}/host-screen', [MinigameController::class, 'playHost'])->name('rooms.host.screen');
+        Route::post('/rooms/{pin}/end', [MinigameController::class, 'endRoom'])->name('rooms.end');
+    });
+
+    // Phòng chờ, Vòng lặp trận đấu & Bảng xếp hạng (Học viên & Host)
+    Route::get('/rooms/{pin}/lobby', [MinigameController::class, 'lobbyPlayer'])->name('rooms.lobby');
+    Route::get('/rooms/{pin}/poll-lobby', [MinigameController::class, 'pollLobby'])->name('rooms.poll-lobby');
+    Route::get('/rooms/{pin}/play', [MinigameController::class, 'playPlayer'])->name('rooms.play');
+    Route::post('/rooms/{pin}/answer', [MinigameController::class, 'submitAnswer'])->name('rooms.answer');
+    Route::post('/rooms/{pin}/open-chest', [MinigameController::class, 'openChest'])->name('rooms.open-chest');
+    Route::get('/rooms/{pin}/poll-host', [MinigameController::class, 'pollHost'])->name('rooms.poll-host');
+    Route::get('/rooms/{pin}/poll-player', [MinigameController::class, 'pollPlayer'])->name('rooms.poll-player');
+    Route::get('/rooms/{pin}/podium', [MinigameController::class, 'podium'])->name('rooms.podium');
+});
+
+// ==========================================
+// ĐẠI CHIẾN CƯỚP VÀNG (GOLD QUEST ENGINE)
+// Hỗ trợ WebSocket Realtime + Redis ZSET
+// ==========================================
+Route::prefix('gold-quest')->name('goldquest.')->group(function () {
+    Route::post('/join', [GoldQuestController::class, 'join'])->name('join');
+    Route::get('/rooms/{pin}/lobby', [GoldQuestController::class, 'playerLobby'])->name('player.lobby');
+    Route::get('/rooms/{pin}/play', [GoldQuestController::class, 'play'])->name('play');
+
+    // Các route yêu cầu quyền quản trị / giảng viên hoặc đăng nhập
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/rooms/create', [GoldQuestController::class, 'createRoom'])->name('rooms.create');
+        Route::get('/rooms/{pin}/host-lobby', [GoldQuestController::class, 'hostLobby'])->name('host.lobby');
+        Route::get('/rooms/{pin}/host-screen', [GoldQuestController::class, 'hostScreen'])->name('host.screen');
+        Route::post('/rooms/{pin}/start', [GoldQuestController::class, 'start'])->name('rooms.start');
+        Route::post('/rooms/{pin}/end', [GoldQuestController::class, 'endRoom'])->name('rooms.end');
+    });
+
+    // Realtime game loop actions
+    Route::post('/rooms/{pin}/answer', [GoldQuestController::class, 'submitAnswer'])->name('rooms.answer');
+    Route::post('/rooms/{pin}/open-chest', [GoldQuestController::class, 'openChest'])->name('rooms.open-chest');
+    Route::post('/rooms/{pin}/execute-action', [GoldQuestController::class, 'executeAction'])->name('rooms.execute-action');
+
+    // Polling endpoints (hỗ trợ companion cùng WebSocket)
+    Route::get('/rooms/{pin}/poll-host', [GoldQuestController::class, 'pollHost'])->name('rooms.poll-host');
+    Route::get('/rooms/{pin}/poll-player', [GoldQuestController::class, 'pollPlayer'])->name('rooms.poll-player');
+});
+
+// Alias API cho Client / Mobile
+Route::prefix('api/gold-quest')->group(function () {
+    Route::post('/rooms', [GoldQuestController::class, 'createRoom']);
+    Route::post('/join', [GoldQuestController::class, 'join']);
+    Route::post('/rooms/{pin}/start', [GoldQuestController::class, 'start']);
+    Route::post('/rooms/{pin}/answer', [GoldQuestController::class, 'submitAnswer']);
+    Route::post('/rooms/{pin}/open-chest', [GoldQuestController::class, 'openChest']);
+    Route::post('/rooms/{pin}/execute-action', [GoldQuestController::class, 'executeAction']);
+    Route::post('/rooms/{pin}/end', [GoldQuestController::class, 'endRoom']);
+    Route::get('/rooms/{pin}/leaderboard', [GoldQuestController::class, 'pollHost']);
+});
+
+// ==========================================
+// KHO TÀI LIỆU (LEARNING RESOURCES & DOCS)
+// ==========================================
+Route::prefix('documents')->name('documents.')->group(function () {
+    Route::get('/', [DocumentController::class, 'index'])->name('index');
+
+    // Quản lý đăng tải & chỉnh sửa tài liệu (Giảng viên / Admin)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/create', [DocumentController::class, 'create'])->name('create');
+        Route::post('/', [DocumentController::class, 'store'])->name('store');
+        Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('edit');
+        Route::put('/{document}', [DocumentController::class, 'update'])->name('update');
+        Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('destroy');
+    });
+
+    // Tải xuống tệp tin tài liệu
+    Route::get('/files/{file}/download', [DocumentController::class, 'download'])->name('files.download');
+
+    // Chi tiết tài liệu (đặt sau các route cụ thể)
+    Route::get('/{document}', [DocumentController::class, 'show'])->name('show');
 });
 
 require __DIR__.'/auth.php';
